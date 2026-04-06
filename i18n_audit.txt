@@ -1,0 +1,27 @@
+﻿===== FEATURE: costos =====
+  (no matches)
+
+===== FEATURE: ventas =====
+  (no matches)
+
+===== FEATURE: inventario =====
+  (no matches)
+
+===== FEATURE: salud =====
+  (no matches)
+
+===== FEATURE: granjas =====
+  (no matches)
+
+===== FEATURE: galpones =====
+  (no matches)
+
+===== FEATURE: perfil =====
+  (no matches)
+
+===== FEATURE: notificaciones =====
+  (no matches)
+
+===== FEATURE: reportes =====
+  (no matches)
+

@@ -1,0 +1,106 @@
+﻿Analyzing smartGranjaAves_pro...                                
+
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\auth\presentation\widgets\auth_forms.dart:206:39 - argument_type_not_assignable
+  error - Undefined name 'context' - lib\features\costos\presentation\pages\costo_detail_page.dart:725:20 - undefined_identifier
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\galpones\presentation\widgets\tag_input_field.dart:54:44 - argument_type_not_assignable
+  error - Too many positional arguments: 3 expected, but 4 found - lib\features\granjas\presentation\pages\codigo_invitacion_page.dart:349:11 - extra_positional_arguments
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\pages\crear_granja_page.dart:230:28 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\pages\crear_granja_page.dart:242:38 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\pages\crear_granja_page.dart:246:36 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\pages\editar_granja_page.dart:593:52 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\widgets\form_steps\contact_info_step.dart:237:32 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\widgets\granja_detail\granja_detail_sections.dart:312:35 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\widgets\granja_detail\granja_detail_sections.dart:327:35 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\granjas\presentation\widgets\granja_detail\granja_detail_sections.dart:1126:35 - argument_type_not_assignable
+  error - Undefined name 'context' - lib\features\granjas\presentation\widgets\granjas_list\granja_list_card.dart:144:21 - undefined_identifier
+  error - 41 positional arguments expected by 'invMovementsOfItem', but 1 found - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:48:75 - not_enough_positional_arguments
+  error - The getter 'invFilter' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:56:24 - undefined_getter
+  error - The getter 'invErrorLoadingMovementsPage' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:82:19 - undefined_getter
+  error - The getter 'invNoMovementsWithFilters' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:107:21 - undefined_getter
+  error - The getter 'invNoMovementsRegisteredHist' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:108:21 - undefined_getter
+  error - The getter 'invClearFiltersHist' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:118:29 - undefined_getter
+  error - The getter 'invToday' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:174:22 - undefined_getter
+  error - The getter 'invYesterday' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:176:22 - undefined_getter
+  error - The getter 'invFilterMovements' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:258:26 - undefined_getter
+  error - The getter 'invMovementType' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:262:26 - undefined_getter
+  error - The getter 'invAll' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:268:39 - undefined_getter
+  error - The getter 'invDateRange' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:290:26 - undefined_getter
+  error - The getter 'invFrom' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:300:37 - undefined_getter
+  error - The getter 'invUntil' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:323:37 - undefined_getter
+  error - The getter 'invClear' isn't defined for the type 'S' - lib\features\inventario\presentation\pages\historial_movimientos_page.dart:352:39 - undefined_getter
+  error - Undefined name 'context' - lib\features\inventario\presentation\widgets\form_steps\imagen_producto_section.dart:262:18 - undefined_identifier
+  error - Undefined name 'context' - lib\features\inventario\presentation\widgets\form_steps\imagen_producto_section.dart:270:18 - undefined_identifier
+  error - The getter 'invEnterValidNumber' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\form_steps\stock_step.dart:150:26 - undefined_getter
+  error - The getter 'invDialogRegisterEntry' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:300:39 - undefined_getter
+  error - The getter 'invDialogRegisterExit' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:301:39 - undefined_getter
+  error - The getter 'invDialogMovementType' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:357:30 - undefined_getter
+  error - The getter 'invSelectType' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:361:60 - undefined_getter
+  error - The getter 'invEnterQuantity' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:393:36 - undefined_getter
+  error - The getter 'invEnterValidNumberGt0' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:397:36 - undefined_getter
+  error - The getter 'invQuantityExceedsStock' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:401:36 - undefined_getter
+  error - The getter 'invTotalCost' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:412:32 - undefined_getter
+  error - The getter 'invSupplierName' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:430:35 - undefined_getter
+  error - The getter 'invObservation' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:439:30 - undefined_getter
+  error - The getter 'invReasonOrObservation' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:444:33 - undefined_getter
+  error - The getter 'invEntryRegistered' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:652:39 - undefined_getter
+  error - The getter 'invExitRegistered' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:652:62 - undefined_getter
+  error - The getter 'invDialogAdjustStock' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:724:33 - undefined_getter
+  error - The getter 'invEnterNewStock' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:791:36 - undefined_getter
+  error - The getter 'invEnterValidNumber' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:795:36 - undefined_getter
+  error - The getter 'invAdjustmentReason' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:805:30 - undefined_getter
+  error - The getter 'invReasonRequired' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:817:36 - undefined_getter
+  error - The getter 'invAdjust' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:871:40 - undefined_getter
+  error - The getter 'invStockAdjustedSuccess' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:979:47 - undefined_getter
+  error - The getter 'invDeleteItem' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:1031:11 - undefined_getter
+  error - The method 'invConfirmDeleteItemName' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:1049:13 - undefined_method
+  error - The getter 'invActionIrreversible' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:1074:15 - undefined_getter
+  error - The getter 'invDeleteWarningDetails' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:1082:15 - undefined_getter
+  error - The getter 'invTypeNameToConfirm' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:1097:13 - undefined_getter
+  error - The getter 'invTypeHere' isn't defined for the type 'S' - lib\features\inventario\presentation\widgets\inventario_dialogs.dart:1124:25 - undefined_getter
+  error - The expression doesn't evaluate to a function, so it can't be invoked - lib\features\lotes\presentation\pages\graficos_peso_page.dart:449:31 - invocation_of_non_function_expression
+  error - Too many positional arguments: 1 expected, but 3 found - lib\features\lotes\presentation\pages\graficos_peso_page.dart:670:37 - extra_positional_arguments
+  error - The expression doesn't evaluate to a function, so it can't be invoked - lib\features\lotes\presentation\pages\graficos_peso_page.dart:893:31 - invocation_of_non_function_expression
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\historial_consumo_page.dart:662:52 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\historial_consumo_page.dart:1308:43 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\historial_mortalidad_page.dart:1289:25 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\historial_peso_page.dart:1280:40 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\historial_produccion_page.dart:1285:40 - argument_type_not_assignable
+  error - The getter 'batchInitialFlock' isn't defined for the type 'S' - lib\features\lotes\presentation\pages\lote_dashboard_page.dart:474:44 - undefined_getter
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_mortalidad_page.dart:773:17 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_mortalidad_page.dart:869:15 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_mortalidad_page.dart:977:41 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_peso_page.dart:1072:15 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_produccion_page.dart:337:19 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_produccion_page.dart:390:19 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_produccion_page.dart:710:15 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\lotes\presentation\pages\registrar_produccion_page.dart:711:15 - argument_type_not_assignable
+  error - Undefined name 'context' - lib\features\lotes\presentation\widgets\consumo_form_steps\resumen_observaciones_step.dart:122:18 - undefined_identifier
+  error - Undefined name 'context' - lib\features\lotes\presentation\widgets\consumo_form_steps\resumen_observaciones_step.dart:130:18 - undefined_identifier
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\perfil\presentation\widgets\sync_settings_section.dart:233:43 - argument_type_not_assignable
+  error - The argument type 'int' can't be assigned to the parameter type 'String'.  - lib\features\salud\presentation\widgets\bioseguridad_form_steps\checklist_bioseguridad_step.dart:137:50 - argument_type_not_assignable
+   info - Don't use 'BuildContext's across async gaps - lib\features\ventas\presentation\pages\registrar_venta_page.dart:702:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\ventas\presentation\pages\registrar_venta_page.dart:707:32 - use_build_context_synchronously
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:960:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:966:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:972:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:977:18 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:986:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:992:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:998:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1004:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1009:18 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1022:23 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1033:18 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1040:18 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1050:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1056:20 - undefined_identifier
+  error - Undefined name 'context' - lib\features\ventas\presentation\pages\ventas_list_page.dart:1061:18 - undefined_identifier
+
+flutter : 95 issues found. (ran in 13.4s)
+En línea: 1 Carácter: 1
++ flutter analyze 2>&1 | Tee-Object -Variable analyzeOutput; $analyzeOu ...
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (95 issues found. (ran in 13.4s):S 
+   tring) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

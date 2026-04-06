@@ -1,0 +1,1135 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =========================================================================
+    // FUNCIONES AUXILIARES
+    // =========================================================================
+    
+    // Verifica si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verifica si el usuario es el propietario del documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Verifica si el documento pertenece al usuario actual
+    function belongsToUser() {
+      return isAuthenticated() && resource.data.usuarioId == request.auth.uid;
+    }
+    
+    // Verifica si el nuevo documento tendrá el usuarioId correcto
+    function willBelongToUser() {
+      return isAuthenticated() && request.resource.data.usuarioId == request.auth.uid;
+    }
+    
+    // Verifica si el usuario es admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+    
+    // Verifica campos requeridos en la solicitud
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    // Verifica que solo se actualicen ciertos campos
+    function onlyUpdates(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+    
+    // Obtiene el timestamp actual del servidor
+    function isValidTimestamp(field) {
+      return request.resource.data[field] == request.time;
+    }
+    
+    // Verifica que el tamaño del documento no exceda el límite (en bytes)
+    function isValidDocSize() {
+      return request.resource.size() < 1048576; // 1 MB
+    }
+    
+    // Verifica que un campo de texto no esté vacío
+    function isNotEmpty(field) {
+      return request.resource.data[field] is string && 
+        request.resource.data[field].size() > 0;
+    }
+    
+    // Verifica que un número sea positivo
+    function isPositive(field) {
+      return request.resource.data[field] is number && 
+        request.resource.data[field] > 0;
+    }
+    
+    // =========================================================================
+    // COLECCIÓN INTERNA: _app_status
+    // =========================================================================
+    // Acceso solo para usuarios autenticados (verificación de conexión)
+    match /_app_status/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: USUARIOS
+    // =========================================================================
+    match /usuarios/{userId} {
+      // Lectura: solo el propio usuario o admin
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Creación: usuario autenticado creando su propio perfil
+      allow create: if isOwner(userId) && 
+        hasRequiredFields(['email']);
+      
+      // Actualización: solo el propio usuario, sin modificar campos críticos
+      allow update: if isOwner(userId) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid', 'fechaCreacion', 'rol']);
+      
+      // Eliminación: solo admin
+      allow delete: if isAdmin();
+      
+      // Subcolección: configuraciones del usuario
+      match /configuraciones/{configId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Subcolección: notificaciones del usuario
+      match /notificaciones/{notifId} {
+        allow read: if isOwner(userId);
+        allow create: if isAuthenticated();
+        allow update, delete: if isOwner(userId);
+      }
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: GRANJAS
+    // =========================================================================
+    match /granjas/{granjaId} {
+      // Funciones específicas para granjas
+      function isGranjaOwner() {
+        return isAuthenticated() && resource.data.propietarioId == request.auth.uid;
+      }
+      
+      function willBeGranjaOwner() {
+        return isAuthenticated() && request.resource.data.propietarioId == request.auth.uid;
+      }
+      
+      // Función para verificar si el usuario es colaborador activo de la granja
+      function isCollaborator() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+          get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true;
+      }
+      
+      // Función para verificar acceso completo (propietario o colaborador)
+      function hasGranjaAccessDirect() {
+        return isGranjaOwner() || isCollaborator() || isAdmin();
+      }
+      
+      // Función para verificar si el usuario está en el array usuariosAccesoIds
+      function isInUsuariosAcceso() {
+        return isAuthenticated() && 
+          resource.data.usuariosAccesoIds != null &&
+          request.auth.uid in resource.data.usuariosAccesoIds;
+      }
+      
+      // Función para verificar si solo se está actualizando usuariosAccesoIds
+      function onlyUpdatesUsuariosAcceso() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usuariosAccesoIds']);
+      }
+      
+      // Lectura: propietario, colaboradores activos, usuarios en usuariosAccesoIds, o admin
+      allow read: if hasGranjaAccessDirect() || isInUsuariosAcceso();
+      
+      // Creación: usuario autenticado como propietario
+      allow create: if willBeGranjaOwner() && 
+        hasRequiredFields(['nombre', 'propietarioId', 'fechaCreacion']);
+      
+      // Actualización: 
+      // 1. Propietario puede actualizar todo excepto campos críticos
+      // 2. Colaborador admin/manager puede actualizar excepto campos críticos
+      // 3. Colaborador puede agregar su propio ID a usuariosAccesoIds
+      allow update: if (
+        // Caso 1 y 2: Actualización completa por propietario/admin/manager
+        ((isGranjaOwner() || 
+          (isCollaborator() && 
+            get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.rol in ['admin', 'manager']
+          )) &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['propietarioId', 'fechaCreacion']))
+        ||
+        // Caso 3: Colaborador agregando su propio ID a usuariosAccesoIds
+        (isCollaborator() && onlyUpdatesUsuariosAcceso())
+      );
+      
+      // Eliminación: solo propietario o admin
+      allow delete: if isGranjaOwner() || isAdmin();
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: USUARIOS DE LA GRANJA (COLABORADORES)
+      // -----------------------------------------------------------------
+      match /granja_usuarios/{usuarioGranjaId} {
+        // El usuario debe ser propietario O estar en la lista de usuariosAccesoIds
+        function hasAccessToGranja() {
+          return isAuthenticated() && (
+            resource.data.activo == true &&
+            resource.data.usuarioId == request.auth.uid
+          );
+        }
+        
+        // Lectura: propietario o el usuario asignado
+        allow read: if isGranjaOwner() || 
+          hasAccessToGranja();
+        
+        // Creación: solo propietario/admin (a través de invitación)
+        allow create: if isGranjaOwner();
+        
+        // Actualización: solo propietario (cambiar rol o estado)
+        allow update: if isGranjaOwner();
+        
+        // Eliminación: solo propietario (soft delete)
+        allow delete: if isGranjaOwner();
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: INVITACIONES
+      // -----------------------------------------------------------------
+      match /invitaciones/{invitacionId} {
+        // Lectura: propietario o invitador
+        allow read: if isGranjaOwner() || 
+          (isAuthenticated() && resource.data.creadoPorId == request.auth.uid);
+        
+        // Creación: solo propietario
+        allow create: if isGranjaOwner() && 
+          hasRequiredFields(['codigo', 'rol', 'fechaCreacion', 'fechaExpiracion', 'creadoPorId']);
+        
+        // Actualización: solo para marcar como usado
+        allow update: if isGranjaOwner() && 
+          onlyUpdates(['usado', 'usadoPorId', 'usadoEn']);
+        
+        // Eliminación: solo propietario
+        allow delete: if isGranjaOwner();
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: GALPONES
+      // -----------------------------------------------------------------
+      match /galpones/{galponId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        
+        allow create, update: if isAuthenticated() && hasGranjaAccessDirect();
+        
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+        
+        // Subcolección: Lotes dentro del galpón
+        match /lotes/{loteId} {
+          allow read, write: if isAuthenticated() && hasGranjaAccessDirect();
+          
+          // Subcolección: Registros diarios del lote
+          match /registros/{registroId} {
+            allow read, write: if isAuthenticated() && hasGranjaAccessDirect();
+          }
+        }
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: LOTES (directamente bajo granjas)
+      // -----------------------------------------------------------------
+      match /lotes/{loteId} {
+        allow read, write: if isAuthenticated() && hasGranjaAccessDirect();
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: NECROPSIAS
+      // -----------------------------------------------------------------
+      match /necropsias/{necId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: INSPECCIONES DE BIOSEGURIDAD
+      // -----------------------------------------------------------------
+      match /inspecciones_bioseguridad/{inspeccionId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: EVENTOS DE SALUD
+      // -----------------------------------------------------------------
+      match /eventos_salud/{eventoId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: USOS DE ANTIMICROBIANOS
+      // -----------------------------------------------------------------
+      match /usos_antimicrobianos/{usoId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: PROGRAMAS DE VACUNACIÓN
+      // -----------------------------------------------------------------
+      match /programas_vacunacion/{programaId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: ALERTAS SANITARIAS
+      // -----------------------------------------------------------------
+      match /alertas_sanitarias/{alertaId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: INVENTARIO DE GRANJA
+      // -----------------------------------------------------------------
+      match /inventario/{itemId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: VACUNACIONES PROGRAMADAS
+      // -----------------------------------------------------------------
+      match /vacunaciones_programadas/{vacId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: INSPECCIONES PROGRAMADAS
+      // -----------------------------------------------------------------
+      match /inspecciones_programadas/{inspId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: PEDIDOS
+      // -----------------------------------------------------------------
+      match /pedidos/{pedidoId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+      
+      // -----------------------------------------------------------------
+      // SUBCOLECCIÓN: REGISTROS DIARIOS
+      // -----------------------------------------------------------------
+      match /registros_diarios/{regId} {
+        allow read: if isAuthenticated() && hasGranjaAccessDirect();
+        allow create: if isAuthenticated() && hasGranjaAccessDirect();
+        allow update: if isAuthenticated() && hasGranjaAccessDirect();
+        allow delete: if isAuthenticated() && (isGranjaOwner() || isAdmin());
+      }
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: USUARIOS DE GRANJAS (colección raíz para consultas)
+    // =========================================================================
+    match /granja_usuarios/{usuarioGranjaId} {
+      // Función para verificar si es propietario de la granja
+      function isGranjaOwnerOrAdmin() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      // Función para verificar si el usuario es colaborador activo de la granja
+      function isActiveCollaborator(granjaId) {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+          get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true;
+      }
+      
+      // Función para verificar acceso a la granja (propietario o colaborador)
+      function hasGranjaAccess() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: cualquier usuario con acceso a la granja puede ver colaboradores
+      // También permite al usuario leer su propia entrada
+      allow read: if hasGranjaAccess() || 
+        (isAuthenticated() && resource.data.usuarioId == request.auth.uid);
+      
+      // Creación: usuario autenticado puede crear su PROPIA entrada (para aceptar invitaciones)
+      // Valida que el usuarioId en el documento sea el del usuario autenticado
+      allow create: if isAuthenticated() && 
+        request.resource.data.usuarioId == request.auth.uid;
+      
+      // Actualización: 
+      // 1. Propietario puede cambiar rol/estado de cualquier colaborador
+      // 2. Usuario puede actualizar su propia entrada (re-aceptar invitación, etc.)
+      allow update: if (
+        isGranjaOwnerOrAdmin() ||
+        (isAuthenticated() && resource.data.usuarioId == request.auth.uid)
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId', 'usuarioId', 'fechaAsignacion']);
+      
+      // Eliminación: solo propietario (soft delete)
+      allow delete: if isGranjaOwnerOrAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: INVITACIONES DE GRANJAS (colección raíz para consultas)
+    // =========================================================================
+    match /invitaciones_granja/{invitacionId} {
+      // Función para verificar propietario de la granja
+      function isGranjaOwnerForInvitation() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      function willBeGranjaOwnerForInvitation() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      // Función para verificar si usuario tiene acceso a la granja (propietario o colaborador)
+      function hasGranjaAccessForInvitation() {
+        return isAuthenticated() && (
+          // Es propietario
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es colaborador activo con rol admin o manager
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.rol in ['owner', 'admin', 'manager'])
+        );
+      }
+      
+      function canCreateInvitation() {
+        return isAuthenticated() && (
+          // Es propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es colaborador con permiso (admin o manager)
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.rol in ['owner', 'admin', 'manager'])
+        );
+      }
+      
+      // Lectura: cualquier usuario autenticado puede leer (para buscar por código)
+      allow read: if isAuthenticated();
+      
+      // Creación: propietario o colaborador con permisos
+      allow create: if canCreateInvitation() && 
+        hasRequiredFields(['codigo', 'granjaId', 'rol', 'fechaCreacion', 'fechaExpiracion', 'creadoPorId']);
+      
+      // Actualización: cualquier usuario autenticado puede marcar como usado (al aceptar)
+      allow update: if isAuthenticated() && 
+        onlyUpdates(['usado', 'usadoPorId', 'usadoEn']);
+      
+      // Eliminación: solo propietario
+      allow delete: if isGranjaOwnerForInvitation();
+    }
+    
+    // =========================================================================
+    match /lotes/{loteId} {
+      // Función para verificar propietario de la granja asociada
+      function isGranjaOwnerForLote() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      function willBeGranjaOwnerForLote() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      // Función para verificar propietario a través del galpón
+      function isGranjaOwnerThroughGalpon() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/galpones/$(resource.data.galponId)) &&
+          exists(/databases/$(database)/documents/granjas/$(get(/databases/$(database)/documents/galpones/$(resource.data.galponId)).data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(get(/databases/$(database)/documents/galpones/$(resource.data.galponId)).data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      // Función para verificar acceso de colaborador al lote
+      function isCollaboratorForLote() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+          get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true;
+      }
+      
+      function isCollaboratorForNewLote() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+          get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true;
+      }
+      
+      // Lectura: permitir queries autenticadas (Firestore filtrará por los where clauses)
+      // Para get de documento individual, verificar propiedad o colaborador
+      allow list: if isAuthenticated();
+      allow get: if isGranjaOwnerForLote() || isGranjaOwnerThroughGalpon() || isCollaboratorForLote() || isAdmin();
+      
+      // Creación: propietario o colaborador con campos requeridos
+      allow create: if (willBeGranjaOwnerForLote() || isCollaboratorForNewLote()) && 
+        hasRequiredFields(['granjaId', 'galponId', 'codigo', 'cantidadInicial', 'fechaIngreso', 'estado']);
+      
+      // Actualización: propietario o colaborador, sin cambiar campos críticos
+      allow update: if (isGranjaOwnerForLote() || isGranjaOwnerThroughGalpon() || isCollaboratorForLote()) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId', 'galponId']);
+      
+      // Eliminación: propietario de la granja o admin
+      allow delete: if isGranjaOwnerForLote() || isGranjaOwnerThroughGalpon() || isAdmin();
+      
+      // Función para verificar acceso a datos del lote (propietario o colaborador)
+      function canAccessLoteData() {
+        let granjaId = get(/databases/$(database)/documents/lotes/$(loteId)).data.granjaId;
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Registros diarios
+      match /registros/{registroId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+      
+      // Registros de peso
+      match /pesos/{pesoId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+      
+      // Registros de consumo
+      match /consumos/{consumoId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+      
+      // Registros de mortalidad
+      match /mortalidad/{mortalidadId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+      
+      // Registros de producción (huevos)
+      match /produccion/{produccionId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+      
+      // Vacunas aplicadas al lote
+      match /vacunas_aplicadas/{vacunaId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: GALPONES (colección raíz para consultas)
+    // =========================================================================
+    match /galpones/{galponId} {
+      // Función para verificar propietario de la granja asociada
+      function isGranjaOwnerForGalpon() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      function willBeGranjaOwnerForGalpon() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      // Función para verificar acceso a la granja (propietario o colaborador)
+      function canAccessGalpon() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateGalpon() {
+        return isAuthenticated() && (
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: propietario, colaborador o admin
+      allow list: if isAuthenticated();
+      allow get: if canAccessGalpon() || isAdmin();
+      
+      // Creación: con acceso a la granja y campos requeridos
+      allow create: if canCreateGalpon() && 
+        hasRequiredFields(['granjaId', 'codigo', 'nombre', 'tipo', 'estado', 'capacidadMaxima', 'fechaCreacion']);
+      
+      // Actualización: con acceso a la granja, sin modificar campos críticos
+      allow update: if canAccessGalpon() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId', 'fechaCreacion']);
+      
+      // Eliminación: propietario de la granja o admin
+      allow delete: if isGranjaOwnerForGalpon() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: EVENTOS DE GALPONES
+    // =========================================================================
+    match /galpon_eventos/{eventoId} {
+      // Función para verificar acceso a la granja (propietario o colaborador)
+      function canAccessGalponEventoByGranja() {
+        return isAuthenticated() && (
+          // Es propietario
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es colaborador activo
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Función para verificar acceso a través del galpón
+      function canAccessGalponEvento() {
+        return isAuthenticated() && 
+          exists(/databases/$(database)/documents/galpones/$(resource.data.galponId)) &&
+          exists(/databases/$(database)/documents/granjas/$(get(/databases/$(database)/documents/galpones/$(resource.data.galponId)).data.granjaId)) &&
+          get(/databases/$(database)/documents/granjas/$(get(/databases/$(database)/documents/galpones/$(resource.data.galponId)).data.granjaId)).data.propietarioId == request.auth.uid;
+      }
+      
+      function canCreateGalponEvento() {
+        return isAuthenticated() && (
+          // Es propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es colaborador activo
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: con acceso a la granja (propietario, colaborador o cadena galpón)
+      allow read: if canAccessGalponEventoByGranja() || canAccessGalponEvento() || isAdmin();
+      
+      // Creación: con acceso a la granja y campos requeridos
+      allow create: if canCreateGalponEvento() && 
+        hasRequiredFields(['galponId', 'granjaId', 'tipo', 'descripcion', 'fecha']);
+      
+      // Actualización: no permitida (eventos son inmutables)
+      allow update: if false;
+      
+      // Eliminación: solo admin (para limpieza)
+      allow delete: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: REGISTROS DIARIOS (colección raíz para consultas)
+    // =========================================================================
+    match /registros/{registroId} {
+      allow read: if belongsToUser() || isAdmin();
+      allow create: if willBelongToUser() && 
+        hasRequiredFields(['usuarioId', 'loteId', 'fecha', 'creadoEn']);
+      allow update: if belongsToUser() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['usuarioId', 'loteId', 'creadoEn']);
+      allow delete: if belongsToUser() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: INVENTARIO ITEMS (colección raíz)
+    // =========================================================================
+    match /inventario_items/{itemId} {
+      // Función para verificar acceso a la granja del item (para lectura/update/delete)
+      function canAccessInventarioItem() {
+        let granjaDoc = get(/databases/$(database)/documents/granjas/$(resource.data.granjaId));
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          granjaDoc.data.propietarioId == request.auth.uid ||
+          // Está en la lista de usuarios con acceso
+          (granjaDoc.data.usuariosAccesoIds != null && request.auth.uid in granjaDoc.data.usuariosAccesoIds) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Función para verificar acceso para creación (usa request.resource)
+      function canCreateInventarioItem() {
+        let granjaDoc = get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId));
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          granjaDoc.data.propietarioId == request.auth.uid ||
+          // Está en la lista de usuarios con acceso
+          (granjaDoc.data.usuariosAccesoIds != null && request.auth.uid in granjaDoc.data.usuariosAccesoIds) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessInventarioItem() || isAdmin();
+      
+      // Creación: con acceso a la granja y campos requeridos
+      allow create: if canCreateInventarioItem() && 
+        hasRequiredFields(['granjaId', 'tipo', 'nombre']);
+      
+      // Actualización: con acceso a la granja
+      allow update: if canAccessInventarioItem() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId']);
+      
+      // Eliminación: con acceso a la granja o admin
+      allow delete: if canAccessInventarioItem() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: MOVIMIENTOS DE INVENTARIO (colección raíz)
+    // =========================================================================
+    match /inventario_movimientos/{movimientoId} {
+      // Función para verificar acceso a la granja del movimiento
+      function canAccessMovimiento() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateMovimiento() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessMovimiento() || isAdmin();
+      
+      // Creación: con acceso a la granja y campos requeridos
+      allow create: if canCreateMovimiento() && 
+        hasRequiredFields(['granjaId', 'itemId', 'tipo', 'cantidad', 'fecha']);
+      
+      // Actualización: no permitida (movimientos son inmutables)
+      allow update: if false;
+      
+      // Eliminación: solo admin (para limpieza)
+      allow delete: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN LEGACY: INVENTARIO (mantener para compatibilidad)
+    // =========================================================================
+    match /inventario/{itemId} {
+      allow read: if belongsToUser() || isAdmin();
+      allow create: if willBelongToUser() && 
+        hasRequiredFields(['usuarioId', 'tipo', 'nombre', 'creadoEn']);
+      allow update: if belongsToUser();
+      allow delete: if belongsToUser() || isAdmin();
+      
+      // Movimientos de inventario (subcolección legacy)
+      match /movimientos/{movId} {
+        allow read, write: if isAuthenticated() && 
+          get(/databases/$(database)/documents/inventario/$(itemId)).data.usuarioId == request.auth.uid;
+      }
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: SALUD REGISTROS (colección raíz)
+    // =========================================================================
+    match /salud_registros/{registroId} {
+      // Función para verificar acceso a la granja del registro
+      function canAccessSaludRegistro() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateSaludRegistro() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessSaludRegistro() || isAdmin();
+      
+      // Creación: con acceso a la granja
+      allow create: if canCreateSaludRegistro();
+      
+      // Actualización: con acceso a la granja
+      allow update: if canAccessSaludRegistro();
+      
+      // Eliminación: con acceso a la granja o admin
+      allow delete: if canAccessSaludRegistro() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: COSTOS GASTOS (colección raíz)
+    // =========================================================================
+    match /costos_gastos/{gastoId} {
+      // Función para verificar acceso a la granja del gasto
+      function canAccessCostoGasto() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateCostoGasto() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessCostoGasto() || isAdmin();
+      
+      // Creación: con acceso a la granja
+      allow create: if canCreateCostoGasto();
+      
+      // Actualización: con acceso a la granja
+      allow update: if canAccessCostoGasto();
+      
+      // Eliminación: con acceso a la granja o admin
+      allow delete: if canAccessCostoGasto() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: VENTAS PRODUCTOS (colección raíz)
+    // =========================================================================
+    match /ventas_productos/{ventaId} {
+      // Función para verificar acceso a la granja de la venta
+      function canAccessVentaProducto() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateVentaProducto() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessVentaProducto() || isAdmin();
+      
+      // Creación: con acceso a la granja
+      allow create: if canCreateVentaProducto();
+      
+      // Actualización: con acceso a la granja
+      allow update: if canAccessVentaProducto();
+      
+      // Eliminación: con acceso a la granja o admin
+      allow delete: if canAccessVentaProducto() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: VENTAS PEDIDOS (colección raíz)
+    // =========================================================================
+    match /ventas_pedidos/{pedidoId} {
+      // Función para verificar acceso a la granja del pedido
+      function canAccessVentaPedido() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateVentaPedido() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessVentaPedido() || isAdmin();
+      
+      // Creación: con acceso a la granja
+      allow create: if canCreateVentaPedido();
+      
+      // Actualización: con acceso a la granja
+      allow update: if canAccessVentaPedido();
+      
+      // Eliminación: con acceso a la granja o admin
+      allow delete: if canAccessVentaPedido() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: CONFIGURACIONES GLOBALES
+    // =========================================================================
+    match /configuraciones/{configId} {
+      // Solo lectura para usuarios autenticados
+      allow read: if isAuthenticated();
+      // Solo admin puede escribir
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: RAZAS DE AVES
+    // =========================================================================
+    match /razas/{razaId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: TIPOS DE ALIMENTO
+    // =========================================================================
+    match /alimentos/{alimentoId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: MEDICAMENTOS/VACUNAS
+    // =========================================================================
+    match /medicamentos/{medId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: REPORTES
+    // =========================================================================
+    match /reportes/{reporteId} {
+      allow read: if belongsToUser() || isAdmin();
+      allow create: if willBelongToUser();
+      allow update, delete: if belongsToUser();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: VACUNACIONES
+    // =========================================================================
+    match /vacunaciones/{vacunacionId} {
+      // Función para verificar acceso a la granja de la vacunación
+      function canAccessVacunacion() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la misma granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      function canCreateVacunacion() {
+        return isAuthenticated() && (
+          // Es el propietario de la granja
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          // Es un colaborador activo de la granja
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      
+      // Lectura: queries autenticadas (Firestore filtra por granjaId o loteId)
+      allow list: if isAuthenticated();
+      allow get: if canAccessVacunacion() || isAdmin();
+      
+      // Creación: con acceso a la granja y campos requeridos
+      allow create: if canCreateVacunacion() && 
+        hasRequiredFields(['granjaId', 'loteId', 'nombreVacuna', 'fechaProgramada']);
+      
+      // Actualización: con acceso a la granja
+      allow update: if canAccessVacunacion();
+      
+      // Eliminación: con acceso a la granja o admin
+      allow delete: if canAccessVacunacion() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: ALERTAS
+    // =========================================================================
+    match /alertas/{alertaId} {
+      allow read: if belongsToUser() || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if belongsToUser() && 
+        onlyUpdates(['leida', 'resuelta', 'notas']);
+      allow delete: if belongsToUser() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: TAREAS PROGRAMADAS
+    // =========================================================================
+    match /tareas/{tareaId} {
+      allow read: if belongsToUser() || isAdmin();
+      allow create: if willBelongToUser() && 
+        hasRequiredFields(['usuarioId', 'titulo', 'tipo', 'fechaProgramada']);
+      allow update: if belongsToUser();
+      allow delete: if belongsToUser() || isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: LOGS DE ACTIVIDAD
+    // =========================================================================
+    match /logs/{logId} {
+      // Solo crear, nunca modificar o eliminar
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && 
+        request.resource.data.usuarioId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: BACKUPS METADATA
+    // =========================================================================
+    match /backups/{backupId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if false; // Los backups nunca se eliminan
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: CONFIGURACIÓN DE SINCRONIZACIÓN
+    // =========================================================================
+    match /sync/{syncId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: PLANTILLAS DE VACUNACIÓN
+    // =========================================================================
+    match /plantillas_vacunacion/{plantillaId} {
+      // Lectura: cualquier usuario autenticado
+      allow read: if isAuthenticated();
+      // Escritura: solo admin
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // COLECCIÓN: ESTADO DE LA APLICACIÓN
+    // =========================================================================
+    match /_app_status/{statusId} {
+      // Solo lectura para usuarios autenticados
+      allow read: if isAuthenticated();
+      // Solo admin puede escribir
+      allow write: if isAdmin();
+    }
+    
+    // =========================================================================
+    // REGLAS PARA collectionGroup QUERIES
+    // =========================================================================
+    // Necesarias para que las queries collectionGroup de actividades recientes
+    // puedan leer documentos en subcollecciones de lotes.
+    // Solo lectura autenticada; la seguridad real la da el filtro granjaId.
+    
+    match /{path=**}/produccion/{docId} {
+      allow read: if isAuthenticated();
+    }
+    match /{path=**}/mortalidad/{docId} {
+      allow read: if isAuthenticated();
+    }
+    match /{path=**}/consumos/{docId} {
+      allow read: if isAuthenticated();
+    }
+    match /{path=**}/pesos/{docId} {
+      allow read: if isAuthenticated();
+    }
+    match /{path=**}/necropsias/{docId} {
+      allow read: if isAuthenticated();
+    }
+    match /{path=**}/inspecciones_bioseguridad/{docId} {
+      allow read: if isAuthenticated();
+    }
+  }
+}

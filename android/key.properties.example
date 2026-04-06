@@ -1,0 +1,8 @@
+## Ejemplo de configuración de firma para release.
+## Copia este archivo como key.properties y completa los valores.
+## NUNCA subas key.properties al repositorio.
+
+storePassword=TU_KEYSTORE_PASSWORD
+keyPassword=TU_KEY_PASSWORD
+keyAlias=smartgranjaaves
+storeFile=../upload-keystore.jks

@@ -1,0 +1,691 @@
+﻿KEY: authLinkAccountMessage
+  ES: Ya tienes una cuenta con este email usando {existingProvider}.
+
+┬┐Deseas vincular tu cuenta de {newProvider} para poder acceder con ambos m├®todos?
+  PT: Ya tienes una conta con este email usando {existingProvider}.
+
+┬┐Deseas vincular tu conta de {newProvider} para poder acceder con ambos m├®todos?
+
+KEY: authLinkSuccess
+  ES: ┬íCuenta de {provider} vinculada exitosamente!
+  PT: ┬íConta de {provider} vinculada com sucesso!
+
+KEY: authSendInstructions
+  ES: Enviar instrucciones
+  PT: Enviar instru├º├Áes
+
+KEY: batchAdjustFilters
+  ES: Intenta ajustar los filtros o buscar con otros t├®rminos
+  PT: Intenta ajustar los filtros o buscar con outros t├®rminos
+
+KEY: batchCloseConfirmation
+  ES: ┬┐Est├í seguro de cerrar el lote "{code}"?
+  PT: ┬┐Est├í seguro de fechar el lote "{code}"?
+
+KEY: batchCloseIrreversibleWarning
+  ES: Esta acci├│n es IRREVERSIBLE. El lote pasar├í a estado cerrado y el galp├│n quedar├í disponible.
+
+┬┐Est├í seguro de cerrar este lote?
+  PT: Esta acci├│n es IRREVERSIBLE. El lote pasar├í a status cerrado y el galp├úo quedar├í dispon├¡vel.
+
+┬┐Est├í seguro de fechar este lote?
+
+KEY: batchConfirmExit
+  ES: ┬┐Desea salir?
+  PT: ┬┐Desea sair?
+
+KEY: batchCreateSuccess
+  ES: ┬íLote creado con ├®xito!
+  PT: ┬íLote criado con sucesso!
+
+KEY: batchDeleteMessage
+  ES: Se eliminar├í el lote "{code}" y todos sus registros. Esta acci├│n no se puede deshacer.
+  PT: Se excluir├í el lote "{code}" y todos sus registros. Esta acci├│n no se puede deshacer.
+
+KEY: batchDraftFoundGeneric
+  ES: Se encontr├│ un borrador guardado. ┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado. ┬┐Deseas restaurarlo?
+
+KEY: batchDraftMessage
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: batchExitWithoutComplete
+  ES: ┬┐Salir sin completar?
+  PT: ┬┐Sair sin completar?
+
+KEY: batchExitWithoutSaving
+  ES: ┬┐Salir sin guardar los cambios?
+  PT: ┬┐Sair sin salvar los cambios?
+
+KEY: batchFirebasePermissionDenied
+  ES: No tienes permisos para realizar esta acci├│n
+  PT: No tienes permiss├Áes para realizar esta acci├│n
+
+KEY: batchFormWeightObsHint
+  ES: Describe condiciones del pesaje, comportamiento de las aves, condiciones ambientales, etc.
+  PT: Descreva condiciones del pesagem, comportamiento de las aves, condiciones ambientales, etc.
+
+KEY: batchHighBreakageMessage
+  ES: El porcentaje de rotura es {percent}% ({count} huevos), que es superior al 5% esperado. ┬┐Deseas continuar?
+  PT: El porcentagem de rotura es {percent}% ({count} ovos), que es superior al 5% esperado. ┬┐Deseas continuar?
+
+KEY: batchHighLayingMessage
+  ES: El porcentaje de postura es {percent}%, que es excepcionalmente alto. ┬┐Deseas continuar con estos datos?
+  PT: El porcentagem de postura es {percent}%, que es excepcionalmente alto. ┬┐Deseas continuar con estos datos?
+
+KEY: batchHighLayingTitle
+  ES: Porcentaje de postura muy alto
+  PT: Porcentagem de postura muy alto
+
+KEY: batchHistoryNoRecordsDesc
+  ES: No hay registros para mostrar
+  PT: N├úo h├í registros para mostrar
+
+KEY: batchNoPermissionMortality
+  ES: No tienes permisos para registrar mortalidad en esta granja
+  PT: No tienes permiss├Áes para registrar mortalidad en esta granja
+
+KEY: batchNoPermissionProduction
+  ES: No tienes permisos para registrar producci├│n en esta granja
+  PT: No tienes permiss├Áes para registrar produ├º├úo en esta granja
+
+KEY: batchNoPermissionRecord
+  ES: No tienes permisos para registrar consumo en esta granja
+  PT: No tienes permiss├Áes para registrar consumo en esta granja
+
+KEY: batchNoPermissionWeight
+  ES: No tienes permisos para registrar pesajes en esta granja
+  PT: No tienes permiss├Áes para registrar pesagems en esta granja
+
+KEY: batchPermanentStatusWarning
+  ES: Este estado es permanente y no podr├í revertirse. El lote no podr├í cambiar a ning├║n otro estado despu├®s de esta acci├│n.
+  PT: Este status es permanente y no podr├í revertirse. El lote no podr├í cambiar a ning├║n outro status despu├®s de esta acci├│n.
+
+KEY: batchQuarantineConfirm
+  ES: ┬┐Est├í seguro de poner "{code}" en cuarentena?
+  PT: ┬┐Est├í seguro de poner "{code}" en quarentena?
+
+KEY: batchRegisterFirst
+  ES: Registra tu primer lote de aves para comenzar a monitorear tu producci├│n
+  PT: Registra tu primer lote de aves para comenzar a monitorear tu produ├º├úo
+
+KEY: batchSearchHint
+  ES: Buscar por nombre, c├│digo o tipo...
+  PT: Buscar por nome, c├│digo o tipo...
+
+KEY: batchSellConfirm
+  ES: ┬┐Registrar la venta completa del lote "{code}"?
+  PT: ┬┐Registrar la venda completa del lote "{code}"?
+
+KEY: batchTransferConfirm
+  ES: ┬┐Transferir "{code}" al galp├│n {shed}?
+  PT: ┬┐Transferir "{code}" al galp├úo {shed}?
+
+KEY: batchUpdateSuccess
+  ES: ┬íLote actualizado con ├®xito!
+  PT: ┬íLote atualizado con sucesso!
+
+KEY: bioEmptyDescription
+  ES: Inicia la primera inspecci├│n de bioseguridad para {farmName} y lleva un registro continuo del cumplimiento sanitario.
+  PT: Inicia la primeira inspecci├│n de biosseguran├ºa para {farmName} y lleva un registro continuo del cumplimiento sanitario.
+
+KEY: bioInspectionExitTitle
+  ES: ┬┐Salir sin completar?
+  PT: ┬┐Sair sin completar?
+
+KEY: bioRatingVeryGood
+  ES: Muy Bueno
+  PT: Muy Bom
+
+KEY: bioSummaryPendingNote
+  ES: Puedes guardar, pero el puntaje solo refleja lo evaluado.
+  PT: Puedes salvar, pero el puntaje solo refleja lo evaluado.
+
+KEY: commonAdjustFilters
+  ES: Intenta ajustar los filtros o buscar con otros t├®rminos
+  PT: Intenta ajustar los filtros o buscar con outros t├®rminos
+
+KEY: commonChangeStatus
+  ES: Cambiar estado
+  PT: Cambiar status
+
+KEY: commonDraftRestoreMessage
+  ES: ┬┐Deseas restaurar el borrador guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho guardado anteriormente?
+
+KEY: commonExitWithoutComplete
+  ES: ┬┐Salir sin completar?
+  PT: ┬┐Sair sin completar?
+
+KEY: commonExitWithoutCompleting
+  ES: ┬┐Salir sin completar?
+  PT: ┬┐Sair sin completar?
+
+KEY: commonExitWithoutSaving
+  ES: ┬┐Salir sin guardar?
+  PT: ┬┐Sair sin salvar?
+
+KEY: commonSearchByNameCityAddress
+  ES: Buscar por nombre, ciudad o direcci├│n...
+  PT: Buscar por nome, ciudad o direcci├│n...
+
+KEY: commonYouHaveUnsavedChanges
+  ES: Tienes cambios sin guardar.
+  PT: Tienes cambios sin salvar.
+
+KEY: costDeleteConfirm
+  ES: ┬┐Eliminar Costo?
+  PT: ┬┐Excluir Custo?
+
+KEY: costDeleteConfirmMessage
+  ES: ┬┐Est├ís seguro de que deseas eliminar este costo?
+
+Esta acci├│n no se puede deshacer.
+  PT: ┬┐Est├ís seguro de que deseas excluir este custo?
+
+Esta acci├│n no se puede deshacer.
+
+KEY: costDeleteMessage
+  ES: ┬┐Est├ís seguro de eliminar el costo "{concept}"?
+
+Esta acci├│n no se puede deshacer.
+  PT: ┬┐Est├ís seguro de excluir el custo "{concept}"?
+
+Esta acci├│n no se puede deshacer.
+
+KEY: costDraftRestoreMessage
+  ES: ┬┐Deseas restaurar el borrador guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho guardado anteriormente?
+
+KEY: costExitConfirm
+  ES: ┬┐Salir sin completar?
+  PT: ┬┐Sair sin completar?
+
+KEY: costSearchInventory
+  ES: Buscar en inventario (opcional)...
+  PT: Buscar en invent├írio (opcional)...
+
+KEY: costoDeleteConfirm
+  ES: ┬┐Est├ís seguro de eliminar el costo "{name}"?
+
+Esta acci├│n no se puede deshacer.
+  PT: ┬┐Est├ís seguro de excluir el custo "{name}"?
+
+Esta acci├│n no se puede deshacer.
+
+KEY: costoDetailDeleteConfirm
+  ES: ┬┐Est├ís seguro de que deseas eliminar este costo?
+  PT: ┬┐Est├ís seguro de que deseas excluir este custo?
+
+KEY: costoDraftFoundMessage
+  ES: ┬┐Deseas restaurar el borrador guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho guardado anteriormente?
+
+KEY: costoFilterEmptyDescription
+  ES: Intenta ajustar los filtros o buscar con otros t├®rminos
+  PT: Intenta ajustar los filtros o buscar con outros t├®rminos
+
+KEY: costoInventoryLinkInfo
+  ES: Puedes vincular este gasto a un producto del inventario para actualizar el stock autom├íticamente.
+  PT: Puedes vincular este gasto a un produto del invent├írio para atualizar el estoque autom├íticamente.
+
+KEY: costoInventorySearchHint
+  ES: Buscar en inventario (opcional)...
+  PT: Buscar en invent├írio (opcional)...
+
+KEY: costoItemCreated
+  ES: ┬íItem "{name}" creado!
+  PT: ┬íItem "{name}" criado!
+
+KEY: costoNoCreatePermission
+  ES: No tienes permiso para registrar costos en esta granja
+  PT: No tienes permiso para registrar custos en esta granja
+
+KEY: costoNoEditPermission
+  ES: No tienes permiso para editar costos en esta granja
+  PT: No tienes permiso para editar custos en esta granja
+
+KEY: diseaseCatalogSearchHint
+  ES: Buscar enfermedad, s├¡ntoma...
+  PT: Buscar doen├ºa, s├¡ntoma...
+
+KEY: draftFoundMessage
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: enumTipoAlimentoDescCrecimiento
+  ES: Crecimiento (22-35 d├¡as)
+  PT: Crecimiento (22-35 dias)
+
+KEY: farmActivateConfirm
+  ES: ┬┐Activar "{name}"?
+  PT: ┬┐Ativar "{name}"?
+
+KEY: farmActivateConfirmMsg
+  ES: ┬┐Activar "{name}"?
+  PT: ┬┐Ativar "{name}"?
+
+KEY: farmCannotChangeOwnerRole
+  ES: No se puede cambiar el rol del propietario
+  PT: No se puede cambiar el rol del propriet├írio
+
+KEY: farmCreatedSuccess
+  ES: ┬íGranja "{name}" creada!
+  PT: ┬íGranja "{name}" criada!
+
+KEY: farmDeleteConfirmName
+  ES: ┬┐Eliminar "{name}"?
+  PT: ┬┐Excluir "{name}"?
+
+KEY: farmDraftFoundMsg
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: farmErrorChangingStatus
+  ES: Error al cambiar el estado: {error}
+  PT: Erro al cambiar el status: {error}
+
+KEY: farmInvitationMessage
+  ES: ┬íTe invito a colaborar en mi granja "{farmName}"! Usa el c├│digo: {code}
+Rol: {role}
+V├ílido hasta: {expiry}
+  PT: ┬íTe invito a colaborar en mi granja "{farmName}"! Usa el c├│digo: {code}
+Fun├º├úo: {role}
+V├ílido at├®: {expiry}
+
+KEY: farmMaintenanceConfirm
+  ES: ┬┐Poner "{name}" en mantenimiento?
+  PT: ┬┐Poner "{name}" en manuten├º├úo?
+
+KEY: farmMaintenanceConfirmMsg
+  ES: ┬┐Poner "{name}" en mantenimiento?
+  PT: ┬┐Poner "{name}" en manuten├º├úo?
+
+KEY: farmNoFarmsFoundHint
+  ES: Intenta ajustar los filtros o buscar con otros t├®rminos
+  PT: Intenta ajustar los filtros o buscar con outros t├®rminos
+
+KEY: farmNoPermToInvite
+  ES: No tienes permisos para invitar usuarios a esta granja.
+Solo propietarios, administradores y gestores pueden invitar.
+  PT: No tienes permiss├Áes para convidar usuarios a esta granja.
+Solo propriet├írios, administradores y gestores pueden convidar.
+
+KEY: farmSearchHint
+  ES: Buscar por nombre, ciudad o direcci├│n...
+  PT: Buscar por nome, ciudad o direcci├│n...
+
+KEY: farmUpdatedSuccess
+  ES: ┬íGranja "{name}" actualizada!
+  PT: ┬íGranja "{name}" atualizada!
+
+KEY: feedObsDescribeHint
+  ES: Describe condiciones del suministro, comportamiento de las aves, calidad del alimento, etc.
+  PT: Descreva condiciones del suministro, comportamiento de las aves, calidad del alimento, etc.
+
+KEY: feedTypeDescGrower
+  ES: Crecimiento (22-35 d├¡as)
+  PT: Crecimiento (22-35 dias)
+
+KEY: healthSearchDisease
+  ES: Buscar enfermedad, s├¡ntoma...
+  PT: Buscar doen├ºa, s├¡ntoma...
+
+KEY: healthSymptomsHint
+  ES: Describe los s├¡ntomas: tos, estornudos, decaimiento...
+  PT: Descreva los sintomas: tos, estornudos, decaimiento...
+
+KEY: invCanAddPhoto
+  ES: Puedes agregar una foto del producto
+  PT: Puedes adicionar una foto del produto
+
+KEY: invCanAddProductPhoto
+  ES: Puedes agregar una foto del producto
+  PT: Puedes adicionar una foto del produto
+
+KEY: invConfirmDeleteItemName
+  ES: ┬┐Est├ís seguro de eliminar {name}?
+  PT: ┬┐Est├ís seguro de excluir {name}?
+
+KEY: invDraftFoundMessage
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: invItemCreated
+  ES: ┬íItem "{name}" creado!
+  PT: ┬íItem "{name}" criado!
+
+KEY: invNoMovementsMatchSearch
+  ES: No hay movimientos que coincidan con tu b├║squeda
+  PT: No movements match your buscar
+
+KEY: invSearchByNameOrCode
+  ES: Buscar por nombre o c├│digo...
+  PT: Buscar por nome o c├│digo...
+
+KEY: invSearchInventory
+  ES: Buscar en inventario...
+  PT: Buscar en invent├írio...
+
+KEY: invSearchProduct
+  ES: Buscar producto...
+  PT: Buscar produto...
+
+KEY: invStockAlertDescription
+  ES: Configura el stock m├¡nimo para recibir alertas cuando el inventario est├® bajo.
+  PT: Configura el estoque m├¡nimo para recibir alertas cuando el invent├írio est├® baixo.
+
+KEY: inventoryNoMovementsSearch
+  ES: No hay movimientos que coincidan con tu b├║squeda
+  PT: No movements match your buscar
+
+KEY: inventorySearchHint
+  ES: Buscar por nombre o c├│digo...
+  PT: Buscar por nome o c├│digo...
+
+KEY: inventorySearchProduct
+  ES: Buscar en inventario...
+  PT: Buscar en invent├írio...
+
+KEY: inventorySearchProductShort
+  ES: Buscar producto...
+  PT: Buscar produto...
+
+KEY: mortalityRegistered
+  ES: ┬íMortalidad registrada!
+  PT: ┬íMortalidade registrada!
+
+KEY: noPermissionCreateCosts
+  ES: No tienes permiso para registrar costos en esta granja
+  PT: No tienes permiso para registrar custos en esta granja
+
+KEY: noPermissionEditCosts
+  ES: No tienes permiso para editar costos en esta granja
+  PT: No tienes permiso para editar custos en esta granja
+
+KEY: notifDeleteReadConfirm
+  ES: ┬┐Deseas eliminar todas las notificaciones le├¡das?
+  PT: ┬┐Deseas excluir todas las notificaciones le├¡das?
+
+KEY: notifMsgClosesToday
+  ES: ┬íFecha de cierre es hoy!
+  PT: ┬íData de cierre es hoje!
+
+KEY: notifMsgExpiresToday
+  ES: ┬íVence hoy!
+  PT: ┬íVence hoje!
+
+KEY: notifMsgStockEmpty
+  ES: Stock en cero, requiere reabastecimiento urgente
+  PT: Estoque en cero, requiere reabastecimiento urgente
+
+KEY: photoMax5Hint
+  ES: Puedes agregar hasta 5 fotos
+  PT: Puedes adicionar hasta 5 fotos
+
+KEY: prodObsHint
+  ES: Describe calidad de los huevos, color de c├íscara, condiciones ambientales, comportamiento de las aves, etc.
+  PT: Descreva calidad de los ovos, color de c├íscara, condiciones ambientales, comportamiento de las aves, etc.
+
+KEY: productionRegistered
+  ES: ┬íProducci├│n registrada!
+  PT: ┬íProdu├º├úo registrada!
+
+KEY: profileSendFeedback
+  ES: Enviar Sugerencia
+  PT: Enviar Sugest├úo
+
+KEY: salesDraftRestore
+  ES: ┬┐Deseas restaurar el borrador de venta guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho de venda guardado anteriormente?
+
+KEY: salesNoCreatePermission
+  ES: No tienes permiso para registrar ventas en esta granja
+  PT: No tienes permiso para registrar vendas en esta granja
+
+KEY: salesNoEditPermission
+  ES: No tienes permiso para editar ventas en esta granja
+  PT: No tienes permiso para editar vendas en esta granja
+
+KEY: salesRegisteredSuccess
+  ES: ┬íVenta registrada exitosamente!
+  PT: ┬íVenda registrada com sucesso!
+
+KEY: saludDeleteConfirmMsg
+  ES: Se eliminar├í el registro de "{name}". Esta acci├│n no se puede deshacer.
+  PT: Se excluir├í el registro de "{name}". Esta acci├│n no se puede deshacer.
+
+KEY: saludDeleteDetail
+  ES: Se eliminar├í el registro de "{name}". Esta acci├│n no se puede deshacer.
+  PT: Se excluir├í el registro de "{name}". Esta acci├│n no se puede deshacer.
+
+KEY: saludDeleteRecordMessage
+  ES: Se eliminar├í el registro "{diagnosis}". Esta acci├│n no se puede deshacer.
+  PT: Se excluir├í el registro "{diagnosis}". Esta acci├│n no se puede deshacer.
+
+KEY: saludDeleteRecordTitle
+  ES: ┬┐Eliminar registro?
+  PT: ┬┐Excluir registro?
+
+KEY: saludDeleteTitle
+  ES: ┬┐Eliminar registro?
+  PT: ┬┐Excluir registro?
+
+KEY: saludDetailDeleteTitle
+  ES: ┬┐Eliminar registro?
+  PT: ┬┐Excluir registro?
+
+KEY: saludEmptyDescription
+  ES: Registra tratamientos, diagn├│sticos y seguimiento sanitario del lote
+  PT: Registra tratamentos, diagn├│sticos y seguimiento sanitario del lote
+
+KEY: saludVacDraftMessage
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: settingsSendLink
+  ES: Enviar enlace
+  PT: Enviar link
+
+KEY: shedActivateConfirm
+  ES: ┬┐Activar "{name}"?
+  PT: ┬┐Ativar "{name}"?
+
+KEY: shedAvailableForNewBatch
+  ES: Este galp├│n est├í disponible para recibir un nuevo lote
+  PT: Este galp├úo est├í dispon├¡vel para recibir un novo lote
+
+KEY: shedCapacityTooHigh
+  ES: La capacidad parece muy alta
+  PT: La capacidade parece muy alta
+
+KEY: shedChangeStateAction
+  ES: Cambiar estado
+  PT: Cambiar status
+
+KEY: shedChangeStatus
+  ES: Cambiar estado
+  PT: Cambiar status
+
+KEY: shedCreatedSuccess
+  ES: ┬íGalp├│n "{name}" creado!
+  PT: ┬íGalp├úo "{name}" criado!
+
+KEY: shedDeleteConfirmMsg
+  ES: ┬┐Eliminar "{name}"?
+  PT: ┬┐Excluir "{name}"?
+
+KEY: shedDisinfectionConfirm
+  ES: ┬┐Poner "{name}" en desinfecci├│n?
+  PT: ┬┐Poner "{name}" en desinfec├º├úo?
+
+KEY: shedDisinfectionMessage
+  ES: ┬┐Poner "{name}" en desinfecci├│n?
+  PT: ┬┐Poner "{name}" en desinfec├º├úo?
+
+KEY: shedDraftFoundMessage
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: shedErrorChangingStatus
+  ES: Error al cambiar el estado: {error}
+  PT: Erro al cambiar el status: {error}
+
+KEY: shedExitWithoutCompleting
+  ES: ┬┐Salir sin completar?
+  PT: ┬┐Sair sin completar?
+
+KEY: shedMaintenanceConfirm
+  ES: ┬┐Poner "{name}" en mantenimiento?
+  PT: ┬┐Poner "{name}" en manuten├º├úo?
+
+KEY: shedSearchHint
+  ES: Buscar por nombre, c├│digo o tipo...
+  PT: Buscar por nome, c├│digo o tipo...
+
+KEY: shedSearchInventory
+  ES: Buscar en inventario...
+  PT: Buscar en invent├írio...
+
+KEY: shedSpecsDesc
+  ES: Configure la capacidad y el equipamiento del galp├│n
+  PT: Configure la capacidade y el equipamiento del galp├úo
+
+KEY: shedUpdatedSuccess
+  ES: ┬íGalp├│n "{name}" actualizado!
+  PT: ┬íGalp├úo "{name}" atualizado!
+
+KEY: treatDraftFoundMessage
+  ES: ┬┐Deseas restaurar el borrador del tratamiento guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho del tratamento guardado anteriormente?
+
+KEY: treatDraftMessage
+  ES: ┬┐Deseas restaurar el borrador del tratamiento guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho del tratamento guardado anteriormente?
+
+KEY: treatStepAdditionalImportantMsg
+  ES: Estos campos son opcionales pero ayudan a un mejor seguimiento del tratamiento.
+  PT: Estos campos son opcionales pero ajudan a un mejor seguimiento del tratamento.
+
+KEY: treatStepSymptomsHint
+  ES: Describe los s├¡ntomas: tos, estornudos, decaimiento...
+  PT: Descreva los sintomas: tos, estornudos, decaimiento...
+
+KEY: vacDeleteTitle
+  ES: ┬┐Eliminar vacunaci├│n?
+  PT: ┬┐Excluir vacina├º├úo?
+
+KEY: vacDetailDeleteMessage
+  ES: Se eliminar├í la vacunaci├│n "{nombre}". Esta acci├│n no se puede deshacer.
+  PT: Se excluir├í la vacina├º├úo "{nombre}". Esta acci├│n no se puede deshacer.
+
+KEY: vacDetailDeleteTitle
+  ES: ┬┐Eliminar vacunaci├│n?
+  PT: ┬┐Excluir vacina├º├úo?
+
+KEY: vacDraftFoundMsg
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: vacFormDraftMessage
+  ES: Se encontr├│ un borrador guardado del {date}.
+┬┐Deseas restaurarlo?
+  PT: Se encontr├│ un rascunho guardado del {date}.
+┬┐Deseas restaurarlo?
+
+KEY: vacFormSuccess
+  ES: ┬íVacunaci├│n programada exitosamente!
+  PT: ┬íVacina├º├úo programada com sucesso!
+
+KEY: vacScheduledSuccess
+  ES: ┬íVacunaci├│n programada exitosamente!
+  PT: ┬íVacina├º├úo programada com sucesso!
+
+KEY: vacStepAppObsDesc
+  ES: Registra cu├índo se aplic├│ y a├▒ade observaciones
+  PT: Registra cu├índo se aplic├│ y a├▒ade observa├º├Áes
+
+KEY: vacSummaryExpiredWarning
+  ES: ┬íAtenci├│n! Hay vacunas vencidas
+  PT: ┬íAtenci├│n! Hay vacinas vencidas
+
+KEY: validateDateTooOld
+  ES: La fecha de ingreso parece muy antigua (m├ís de 5 a├▒os)
+  PT: La data de ingreso parece muy antigua (m├ís de 5 anos)
+
+KEY: ventaCreateSuccess
+  ES: ┬íVenta registrada exitosamente!
+  PT: ┬íVenda registrada com sucesso!
+
+KEY: ventaDeleteMessage
+  ES: Se eliminar├í la venta de {product}. Esta acci├│n no se puede deshacer.
+  PT: Se excluir├í la venda de {product}. Esta acci├│n no se puede deshacer.
+
+KEY: ventaDraftFoundMessage
+  ES: ┬┐Deseas restaurar el borrador de venta guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho de venda guardado anteriormente?
+
+KEY: ventaDraftMessage
+  ES: ┬┐Deseas restaurar el borrador de venta guardado anteriormente?
+  PT: ┬┐Deseas restaurar el rascunho de venda guardado anteriormente?
+
+KEY: ventaEmptyDescription
+  ES: Registra tu primera venta para comenzar a llevar un control de tus ingresos
+  PT: Registra tu primeira venda para comenzar a llevar un control de tus ingresos
+
+KEY: ventaNoCreatePermission
+  ES: No tienes permiso para registrar ventas en esta granja
+  PT: No tienes permiso para registrar vendas en esta granja
+
+KEY: ventaNoEditPermission
+  ES: No tienes permiso para editar ventas en esta granja
+  PT: No tienes permiso para editar vendas en esta granja
+
+KEY: ventaStepProductQuestion
+  ES: ┬┐Qu├® tipo de producto vendes?
+  PT: ┬┐Qu├® tipo de produto vendes?
+
+KEY: weightRegistered
+  ES: ┬íPesaje registrado!
+  PT: ┬íPesagem registrado!
+
+KEY: whatsappHelp
+  ES: ┬íHola! Necesito ayuda con la app Smart Granja Aves. 
+  PT: ┬íHola! Necesito ajuda con la app Smart Granja Aves. 
+
+KEY: whatsappMsgPricing
+  ES: ┬íHola! Me gustar├¡a conocer los planes y precios de Smart Granja Aves. 
+  PT: ┬íHola! Me gustar├¡a conocer los planes y pre├ºos de Smart Granja Aves. 
+
+KEY: whatsappMsgSuggest
+  ES: ┬íHola! Tengo una sugerencia para la app Smart Granja Aves: 
+  PT: ┬íHola! Tengo una sugest├úo para la app Smart Granja Aves: 
+
+KEY: whatsappMsgSupport
+  ES: ┬íHola! Necesito ayuda con la app Smart Granja Aves. 
+  PT: ┬íHola! Necesito ajuda con la app Smart Granja Aves. 
+
+KEY: whatsappPricing
+  ES: ┬íHola! Me gustar├¡a conocer los planes y precios de Smart Granja Aves. 
+  PT: ┬íHola! Me gustar├¡a conocer los planes y pre├ºos de Smart Granja Aves. 
+
+KEY: whatsappSuggestion
+  ES: ┬íHola! Tengo una sugerencia para la app Smart Granja Aves: 
+  PT: ┬íHola! Tengo una sugest├úo para la app Smart Granja Aves: 
+
+TOTAL: 162

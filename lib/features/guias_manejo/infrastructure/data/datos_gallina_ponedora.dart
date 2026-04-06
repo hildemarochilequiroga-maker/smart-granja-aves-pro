@@ -1,0 +1,50 @@
+﻿import '../../domain/entities/guia_semanal.dart';
+
+/// Datos basados en manuales Hy-Line Brown y Lohmann Brown para gallina ponedora.
+/// Ciclo: 0-72 semanas (levante 0-17, pre-postura 18-19, postura 20-72).
+const datosGallinaPonedora = <GuiaSemanal>[
+  // === LEVANTE (0-17 semanas) ===
+  GuiaSemanal(semana: 0,  luzHoras: 22,   alimentoGAve: 13,  pesoObjetivoG: 70,   aguaMlAve: 26,  tipoAlimento: 'Pre-iniciador', temperaturaC: 33, humedadPct: 65),
+  GuiaSemanal(semana: 1,  luzHoras: 20,   alimentoGAve: 18,  pesoObjetivoG: 110,  aguaMlAve: 36,  tipoAlimento: 'Iniciador',     temperaturaC: 30, humedadPct: 65),
+  GuiaSemanal(semana: 2,  luzHoras: 18,   alimentoGAve: 22,  pesoObjetivoG: 160,  aguaMlAve: 44,  tipoAlimento: 'Iniciador',     temperaturaC: 27, humedadPct: 60),
+  GuiaSemanal(semana: 3,  luzHoras: 16,   alimentoGAve: 27,  pesoObjetivoG: 220,  aguaMlAve: 54,  tipoAlimento: 'Iniciador',     temperaturaC: 25, humedadPct: 60),
+  GuiaSemanal(semana: 4,  luzHoras: 14,   alimentoGAve: 32,  pesoObjetivoG: 290,  aguaMlAve: 64,  tipoAlimento: 'Levante',       temperaturaC: 23, humedadPct: 60),
+  GuiaSemanal(semana: 5,  luzHoras: 12,   alimentoGAve: 37,  pesoObjetivoG: 370,  aguaMlAve: 74,  tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 60),
+  GuiaSemanal(semana: 6,  luzHoras: 10,   alimentoGAve: 42,  pesoObjetivoG: 450,  aguaMlAve: 84,  tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 7,  luzHoras: 10,   alimentoGAve: 48,  pesoObjetivoG: 530,  aguaMlAve: 96,  tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 8,  luzHoras: 10,   alimentoGAve: 53,  pesoObjetivoG: 620,  aguaMlAve: 106, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 9,  luzHoras: 10,   alimentoGAve: 58,  pesoObjetivoG: 710,  aguaMlAve: 116, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 10, luzHoras: 10,   alimentoGAve: 63,  pesoObjetivoG: 810,  aguaMlAve: 126, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 11, luzHoras: 10,   alimentoGAve: 68,  pesoObjetivoG: 900,  aguaMlAve: 136, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 12, luzHoras: 10,   alimentoGAve: 73,  pesoObjetivoG: 990,  aguaMlAve: 146, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 13, luzHoras: 10,   alimentoGAve: 77,  pesoObjetivoG: 1070, aguaMlAve: 154, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 14, luzHoras: 10,   alimentoGAve: 80,  pesoObjetivoG: 1150, aguaMlAve: 160, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 15, luzHoras: 11,   alimentoGAve: 83,  pesoObjetivoG: 1230, aguaMlAve: 166, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 16, luzHoras: 12,   alimentoGAve: 87,  pesoObjetivoG: 1310, aguaMlAve: 174, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 17, luzHoras: 13,   alimentoGAve: 90,  pesoObjetivoG: 1380, aguaMlAve: 180, tipoAlimento: 'Levante',       temperaturaC: 21, humedadPct: 55),
+  // === PRE-POSTURA (18-19 semanas) ===
+  GuiaSemanal(semana: 18, luzHoras: 14,   alimentoGAve: 95,  pesoObjetivoG: 1450, aguaMlAve: 190, tipoAlimento: 'Pre-postura',   temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 19, luzHoras: 14.5, alimentoGAve: 100, pesoObjetivoG: 1530, aguaMlAve: 200, tipoAlimento: 'Pre-postura',   temperaturaC: 21, humedadPct: 55),
+  // === POSTURA (20-72 semanas) ===
+  GuiaSemanal(semana: 20, luzHoras: 15,   alimentoGAve: 105, pesoObjetivoG: 1600, aguaMlAve: 210, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 21, luzHoras: 15,   alimentoGAve: 108, pesoObjetivoG: 1640, aguaMlAve: 216, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 22, luzHoras: 15.5, alimentoGAve: 110, pesoObjetivoG: 1680, aguaMlAve: 220, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 23, luzHoras: 15.5, alimentoGAve: 112, pesoObjetivoG: 1710, aguaMlAve: 224, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 24, luzHoras: 16,   alimentoGAve: 114, pesoObjetivoG: 1740, aguaMlAve: 228, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 25, luzHoras: 16,   alimentoGAve: 115, pesoObjetivoG: 1770, aguaMlAve: 230, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 26, luzHoras: 16,   alimentoGAve: 115, pesoObjetivoG: 1790, aguaMlAve: 230, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 28, luzHoras: 16,   alimentoGAve: 115, pesoObjetivoG: 1830, aguaMlAve: 230, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 30, luzHoras: 16,   alimentoGAve: 115, pesoObjetivoG: 1870, aguaMlAve: 230, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 32, luzHoras: 16,   alimentoGAve: 115, pesoObjetivoG: 1900, aguaMlAve: 230, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 34, luzHoras: 16,   alimentoGAve: 114, pesoObjetivoG: 1920, aguaMlAve: 228, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 36, luzHoras: 16,   alimentoGAve: 114, pesoObjetivoG: 1940, aguaMlAve: 228, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 38, luzHoras: 16,   alimentoGAve: 113, pesoObjetivoG: 1960, aguaMlAve: 226, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 40, luzHoras: 16,   alimentoGAve: 113, pesoObjetivoG: 1970, aguaMlAve: 226, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 45, luzHoras: 16,   alimentoGAve: 112, pesoObjetivoG: 1990, aguaMlAve: 224, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 50, luzHoras: 16,   alimentoGAve: 111, pesoObjetivoG: 2010, aguaMlAve: 222, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 55, luzHoras: 16,   alimentoGAve: 110, pesoObjetivoG: 2020, aguaMlAve: 220, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 60, luzHoras: 16,   alimentoGAve: 109, pesoObjetivoG: 2030, aguaMlAve: 218, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 65, luzHoras: 16,   alimentoGAve: 108, pesoObjetivoG: 2030, aguaMlAve: 216, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 70, luzHoras: 16,   alimentoGAve: 107, pesoObjetivoG: 2040, aguaMlAve: 214, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+  GuiaSemanal(semana: 72, luzHoras: 16,   alimentoGAve: 106, pesoObjetivoG: 2040, aguaMlAve: 212, tipoAlimento: 'Postura',       temperaturaC: 21, humedadPct: 55),
+];

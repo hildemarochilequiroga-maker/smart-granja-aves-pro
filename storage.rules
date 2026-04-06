@@ -1,0 +1,235 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // =========================================================================
+    // FUNCIONES AUXILIARES
+    // =========================================================================
+    
+    // Verifica si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verifica si el usuario es el propietario del archivo
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Verifica el tamaño máximo del archivo (en bytes)
+    function isValidSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+    
+    // Verifica que el archivo sea una imagen
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Verifica que el archivo sea JPEG o PNG
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/jpeg') ||
+             request.resource.contentType.matches('image/png') ||
+             request.resource.contentType.matches('image/webp') ||
+             request.resource.contentType.matches('image/jpg') ||
+             request.resource.contentType.matches('image/heic') ||
+             request.resource.contentType.matches('image/heif');
+    }
+    
+    // Verifica que el archivo sea un documento
+    function isDocument() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('application/msword') ||
+             request.resource.contentType.matches('application/vnd.*') ||
+             request.resource.contentType.matches('text/csv') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*');
+    }
+    
+    // Verifica que el archivo sea PDF
+    function isPDF() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    
+    // Verifica que el archivo sea CSV o Excel
+    function isSpreadsheet() {
+      return request.resource.contentType.matches('text/csv') ||
+             request.resource.contentType.matches('application/vnd.ms-excel') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.spreadsheetml.*');
+    }
+    
+    // Verifica si el usuario tiene acceso a la granja.
+    // Comprueba que el usuario sea propietario o colaborador activo.
+    function hasGranjaAccess(granjaId) {
+      return isAuthenticated() && (
+        firestore.get(/databases/(default)/documents/granjas/$(granjaId)).data.propietarioId == request.auth.uid ||
+        (
+          firestore.exists(/databases/(default)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+          firestore.get(/databases/(default)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true
+        )
+      );
+    }
+    
+    // =========================================================================
+    // CARPETA: USUARIOS (Fotos de perfil)
+    // Path real del app: users/{uid}/profile.jpg (archivo plano, sin subcarpeta)
+    // =========================================================================
+    match /users/{userId}/{fileName} {
+      // Lectura: cualquier usuario autenticado puede ver fotos de perfil
+      allow read: if isAuthenticated();
+      
+      // Escritura: solo el propio usuario, solo imágenes válidas, máx 5MB
+      allow write: if isOwner(userId) && isValidImageType() && isValidSize(5);
+      
+      // Eliminación: solo el propio usuario
+      allow delete: if isOwner(userId);
+    }
+    
+    // =========================================================================
+    // CARPETA: GRANJAS (ImageUploadType.granja)
+    // Path real: granjas/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /granjas/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: GALPONES (ImageUploadType.galpon)
+    // Path real: galpones/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /galpones/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: LOTES (ImageUploadType.lote)
+    // Path real: lotes/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /lotes/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: PERFILES (ImageUploadType.perfil)
+    // Path real: perfiles/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /perfiles/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(5);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: SALUD (ImageUploadType.salud)
+    // Path real: salud/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /salud/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: INVENTARIO (ImageUploadType.inventario)
+    // Path real: inventario/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /inventario/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: PESO (ImageUploadType.peso)
+    // Path real: peso/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /peso/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: PRODUCCIÓN (ImageUploadType.produccion)
+    // Path real: produccion/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /produccion/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: MORTALIDAD (ImageUploadType.mortalidad)
+    // Path real: mortalidad/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /mortalidad/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: CONSUMO (ImageUploadType.consumo)
+    // Path real: consumo/{granjaId}/{entityId}/{timestamp}.ext
+    // =========================================================================
+    match /consumo/{granjaId}/{allPaths=**} {
+      allow read: if hasGranjaAccess(granjaId);
+      allow write: if hasGranjaAccess(granjaId) && isValidImageType() && isValidSize(10);
+      allow delete: if hasGranjaAccess(granjaId);
+    }
+    
+    // =========================================================================
+    // CARPETA: REPORTES (PDFs generados)
+    // =========================================================================
+    match /reportes/{userId}/pdf/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isPDF() && isValidSize(20);
+    }
+    
+    match /reportes/{userId}/excel/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isSpreadsheet() && isValidSize(25);
+    }
+    
+    match /reportes/{userId}/graficos/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isImage() && isValidSize(10);
+    }
+    
+    // =========================================================================
+    // CARPETA: EXPORTS (Exportaciones de datos)
+    // =========================================================================
+    match /exports/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && 
+        (isSpreadsheet() || isPDF()) && 
+        isValidSize(50);
+    }
+    
+    // =========================================================================
+    // CARPETA: TEMPORAL
+    // =========================================================================
+    match /temp/{userId}/{fileName} {
+      allow read, write: if isOwner(userId) && isValidSize(15);
+      allow delete: if isOwner(userId);
+    }
+    
+    // =========================================================================
+    // CARPETA: BACKUPS (Solo admin)
+    // =========================================================================
+    match /backups/{backupId}/{fileName} {
+      allow read: if request.auth != null && 
+        request.auth.token.admin == true;
+      allow write: if request.auth != null && 
+        request.auth.token.admin == true && 
+        isValidSize(100);
+    }
+  }
+}

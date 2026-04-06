@@ -1,0 +1,899 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "granja_usuarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granja_usuarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "invitaciones_granja",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "creadoPorId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "invitaciones_granja",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "usado", "order": "ASCENDING" },
+        { "fieldPath": "fechaExpiracion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "invitaciones_granja",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "usuarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "email", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "usuarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rol", "order": "ASCENDING" },
+        { "fieldPath": "nombre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "propietarioId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "propietarioId", "order": "ASCENDING" },
+        { "fieldPath": "nombre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "propietarioId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "nombre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "propietarioId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuariosAccesoIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "estado", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "codigo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "codigo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "loteActualId", "order": "ASCENDING" },
+        { "fieldPath": "codigo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "codigo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpon_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "galponId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpon_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "galponId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpon_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "nombre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "galponId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "galponId", "order": "ASCENDING" },
+        { "fieldPath": "fechaIngreso", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaIngreso", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "fechaIngreso", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registros",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" },
+        { "fieldPath": "nombre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" },
+        { "fieldPath": "nombre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "itemId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "itemId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "itemId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movimientos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "itemId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movimientos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reportes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reportes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notificaciones",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "leida", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "accion", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "salud_registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "salud_registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "costos_gastos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_productos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaVenta", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_productos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipoProducto", "order": "ASCENDING" },
+        { "fieldPath": "fechaVenta", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_productos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fechaVenta", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_pedidos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaPedido", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_pedidos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaPedido", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "costos_gastos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "costos_gastos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "costos_gastos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "requiereAprobacion", "order": "ASCENDING" },
+        { "fieldPath": "aprobado", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "vacunaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fechaProgramada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "vacunaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaProgramada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "vacunaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aplicada", "order": "ASCENDING" },
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaAplicacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "vacunaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aplicada", "order": "ASCENDING" },
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "produccion",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mortalidad",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "consumos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pesos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "necropsias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "necropsias",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inspecciones_bioseguridad",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inspecciones_bioseguridad",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "produccion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "produccion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "produccion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "huevosRecolectados", "order": "DESCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ambiente",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ambiente",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "galponId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pesos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "consumos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "loteId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "alertas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "leida", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "alertas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tareas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "completada", "order": "ASCENDING" },
+        { "fieldPath": "fechaProgramada", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tareas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fechaProgramada", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "usuarios",
+      "fieldPath": "email",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "fieldPath": "propietarioId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "fieldPath": "estado",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "granjas",
+      "fieldPath": "ruc",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "fieldPath": "granjaId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "fieldPath": "estado",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "fieldPath": "tipo",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "galpones",
+      "fieldPath": "loteActualId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "galpon_eventos",
+      "fieldPath": "galponId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "galpon_eventos",
+      "fieldPath": "tipo",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "lotes",
+      "fieldPath": "tags",
+      "indexes": [
+        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "produccion",
+      "fieldPath": "loteId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "ambiente",
+      "fieldPath": "temperatura",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "alertas",
+      "fieldPath": "prioridad",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "alertas",
+      "fieldPath": "tipo",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "tareas",
+      "fieldPath": "completada",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_productos",
+      "fieldPath": "granjaId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_productos",
+      "fieldPath": "loteId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_productos",
+      "fieldPath": "tipoProducto",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_pedidos",
+      "fieldPath": "granjaId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "ventas_pedidos",
+      "fieldPath": "estado",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "costos_gastos",
+      "fieldPath": "granjaId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "costos_gastos",
+      "fieldPath": "loteId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_items",
+      "fieldPath": "granjaId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_items",
+      "fieldPath": "tipo",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_items",
+      "fieldPath": "activo",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "fieldPath": "granjaId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "fieldPath": "itemId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "inventario_movimientos",
+      "fieldPath": "tipo",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    }
+  ]
+}
