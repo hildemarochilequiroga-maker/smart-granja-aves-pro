@@ -13,6 +13,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/widgets/app_progress_bar.dart';
+import '../../../../../core/widgets/app_stat_item.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import 'lote_detail_utils.dart';
 
@@ -720,16 +721,14 @@ class LoteKPIsSection extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(
-            context,
+          AppStatItem(
             icon: Icons.favorite_rounded,
             value: '${sobrevivencia.toStringAsFixed(1)}%',
             label: S.of(context).batchLiveBirds,
             color: _getSobrevivenciaColor(sobrevivencia),
           ),
           _buildStatDivider(context),
-          _buildStatItem(
-            context,
+          AppStatItem(
             icon: Icons.trending_down_rounded,
             value: '${mortalidad.toStringAsFixed(1)}%',
             label: S.of(context).batchMortality,
@@ -737,8 +736,7 @@ class LoteKPIsSection extends StatelessWidget {
           ),
           if (lote.pesoPromedioActual != null) ...[
             _buildStatDivider(context),
-            _buildStatItem(
-              context,
+            AppStatItem(
               icon: Icons.scale_rounded,
               value: '${lote.pesoPromedioActual!.toStringAsFixed(2)} kg',
               label: S.of(context).batchCurrentWeight,
@@ -747,36 +745,6 @@ class LoteKPIsSection extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context, {
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 

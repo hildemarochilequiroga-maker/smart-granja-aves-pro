@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_progress_bar.dart';
+import '../../../../../core/widgets/app_stat_item.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../lotes/application/providers/lote_providers.dart';
 import '../../../domain/entities/galpon.dart';
@@ -334,24 +335,21 @@ class GalponOcupacionSection extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(
-            theme: theme,
+          AppStatItem(
             icon: Icons.pets_rounded,
             value: GalponDetailFormatters.formatNumber(galpon.avesActuales),
             label: S.of(context).shedBirds,
             color: theme.colorScheme.primary,
           ),
           _buildStatDivider(theme),
-          _buildStatItem(
-            theme: theme,
+          AppStatItem(
             icon: Icons.pie_chart_rounded,
             value: '${ocupacion.toStringAsFixed(0)}%',
             label: S.of(context).shedOccupationLabel,
             color: _getOcupacionColor(ocupacion),
           ),
           _buildStatDivider(theme),
-          _buildStatItem(
-            theme: theme,
+          AppStatItem(
             icon: Icons.add_circle_outline_rounded,
             value: GalponDetailFormatters.formatNumber(disponibles),
             label: S.of(context).commonAvailable,
@@ -361,34 +359,6 @@ class GalponOcupacionSection extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required ThemeData theme,
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 
