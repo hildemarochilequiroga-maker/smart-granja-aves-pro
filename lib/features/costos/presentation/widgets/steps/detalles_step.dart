@@ -5,6 +5,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
+import 'package:smartgranjaavespro/core/utils/field_validators.dart';
+
 import '../costo_form_field.dart';
 
 /// Step de detalles adicionales (proveedor, factura, observaciones)
@@ -61,15 +63,10 @@ class DetallesStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.costoSupplierRequired;
-              }
-              if (value.trim().length < 3) {
-                return l.costoSupplierMinLength;
-              }
-              return null;
-            },
+            validator: FieldValidators.compose([
+              FieldValidators.required(l.costoSupplierRequired),
+              FieldValidators.minLength(l.costoSupplierMinLength, 3),
+            ]),
           ),
           const SizedBox(height: 16),
 

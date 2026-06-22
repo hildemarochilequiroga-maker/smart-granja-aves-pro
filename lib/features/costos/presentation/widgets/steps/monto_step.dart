@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/utils/formatters.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -116,15 +117,10 @@ class _MontoStepState extends ConsumerState<MontoStep> {
             autovalidateMode: widget.autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.costoConceptRequired;
-              }
-              if (value.trim().length < 5) {
-                return l.costoConceptMinLength;
-              }
-              return null;
-            },
+            validator: FieldValidators.compose([
+              FieldValidators.required(l.costoConceptRequired),
+              FieldValidators.minLength(l.costoConceptMinLength, 5),
+            ]),
           ),
           AppSpacing.gapBase,
 
@@ -149,16 +145,10 @@ class _MontoStepState extends ConsumerState<MontoStep> {
             autovalidateMode: widget.autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.costoAmountRequired;
-              }
-              final monto = double.tryParse(value.replaceAll(',', '.'));
-              if (monto == null || monto <= 0) {
-                return l.costoAmountInvalid;
-              }
-              return null;
-            },
+            validator: FieldValidators.positiveNumber(
+              requiredMessage: l.costoAmountRequired,
+              invalidMessage: l.costoAmountInvalid,
+            ),
           ),
           AppSpacing.gapXl,
 
