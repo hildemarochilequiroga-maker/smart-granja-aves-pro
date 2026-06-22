@@ -6,6 +6,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 /// Widget indicador visual de nivel de stock.
@@ -256,7 +257,7 @@ class ResumenInventarioWidget extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  TextButton(onPressed: onTap, child: Text(l.invViewAllItems)),
+                  AppButton.text(label: l.invViewAllItems, onPressed: onTap),
                 ],
               ),
               const Divider(),

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../application/providers/providers.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/enums/enums.dart';
@@ -112,10 +113,10 @@ class _HistorialMovimientosPageState
           ),
           if (_filtroTipo != null || _fechaInicio != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            TextButton.icon(
+            AppButton.text(
+              label: l.invClearFiltersHist,
+              icon: Icons.clear,
               onPressed: _limpiarFiltros,
-              icon: const Icon(Icons.clear),
-              label: Text(l.invClearFiltersHist),
             ),
           ],
         ],
@@ -347,17 +348,17 @@ class _HistorialMovimientosPageState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(
+                      AppButton.text(
+                        label: l.invClear,
                         onPressed: () {
                           _limpiarFiltros();
                           setModalState(() {});
                         },
-                        child: Text(l.invClear),
                       ),
                       const SizedBox(width: AppSpacing.sm),
-                      FilledButton(
+                      AppButton.primary(
+                        label: l.commonApply,
                         onPressed: () => Navigator.pop(context),
-                        child: Text(l.commonApply),
                       ),
                     ],
                   ),

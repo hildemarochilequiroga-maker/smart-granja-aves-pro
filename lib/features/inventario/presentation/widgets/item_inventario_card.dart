@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/enums/enums.dart';
@@ -476,25 +477,10 @@ class ItemInventarioCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: SizedBox(
-            height: 48,
-            child: FilledButton(
-              onPressed: onTap,
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                elevation: 0,
-              ),
-              child: Text(
-                l.invViewDetails,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          child: AppButton.primary(
+            label: l.invViewDetails,
+            onPressed: onTap,
+            expanded: true,
           ),
         ),
         AppSpacing.hGapSm,

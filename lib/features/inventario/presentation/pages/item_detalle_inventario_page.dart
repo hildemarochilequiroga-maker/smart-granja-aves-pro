@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
@@ -143,9 +144,9 @@ class _ItemDetalleInventarioPageState
                   AppSpacing.gapBase,
                   Text(l.invItemNotFound),
                   AppSpacing.gapBase,
-                  ElevatedButton(
+                  AppButton.primary(
+                    label: l.commonBack,
                     onPressed: () => context.pop(),
-                    child: Text(l.commonBack),
                   ),
                 ],
               ),
@@ -679,16 +680,14 @@ class _ItemDetalleInventarioPageState
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              TextButton(
+              AppButton.text(
+                label: l.invViewAll,
                 onPressed: () {
                   context.push(
                     AppRoutes.inventarioHistorialMovimientosById(widget.itemId),
                   );
                 },
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.secondary,
-                ),
-                child: Text(l.invViewAll),
+                foregroundColor: theme.colorScheme.secondary,
               ),
             ],
           ),

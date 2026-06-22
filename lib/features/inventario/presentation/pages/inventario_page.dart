@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/permission_guard.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -267,10 +268,10 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
                   AppSpacing.gapBase,
                   Text(l.commonErrorWithDetail(error.toString())),
                   AppSpacing.gapBase,
-                  ElevatedButton(
+                  AppButton.primary(
+                    label: l.commonRetry,
                     onPressed: () =>
                         ref.invalidate(inventarioItemsStreamProvider(granjaId)),
-                    child: Text(l.commonRetry),
                   ),
                 ],
               ),
@@ -399,7 +400,8 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
           ),
           AppSpacing.gapXl,
           if (hasFilters)
-            FilledButton(
+            AppButton.primary(
+              label: l.invClearFilters,
               onPressed: () {
                 _searchController.clear();
                 setState(() {
@@ -407,24 +409,16 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
                   _filtroTipo = null;
                 });
               },
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondary,
-                foregroundColor: theme.colorScheme.surface,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-              ),
-              child: Text(l.invClearFilters),
+              backgroundColor: theme.colorScheme.secondary,
+              foregroundColor: theme.colorScheme.surface,
             )
           else
-            ElevatedButton.icon(
+            AppButton.primary(
+              label: l.invAddItem,
+              icon: Icons.add,
               onPressed: () => context.push(
                 AppRoutes.inventarioCrearItemConGranja(granjaId),
               ),
-              icon: const Icon(Icons.add),
-              label: Text(l.invAddItem),
             ),
         ],
       ),
@@ -577,23 +571,12 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
                   // Botón aplicar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.allMd,
-                          ),
-                        ),
-                        child: Text(
-                          _hayFiltrosActivos ? l.invApplyFilter : l.commonClose,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    child: AppButton.primary(
+                      label: _hayFiltrosActivos
+                          ? l.invApplyFilter
+                          : l.commonClose,
+                      onPressed: () => Navigator.pop(context),
+                      expanded: true,
                     ),
                   ),
                 ],
