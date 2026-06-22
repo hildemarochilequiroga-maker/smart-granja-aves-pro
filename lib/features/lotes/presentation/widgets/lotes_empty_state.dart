@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 
 /// Widget de estado de error para lotes
 class LotesErrorState extends StatelessWidget {
@@ -120,32 +119,18 @@ class LotesErrorState extends StatelessWidget {
     ThemeData theme,
     bool isSmallScreen,
   ) {
-    final iconSize = isSmallScreen ? 16.0 : 18.0;
 
     return Semantics(
       button: true,
       label: S.of(context).batchRetryLoadSemantics,
-      child: SizedBox(
-        height: 48,
-        child: OutlinedButton.icon(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            onRetry?.call();
-          },
-          icon: Icon(Icons.refresh_rounded, size: iconSize),
-          label: Text(
-            S.of(context).commonRetry,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: theme.colorScheme.primary,
-            side: BorderSide(color: theme.colorScheme.primary),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-          ),
-        ),
+      child: AppButton.secondary(
+        label: S.of(context).commonRetry,
+        icon: Icons.refresh_rounded,
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          onRetry?.call();
+        },
+        expanded: true,
       ),
     );
   }

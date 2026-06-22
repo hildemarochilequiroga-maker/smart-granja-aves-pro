@@ -19,6 +19,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../application/providers/providers.dart';
 import '../../domain/entities/lote.dart';
 import '../../domain/enums/enums.dart';
@@ -65,10 +66,10 @@ class LoteDashboardPage extends ConsumerWidget {
               const SizedBox(height: AppSpacing.base),
               Text(S.of(context).commonErrorWithDetail(error.toString())),
               const SizedBox(height: AppSpacing.xl),
-              FilledButton.icon(
+              AppButton.primary(
+                label: S.of(context).commonRetry,
+                icon: Icons.refresh,
                 onPressed: () => ref.invalidate(loteByIdProvider(loteId)),
-                icon: const Icon(Icons.refresh),
-                label: Text(S.of(context).commonRetry),
               ),
             ],
           ),
@@ -88,10 +89,10 @@ class LoteDashboardPage extends ConsumerWidget {
             const SizedBox(height: AppSpacing.base),
             Text(S.of(context).batchNotFound, style: AppTextStyles.titleLarge),
             const SizedBox(height: AppSpacing.xl),
-            FilledButton.icon(
+            AppButton.primary(
+              label: S.of(context).commonBack,
+              icon: Icons.arrow_back,
               onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back),
-              label: Text(S.of(context).commonBack),
             ),
           ],
         ),

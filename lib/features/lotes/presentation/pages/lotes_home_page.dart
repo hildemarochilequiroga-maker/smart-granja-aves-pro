@@ -18,6 +18,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
@@ -823,29 +824,13 @@ class _LoteCard extends StatelessWidget {
 
   Widget _buildActionButton(BuildContext context, ThemeData theme) {
     return ExcludeSemantics(
-      child: SizedBox(
-        height: 48,
-        width: double.infinity,
-        child: FilledButton(
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
-          style: FilledButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-            elevation: 0,
-          ),
-          child: Text(
-            S.of(context).batchViewRecords,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.onPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+      child: AppButton.primary(
+        label: S.of(context).batchViewRecords,
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        expanded: true,
       ),
     );
   }
@@ -975,10 +960,10 @@ class _EmptyState extends StatelessWidget {
                 ),
                 if (actionLabel != null && onAction != null) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  FilledButton.icon(
+                  AppButton.primary(
+                    label: actionLabel!,
+                    icon: Icons.add_rounded,
                     onPressed: onAction,
-                    icon: const Icon(Icons.add_rounded),
-                    label: Text(actionLabel!),
                   ),
                 ],
               ],
@@ -1041,10 +1026,10 @@ class _ErrorWidget extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.base),
-                FilledButton.icon(
+                AppButton.primary(
+                  label: S.of(context).batchRetry,
+                  icon: Icons.refresh_rounded,
                   onPressed: onReintentar,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(S.of(context).batchRetry),
                 ),
               ],
             ),

@@ -7,6 +7,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/lote.dart';
@@ -372,30 +373,15 @@ class LoteListCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: SizedBox(
-            height: 48,
-            child: FilledButton(
-              onPressed: onVerDashboard == null
-                  ? null
-                  : () {
-                      HapticFeedback.selectionClick();
-                      onVerDashboard?.call();
-                    },
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                elevation: 0,
-              ),
-              child: Text(
-                S.of(context).batchViewRecords,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          child: AppButton.primary(
+            label: S.of(context).batchViewRecords,
+            onPressed: onVerDashboard == null
+                ? null
+                : () {
+                    HapticFeedback.selectionClick();
+                    onVerDashboard?.call();
+                  },
+            expanded: true,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),

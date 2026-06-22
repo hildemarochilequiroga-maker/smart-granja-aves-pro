@@ -15,6 +15,7 @@ import '../../../../../core/theme/app_radius.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/utils/formatters.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../application/providers/registro_providers.dart';
 
 /// Card que muestra los últimos registros del lote
@@ -48,11 +49,11 @@ class UltimosRegistrosCard extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                TextButton(
+                AppButton.text(
+                  label: S.of(context).batchViewRecords,
                   onPressed: () => context.push(
                     AppRoutes.loteDashboardById(granjaId, loteId),
                   ),
-                  child: Text(S.of(context).batchViewRecords),
                 ),
               ],
             ),

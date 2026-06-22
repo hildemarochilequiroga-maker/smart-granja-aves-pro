@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../application/providers/lote_providers.dart';
 import '../../domain/entities/lote.dart';
@@ -297,10 +298,11 @@ class _CerrarLotePageState extends ConsumerState<CerrarLotePage> {
             // Botón anterior
             if (_currentStep > 0)
               Expanded(
-                child: OutlinedButton.icon(
+                child: AppButton.secondary(
+                  label: S.of(context).batchPrevious,
+                  icon: Icons.arrow_back,
                   onPressed: _isSaving ? null : _previousStep,
-                  icon: const Icon(Icons.arrow_back),
-                  label: Text(S.of(context).batchPrevious),
+                  expanded: true,
                 ),
               ),
 
@@ -310,31 +312,18 @@ class _CerrarLotePageState extends ConsumerState<CerrarLotePage> {
             Expanded(
               flex: 2,
               child: _currentStep == _steps.length - 1
-                  ? FilledButton.icon(
+                  ? AppButton.danger(
+                      label: S.of(context).batchCloseBatch,
+                      icon: Icons.check,
                       onPressed: _isSaving ? null : _cerrarLote,
-                      icon: _isSaving
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colorScheme.onPrimary,
-                              ),
-                            )
-                          : const Icon(Icons.check),
-                      label: Text(
-                        _isSaving
-                            ? S.of(context).batchClosing
-                            : S.of(context).batchCloseBatch,
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.error,
-                      ),
+                      isLoading: _isSaving,
+                      expanded: true,
                     )
-                  : FilledButton.icon(
+                  : AppButton.primary(
+                      label: S.of(context).batchNext,
+                      icon: Icons.arrow_forward,
                       onPressed: _isSaving ? null : _nextStep,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: Text(S.of(context).batchNext),
+                      expanded: true,
                     ),
             ),
           ],

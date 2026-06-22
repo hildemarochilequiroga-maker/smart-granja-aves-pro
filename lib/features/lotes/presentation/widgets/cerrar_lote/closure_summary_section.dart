@@ -13,6 +13,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/utils/formatters.dart';
+import '../../../../../core/widgets/app_button.dart';
 
 /// Widget de resumen antes de confirmar cierre
 class ClosureSummarySection extends StatelessWidget {
@@ -232,41 +233,13 @@ class ClosureSummarySection extends StatelessWidget {
           ],
 
           // Botón de confirmación
-          SizedBox(
-            width: double.infinity,
+          AppButton.danger(
+            label: S.of(context).batchCloseConfirm,
+            icon: Icons.lock_outline,
+            onPressed: isLoading ? null : onConfirm,
+            isLoading: isLoading,
+            expanded: true,
             height: 56,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : onConfirm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-                elevation: 2,
-              ),
-              child: isLoading
-                  ? SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: colorScheme.onPrimary,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.lock_outline, size: 20),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          S.of(context).batchCloseConfirm,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
           ),
           const SizedBox(height: AppSpacing.base),
         ],

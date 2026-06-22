@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../application/providers/providers.dart';
@@ -85,10 +86,10 @@ class LoteDetailPage extends ConsumerWidget {
               const SizedBox(height: 16),
               Text('${S.of(context).batchError}: ${error.toString()}'),
               const SizedBox(height: 24),
-              FilledButton.icon(
+              AppButton.primary(
+                label: S.of(context).batchRetry,
+                icon: Icons.refresh,
                 onPressed: () => ref.invalidate(loteByIdProvider(loteId)),
-                icon: const Icon(Icons.refresh),
-                label: Text(S.of(context).batchRetry),
               ),
             ],
           ),
@@ -112,16 +113,10 @@ class LoteDetailPage extends ConsumerWidget {
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back),
-                label: Text(S.of(context).commonBack),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                ),
-              ),
+            AppButton.primary(
+              label: S.of(context).commonBack,
+              icon: Icons.arrow_back,
+              onPressed: () => context.pop(),
             ),
           ],
         ),
