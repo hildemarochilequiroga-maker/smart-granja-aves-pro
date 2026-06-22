@@ -101,43 +101,38 @@ final loteByIdProvider = StreamProvider.autoDispose.family<Lote?, String>((
 // =============================================================================
 
 /// Provider que cuenta los lotes de una granja.
-final conteoLotesProvider = Provider.family<AsyncValue<int>, String>((
-  ref,
-  granjaId,
-) {
-  final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
-  return lotesAsync.whenData((lotes) => lotes.length);
-});
+final conteoLotesProvider = Provider.autoDispose
+    .family<AsyncValue<int>, String>((ref, granjaId) {
+      final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
+      return lotesAsync.whenData((lotes) => lotes.length);
+    });
 
 /// Provider que cuenta los lotes activos de una granja.
-final conteoLotesActivosProvider = Provider.family<AsyncValue<int>, String>((
-  ref,
-  granjaId,
-) {
-  final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
-  return lotesAsync.whenData(
-    (lotes) => lotes.where((l) => l.estaActivo).length,
-  );
-});
+final conteoLotesActivosProvider = Provider.autoDispose
+    .family<AsyncValue<int>, String>((ref, granjaId) {
+      final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
+      return lotesAsync.whenData(
+        (lotes) => lotes.where((l) => l.estaActivo).length,
+      );
+    });
 
 /// Provider que obtiene el lote activo de un galpón.
-final loteActivoGalponProvider = Provider.family<AsyncValue<Lote?>, String>((
-  ref,
-  galponId,
-) {
-  final lotesAsync = ref.watch(lotesGalponStreamProvider(galponId));
-  return lotesAsync.whenData((lotes) {
-    try {
-      return lotes.firstWhere((l) => l.estaActivo);
-    } catch (_) {
-      return null;
-    }
-  });
-});
+final loteActivoGalponProvider = Provider.autoDispose
+    .family<AsyncValue<Lote?>, String>((ref, galponId) {
+      final lotesAsync = ref.watch(lotesGalponStreamProvider(galponId));
+      return lotesAsync.whenData((lotes) {
+        try {
+          return lotes.firstWhere((l) => l.estaActivo);
+        } catch (_) {
+          return null;
+        }
+      });
+    });
 
 /// Provider de estadísticas de lotes.
-final estadisticasLotesProvider =
-    Provider.family<AsyncValue<LoteStatsState>, String>((ref, granjaId) {
+/// Calcula todas las estadísticas en un solo recorrido O(N).
+final estadisticasLotesProvider = Provider.autoDispose
+    .family<AsyncValue<LoteStatsState>, String>((ref, granjaId) {
       final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
 
       return lotesAsync.whenData((lotes) {
@@ -145,32 +140,36 @@ final estadisticasLotesProvider =
           return LoteStatsState.initial();
         }
 
-        final activos = lotes.where((l) => l.estaActivo).length;
-        final cerrados = lotes
-            .where((l) => l.estado == EstadoLote.cerrado)
-            .length;
-        final enCuarentena = lotes
-            .where((l) => l.estado == EstadoLote.cuarentena)
-            .length;
-        final vendidos = lotes
-            .where((l) => l.estado == EstadoLote.vendido)
-            .length;
+        // Calcular todo en un solo recorrido
+        int activos = 0;
+        int cerrados = 0;
+        int enCuarentena = 0;
+        int vendidos = 0;
+        int totalAvesActuales = 0;
+        int totalAvesInicial = 0;
+        int mortalidadTotal = 0;
+        double sumMortalidadPct = 0.0;
 
-        final totalAvesActuales = lotes
-            .where((l) => l.estaActivo)
-            .fold<int>(0, (sum, l) => sum + l.avesActuales);
-        final totalAvesInicial = lotes.fold<int>(
-          0,
-          (sum, l) => sum + l.cantidadInicial,
-        );
-        final mortalidadTotal = lotes.fold<int>(
-          0,
-          (sum, l) => sum + l.mortalidadAcumulada,
-        );
-        final mortalidadPromedio = lotes.isNotEmpty
-            ? lotes.fold<double>(0, (sum, l) => sum + l.porcentajeMortalidad) /
-                  lotes.length
-            : 0.0;
+        for (final l in lotes) {
+          totalAvesInicial += l.cantidadInicial;
+          mortalidadTotal += l.mortalidadAcumulada;
+          sumMortalidadPct += l.porcentajeMortalidad;
+
+          if (l.estaActivo) {
+            activos++;
+            totalAvesActuales += l.avesActuales;
+          }
+          switch (l.estado) {
+            case EstadoLote.cerrado:
+              cerrados++;
+            case EstadoLote.cuarentena:
+              enCuarentena++;
+            case EstadoLote.vendido:
+              vendidos++;
+            default:
+              break;
+          }
+        }
 
         return LoteStatsState(
           totalLotes: lotes.length,
@@ -181,7 +180,7 @@ final estadisticasLotesProvider =
           totalAvesActuales: totalAvesActuales,
           totalAvesInicial: totalAvesInicial,
           mortalidadTotal: mortalidadTotal,
-          mortalidadPromedio: mortalidadPromedio,
+          mortalidadPromedio: sumMortalidadPct / lotes.length,
         );
       });
     });
@@ -197,20 +196,18 @@ final granjaSeleccionadaParaLotesProvider = StateProvider.autoDispose<String?>(
 );
 
 /// Provider que indica si la granja tiene al menos un lote activo.
-final tieneLoteActivoProvider = Provider.family<AsyncValue<bool>, String>((
-  ref,
-  granjaId,
-) {
-  final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
-  return lotesAsync.whenData((lotes) => lotes.any((l) => l.estaActivo));
-});
+final tieneLoteActivoProvider = Provider.autoDispose
+    .family<AsyncValue<bool>, String>((ref, granjaId) {
+      final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
+      return lotesAsync.whenData((lotes) => lotes.any((l) => l.estaActivo));
+    });
 
 /// Provider de lotes filtrados por estado.
-final lotesPorEstadoProvider =
-    Provider.family<
-      AsyncValue<List<Lote>>,
-      ({String granjaId, EstadoLote estado})
-    >((ref, params) {
+final lotesPorEstadoProvider = Provider.autoDispose
+    .family<AsyncValue<List<Lote>>, ({String granjaId, EstadoLote estado})>((
+      ref,
+      params,
+    ) {
       final lotesAsync = ref.watch(lotesStreamProvider(params.granjaId));
       return lotesAsync.whenData(
         (lotes) => lotes.where((l) => l.estado == params.estado).toList(),
@@ -218,14 +215,12 @@ final lotesPorEstadoProvider =
     });
 
 /// Provider que cuenta las aves totales activas de una granja.
-final totalAvesActivasProvider = Provider.family<AsyncValue<int>, String>((
-  ref,
-  granjaId,
-) {
-  final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
-  return lotesAsync.whenData((lotes) {
-    return lotes
-        .where((l) => l.estaActivo)
-        .fold<int>(0, (sum, l) => sum + l.avesActuales);
-  });
-});
+final totalAvesActivasProvider = Provider.autoDispose
+    .family<AsyncValue<int>, String>((ref, granjaId) {
+      final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
+      return lotesAsync.whenData((lotes) {
+        return lotes
+            .where((l) => l.estaActivo)
+            .fold<int>(0, (sum, l) => sum + l.avesActuales);
+      });
+    });

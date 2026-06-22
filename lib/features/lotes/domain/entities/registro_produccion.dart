@@ -253,6 +253,9 @@ class RegistroProduccion extends Equatable {
     if (huevosBuenos > huevosRecolectados) {
       return ErrorMessages.get('REG_PROD_BUENOS_NO_SUPERAR');
     }
+    if ((huevosRotos ?? 0) + (huevosSucios ?? 0) > huevosRecolectados) {
+      return ErrorMessages.get('REG_PROD_DEFECTOS_NO_SUPERAR');
+    }
     if (cantidadAvesActual <= 0) {
       return ErrorMessages.get('REG_PROD_AVES_MAYOR_CERO');
     }

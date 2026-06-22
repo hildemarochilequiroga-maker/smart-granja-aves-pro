@@ -53,11 +53,11 @@ class _DashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final granja = dashboard['granja'] as Map<String, dynamic>;
-    final capacidad = dashboard['capacidad'] as Map<String, dynamic>;
-    final lotes = dashboard['lotes'] as Map<String, dynamic>;
-    final galpones = dashboard['galpones'] as Map<String, dynamic>;
-    final alertas = dashboard['alertas'] as Map<String, dynamic>;
+    final granja = (dashboard['granja'] as Map<String, dynamic>?) ?? {};
+    final capacidad = (dashboard['capacidad'] as Map<String, dynamic>?) ?? {};
+    final lotes = (dashboard['lotes'] as Map<String, dynamic>?) ?? {};
+    final galpones = (dashboard['galpones'] as Map<String, dynamic>?) ?? {};
+    final alertas = (dashboard['alertas'] as Map<String, dynamic>?) ?? {};
     final l = S.of(context);
 
     return Column(
@@ -73,13 +73,13 @@ class _DashboardContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    granja['nombre'] as String,
+                    (granja['nombre'] as String?) ?? '',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    granja['estado'] as String,
+                    (granja['estado'] as String?) ?? '',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppColors.outline),
@@ -97,9 +97,10 @@ class _DashboardContent extends StatelessWidget {
         _SectionTitle(title: l.farmCapacity),
         const SizedBox(height: AppSpacing.md),
         _CapacidadWidget(
-          totalAves: capacidad['totalAves'] as int,
-          capacidadMaxima: capacidad['capacidadMaxima'] as int,
-          porcentajeOcupacion: capacidad['porcentajeOcupacion'] as double,
+          totalAves: (capacidad['totalAves'] as int?) ?? 0,
+          capacidadMaxima: (capacidad['capacidadMaxima'] as int?) ?? 0,
+          porcentajeOcupacion:
+              (capacidad['porcentajeOcupacion'] as double?) ?? 0.0,
         ),
         const SizedBox(height: AppSpacing.base),
 
@@ -110,7 +111,7 @@ class _DashboardContent extends StatelessWidget {
               child: _StatCard(
                 icon: Icons.egg,
                 label: l.farmActiveBatches,
-                value: (lotes['activos'] as int).toString(),
+                value: ((lotes['activos'] as int?) ?? 0).toString(),
                 color: AppColors.success,
               ),
             ),
@@ -119,7 +120,7 @@ class _DashboardContent extends StatelessWidget {
               child: _StatCard(
                 icon: Icons.warehouse,
                 label: l.farmActiveShedsLabel,
-                value: (galpones['activos'] as int).toString(),
+                value: ((galpones['activos'] as int?) ?? 0).toString(),
                 color: AppColors.info,
               ),
             ),

@@ -8,6 +8,8 @@
 /// - FAB para crear nueva granja
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,9 +40,11 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
   final _searchFocusNode = FocusNode();
   String _searchQuery = '';
   EstadoGranja? _estadoFilter;
+  Timer? _searchDebounce;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -89,7 +93,13 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
                 searchQuery: _searchQuery,
                 estadoFilter: _estadoFilter,
                 onSearchChanged: (value) {
-                  setState(() => _searchQuery = value);
+                  _searchDebounce?.cancel();
+                  _searchDebounce = Timer(
+                    const Duration(milliseconds: 300),
+                    () {
+                      if (mounted) setState(() => _searchQuery = value);
+                    },
+                  );
                 },
                 onClearSearch: () {
                   _searchController.clear();
@@ -140,30 +150,55 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
                 final listPadding = size.width < 360 ? 12.0 : 16.0;
                 final cardSpacing = size.width < 360 ? 12.0 : 16.0;
 
-                return SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: listPadding),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final granja = filteredGranjas[index];
-                      final isFirst = index == 0;
-                      final isLast = index == filteredGranjas.length - 1;
+                return SliverMainAxisGroup(
+                  slivers: [
+                    // Botón Planificador Avícola
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: listPadding,
+                        ).copyWith(top: cardSpacing),
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(AppRoutes.planificador),
+                          icon: const Icon(Icons.auto_awesome, size: 20),
+                          label: const Text('Planificador Avícola'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.success,
+                            side: const BorderSide(color: AppColors.success),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            minimumSize: const Size(double.infinity, 46),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(horizontal: listPadding),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final granja = filteredGranjas[index];
+                          final isFirst = index == 0;
+                          final isLast = index == filteredGranjas.length - 1;
 
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          top: isFirst ? cardSpacing : 0,
-                          bottom: isLast ? 80 : cardSpacing,
-                        ),
-                        child: GranjaListCard(
-                          granja: granja,
-                          onDetalles: () => _navegarADetalle(granja.id),
-                          onEdit: () => _navegarAEditar(granja.id),
-                          onCambiarEstado: () => _cambiarEstado(granja),
-                          onEliminar: () => _confirmarEliminar(granja),
-                          onVerCasas: () => _navegarACasas(granja.id),
-                        ),
-                      );
-                    }, childCount: filteredGranjas.length),
-                  ),
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              top: isFirst ? cardSpacing : 0,
+                              bottom: isLast ? 80 : cardSpacing,
+                            ),
+                            child: GranjaListCard(
+                              granja: granja,
+                              onDetalles: () => _navegarADetalle(granja.id),
+                              onEdit: () => _navegarAEditar(granja.id),
+                              onCambiarEstado: () => _cambiarEstado(granja),
+                              onEliminar: () => _confirmarEliminar(granja),
+                              onVerCasas: () => _navegarACasas(granja.id),
+                            ),
+                          );
+                        }, childCount: filteredGranjas.length),
+                      ),
+                    ),
+                  ],
                 );
               },
               loading: () => const SliverSkeletonList(itemCount: 4),

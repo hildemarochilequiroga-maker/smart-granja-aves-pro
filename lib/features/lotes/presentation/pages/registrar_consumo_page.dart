@@ -9,19 +9,21 @@ import '../../domain/entities/lote.dart';
 import '../../domain/entities/registro_consumo.dart';
 import '../../domain/enums/tipo_alimento.dart';
 import '../../application/providers/registro_providers.dart';
-import '../../application/providers/lote_providers.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../inventario/application/services/inventario_integracion_service.dart';
 import '../../../inventario/domain/entities/item_inventario.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../application/services/registro_quick_cache_service.dart';
 import '../widgets/consumo_form_steps/informacion_consumo_step.dart';
 import '../widgets/consumo_form_steps/resumen_observaciones_step.dart';
 
@@ -105,6 +107,7 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _debounceSaveTimer?.cancel();
     _cantidadKgController.removeListener(_onFieldChanged);
     _costoPorKgController.removeListener(_onFieldChanged);
     _observacionesController.removeListener(_onFieldChanged);
@@ -124,6 +127,8 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
 
   // ==================== AUTO-SAVE ====================
 
+  Timer? _debounceSaveTimer;
+
   void _startAutoSave() {
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (_hasUnsavedChanges && !_isSaving) {
@@ -133,9 +138,13 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
   }
 
   void _onFieldChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    _hasUnsavedChanges = true;
+    _debounceSaveTimer?.cancel();
+    _debounceSaveTimer = Timer(const Duration(seconds: 2), () {
+      if (_hasUnsavedChanges && !_isSaving) {
+        _saveDraft();
+      }
+    });
   }
 
   void _attachChangeListeners() {
@@ -145,10 +154,10 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
   }
 
   Future<void> _saveDraft() async {
-    if (!_hasUnsavedChanges) return;
+    if (!_hasUnsavedChanges || _isSaving) return;
+    _isSaving = true;
 
     try {
-      setState(() => _isSaving = true);
       final prefs = await SharedPreferences.getInstance();
       final draft = jsonEncode({
         'cantidadKg': _cantidadKgController.text,
@@ -160,24 +169,24 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
         'timestamp': DateTime.now().toIso8601String(),
       });
       await prefs.setString('consumo_draft_${widget.lote.id}', draft);
-      if (!mounted) return;
-      setState(() {
-        _hasUnsavedChanges = false;
-        _isSaving = false;
-        _lastSaveTime = DateTime.now();
-      });
+      _hasUnsavedChanges = false;
+      _lastSaveTime = DateTime.now();
       debugPrint('✅ Borrador guardado exitosamente');
     } on Exception catch (e) {
       debugPrint('❌ Error al guardar borrador: $e');
-      if (!mounted) return;
-      setState(() => _isSaving = false);
+    } finally {
+      _isSaving = false;
     }
   }
 
   Future<void> _loadDraft() async {
     final prefs = await SharedPreferences.getInstance();
     final draftJson = prefs.getString('consumo_draft_${widget.lote.id}');
-    if (draftJson == null) return;
+    if (draftJson == null) {
+      // Sin borrador → smart pre-fill desde cache rápido
+      await _applyQuickCachePrefill();
+      return;
+    }
 
     final draft = jsonDecode(draftJson) as Map<String, dynamic>;
     final timestamp = DateTime.parse(draft['timestamp'] as String);
@@ -214,6 +223,36 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
         _currentStep = draft['step'] ?? 0;
       });
       _pageController.jumpToPage(_currentStep);
+    }
+  }
+
+  /// Pre-llena tipo de alimento y costo por kg desde el cache rápido
+  /// cuando no hay borrador, para acelerar registro diario.
+  Future<void> _applyQuickCachePrefill() async {
+    try {
+      final cache = await ref.read(registroQuickCacheAsyncProvider.future);
+      if (!mounted) return;
+      final cached = cache.read(widget.lote.id, RegistroQuickType.consumo);
+      if (cached == null) return;
+
+      final tipoIndex = cached['tipoAlimento'];
+      final costoCache = cached['costoPorKg'];
+
+      setState(() {
+        if (tipoIndex is int &&
+            tipoIndex >= 0 &&
+            tipoIndex < TipoAlimento.values.length) {
+          _tipoSeleccionado = TipoAlimento.values[tipoIndex];
+        }
+        if (costoCache is String &&
+            costoCache.isNotEmpty &&
+            _costoPorKgController.text.isEmpty) {
+          _costoPorKgController.text = costoCache;
+        }
+        _hasUnsavedChanges = false;
+      });
+    } on Exception catch (e) {
+      debugPrint('Sin cache rápido para consumo: $e');
     }
   }
 
@@ -289,6 +328,12 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
   }
 
   Future<void> _guardarRegistro() async {
+    // Validar que el lote esté activo
+    if (!widget.lote.estaActivo) {
+      _showError(S.of(context).batchClosedCannotRegister);
+      return;
+    }
+
     // Validar usuario
     final user = ref.read(currentUserProvider);
     if (user == null ||
@@ -400,24 +445,30 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
         }
       }
 
-      await ref.read(registroConsumoDatasourceProvider).crear(registro);
+      // Verificar que no exista registro duplicado para esta fecha
+      final existeDuplicado = await ref
+          .read(registroConsumoDatasourceProvider)
+          .existeRegistroParaFecha(widget.lote.id, _fechaSeleccionada);
+      if (existeDuplicado) {
+        if (!mounted) return;
+        _showError(S.of(context).consumptionDuplicateDate);
+        return;
+      }
 
-      debugPrint('✅ Registro de consumo guardado exitosamente');
+      // Crear registro y actualizar consumo acumulado del lote en
+      // transacción atómica (evita desync entre subdoc y agregado).
+      debugPrint('🔄 Crear consumo + actualizar lote (+$_cantidadKg kg)');
 
-      // Actualizar el consumo acumulado en el lote
-      final nuevoConsumoAcumulado =
-          (widget.lote.consumoAcumuladoKg ?? 0) + _cantidadKg;
+      await ref
+          .read(registroConsumoDatasourceProvider)
+          .crearConActualizacionLote(
+            registro: registro,
+            camposLote: {
+              'consumoAcumuladoKg': FieldValue.increment(_cantidadKg),
+            },
+          );
 
-      debugPrint(
-        '🔄 Actualizando consumo acumulado del lote: $nuevoConsumoAcumulado kg',
-      );
-
-      await ref.read(loteFirebaseDatasourceProvider).actualizarCampos(
-        widget.lote.id,
-        {'consumoAcumuladoKg': nuevoConsumoAcumulado},
-      );
-
-      debugPrint('✅ Lote actualizado exitosamente');
+      debugPrint('✅ Registro y lote actualizados exitosamente');
 
       // Descontar del inventario si se seleccionó un item
       if (_itemInventarioSeleccionado != null) {
@@ -453,9 +504,21 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
       await prefs.remove('consumo_draft_${widget.lote.id}');
       setState(() => _hasUnsavedChanges = false);
 
+      // Persistir cache rápido para futuros prefills
+      try {
+        final cache = await ref.read(registroQuickCacheAsyncProvider.future);
+        await cache.save(widget.lote.id, RegistroQuickType.consumo, {
+          'tipoAlimento': _tipoSeleccionado.index,
+          'costoPorKg': _costoPorKgController.text,
+          'cantidadKg': _cantidadKgController.text,
+        });
+      } on Exception catch (e) {
+        debugPrint('No se pudo guardar cache rápido consumo: $e');
+      }
+
       if (!mounted) return;
-      // Mostrar celebración con animación
-      AppSnackBar.success(
+      // Overlay animado de éxito + haptic
+      await SaveSuccessOverlay.show(
         context,
         message: S.of(context).consumptionRegistered,
         detail: S
@@ -466,12 +529,9 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
             ),
       );
 
-      // Navegar con delay para mostrar celebración
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) {
-          Navigator.of(context).pop(true);
-        }
-      });
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
     } on FirebaseException catch (e) {
       debugPrint(
         '❌ Error Firebase en registro consumo: ${e.code} - ${e.message}',
@@ -970,6 +1030,7 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
 
   void _previousStep() {
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep--;
@@ -984,10 +1045,14 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
 
   Future<void> _nextStep() async {
     final isValid = await _validateCurrentStep();
-    if (!isValid) return;
+    if (!isValid) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
     if (!mounted) return;
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep++;

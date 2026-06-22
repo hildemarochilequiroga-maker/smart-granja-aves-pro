@@ -448,8 +448,18 @@ service cloud.firestore {
         );
       }
       
-      // Lectura: cualquier usuario autenticado puede leer (para buscar por código)
-      allow read: if isAuthenticated();
+      // Lectura individual (get) por docId == codigo: permitir a cualquier
+      // usuario autenticado (necesario para que el invitado pueda buscar
+      // su invitación al ingresar el código). El docId es un código
+      // aleatorio no enumerable.
+      allow get: if isAuthenticated();
+
+      // Listado (list/query): restringido al propietario, colaborador
+      // con permisos de gestión, o al creador de la invitación. Esto
+      // evita que cualquier usuario autenticado enumere las invitaciones
+      // de otras granjas.
+      allow list: if hasGranjaAccessForInvitation() ||
+        (isAuthenticated() && resource.data.creadoPorId == request.auth.uid);
       
       // Creación: propietario o colaborador con permisos
       allow create: if canCreateInvitation() && 
@@ -560,6 +570,12 @@ service cloud.firestore {
       
       // Vacunas aplicadas al lote
       match /vacunas_aplicadas/{vacunaId} {
+        allow read: if canAccessLoteData() || isAdmin();
+        allow write: if canAccessLoteData();
+      }
+
+      // Tareas diarias (guía diaria de manejo)
+      match /tareas_diarias/{tareaId} {
         allow read: if canAccessLoteData() || isAdmin();
         allow write: if canAccessLoteData();
       }

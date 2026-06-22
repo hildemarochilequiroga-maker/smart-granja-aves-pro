@@ -30,10 +30,6 @@ class GranjaRepositoryImpl implements GranjaRepository {
 
   @override
   Future<Either<Failure, Granja>> crear(Granja granja) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final model = GranjaModel.fromEntity(granja);
       final result = await _firebaseDatasource.crear(model);
@@ -46,7 +42,9 @@ class GranjaRepositoryImpl implements GranjaRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on UnknownException catch (e) {
-      return Left(UnknownFailure(message: e.details ?? ErrorMessages.get('ERR_UNKNOWN')));
+      return Left(
+        UnknownFailure(message: e.details ?? ErrorMessages.get('ERR_UNKNOWN')),
+      );
     } on Exception catch (e) {
       return Left(UnknownFailure(message: e.toString()));
     }
@@ -115,10 +113,6 @@ class GranjaRepositoryImpl implements GranjaRepository {
 
   @override
   Future<Either<Failure, Granja>> actualizar(Granja granja) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final model = GranjaModel.fromEntity(granja);
       final result = await _firebaseDatasource.actualizar(model);
@@ -136,10 +130,6 @@ class GranjaRepositoryImpl implements GranjaRepository {
 
   @override
   Future<Either<Failure, bool>> eliminar(String id) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final result = await _firebaseDatasource.eliminar(id);
 

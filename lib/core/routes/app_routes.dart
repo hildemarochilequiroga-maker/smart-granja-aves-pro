@@ -112,6 +112,8 @@ abstract final class AppRoutes {
       '/granjas/:granjaId/lotes/:id/graficos-produccion';
   static const String loteGuiasManejo =
       '/granjas/:granjaId/lotes/:id/guias-manejo';
+  static const String loteGuiaDiaria =
+      '/granjas/:granjaId/lotes/:id/guia-diaria';
 
   static String lotesPorGalpon(String granjaId, String galponId) =>
       '/granjas/$granjaId/galpones/$galponId/lotes';
@@ -165,6 +167,8 @@ abstract final class AppRoutes {
       '/granjas/$granjaId/lotes/$loteId/graficos-produccion';
   static String loteGuiasManejoById(String granjaId, String loteId) =>
       '/granjas/$granjaId/lotes/$loteId/guias-manejo';
+  static String loteGuiaDiariaById(String granjaId, String loteId) =>
+      '/granjas/$granjaId/lotes/$loteId/guia-diaria';
 
   // ============================================================================
   // SALUD
@@ -298,6 +302,12 @@ abstract final class AppRoutes {
   // ============================================================================
   static const String veterinarioVirtual = '/veterinario-virtual';
   static const String veterinarioChat = '/veterinario-virtual/chat';
+
+  // ============================================================================
+  // PLANIFICADOR AVÍCOLA
+  // ============================================================================
+  static const String planificador = '/planificador';
+  static const String planificadorResultado = '/planificador/resultado';
 
   // ============================================================================
   // LEGAL

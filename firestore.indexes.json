@@ -12,6 +12,15 @@
       "collectionGroup": "granja_usuarios",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "rol", "order": "ASCENDING" },
+        { "fieldPath": "activo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "granja_usuarios",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "usuarioId", "order": "ASCENDING" },
         { "fieldPath": "activo", "order": "ASCENDING" }
       ]

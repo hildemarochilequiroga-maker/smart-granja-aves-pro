@@ -60,8 +60,10 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
     final theme = Theme.of(context);
 
     // Usar el stream correcto: por loteId > por granjaId > granja seleccionada
-    final granjaActiva = ref.watch(granjaSeleccionadaProvider);
-    final granjaIdEfectivo = widget.granjaId ?? granjaActiva?.id;
+    final granjaIdSeleccionada = ref.watch(
+      granjaSeleccionadaProvider.select((g) => g?.id),
+    );
+    final granjaIdEfectivo = widget.granjaId ?? granjaIdSeleccionada;
     final ventasAsync = widget.loteId != null
         ? ref.watch(streamVentasProductoPorLoteProvider(widget.loteId!))
         : granjaIdEfectivo != null
@@ -202,6 +204,7 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                       final isLast = index == filteredVentas.length - 1;
 
                       return Padding(
+                        key: ValueKey('venta_${venta.id}'),
                         padding: EdgeInsets.only(
                           top: isFirst ? 8 : 0,
                           bottom: isLast ? 100 : 12,

@@ -2649,6 +2649,12 @@ abstract class S {
   /// **'Lote cerrado exitosamente'**
   String get batchClosedSuccess;
 
+  /// No description provided for @batchClosedCannotRegister.
+  ///
+  /// In es, this message translates to:
+  /// **'No se puede registrar en un lote que no está activo'**
+  String get batchClosedCannotRegister;
+
   /// No description provided for @batchEntryAgeDays.
   ///
   /// In es, this message translates to:
@@ -4802,6 +4808,12 @@ abstract class S {
   /// In es, this message translates to:
   /// **'¡Venta registrada exitosamente!'**
   String get salesRegisteredSuccess;
+
+  /// No description provided for @salesExceedsAvailableBirds.
+  ///
+  /// In es, this message translates to:
+  /// **'La cantidad solicitada ({requested}) supera las aves disponibles ({available})'**
+  String salesExceedsAvailableBirds(int requested, int available);
 
   /// No description provided for @salesInventoryUpdateError.
   ///
@@ -9533,6 +9545,24 @@ abstract class S {
   /// In es, this message translates to:
   /// **'La fecha de producción no puede ser futura'**
   String get productionFutureDate;
+
+  /// No description provided for @productionDuplicateDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe un registro de producción para esta fecha'**
+  String get productionDuplicateDate;
+
+  /// No description provided for @weightDuplicateDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe un registro de peso para esta fecha'**
+  String get weightDuplicateDate;
+
+  /// No description provided for @consumptionDuplicateDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe un registro de consumo para esta fecha'**
+  String get consumptionDuplicateDate;
 
   /// No description provided for @productionBeforeEntryDate.
   ///
@@ -29089,6 +29119,168 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Nos reservamos el derecho de modificar estos términos en cualquier momento. Le notificaremos sobre cambios significativos a través de la aplicación. El uso continuado después de los cambios constituye su aceptación de los nuevos términos.'**
   String get legalTerms6Body;
+
+  /// No description provided for @guiaDiariaTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Guía del Día'**
+  String get guiaDiariaTitle;
+
+  /// No description provided for @guiaDiariaDia.
+  ///
+  /// In es, this message translates to:
+  /// **'Día {dia}'**
+  String guiaDiariaDia(int dia);
+
+  /// No description provided for @guiaDiariaProgreso.
+  ///
+  /// In es, this message translates to:
+  /// **'{completadas} de {total} tareas'**
+  String guiaDiariaProgreso(int completadas, int total);
+
+  /// No description provided for @guiaDiariaTodasCompletadas.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Todas las tareas completadas!'**
+  String get guiaDiariaTodasCompletadas;
+
+  /// No description provided for @guiaDiariaMarcarTodas.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar todas'**
+  String get guiaDiariaMarcarTodas;
+
+  /// No description provided for @guiaDiariaHoy.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get guiaDiariaHoy;
+
+  /// No description provided for @guiaDiariaSinTareas.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay tareas programadas para este día'**
+  String get guiaDiariaSinTareas;
+
+  /// No description provided for @guiaDiariaBotonLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Guía diaria interactiva'**
+  String get guiaDiariaBotonLabel;
+
+  /// No description provided for @guiaDiariaBotonSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tareas del día con control de progreso'**
+  String get guiaDiariaBotonSubtitle;
+
+  /// No description provided for @guiaDiariaNavDia.
+  ///
+  /// In es, this message translates to:
+  /// **'Ir al día'**
+  String get guiaDiariaNavDia;
+
+  /// No description provided for @guiaDiariaCatAlimentacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Alimentación'**
+  String get guiaDiariaCatAlimentacion;
+
+  /// No description provided for @guiaDiariaCatAgua.
+  ///
+  /// In es, this message translates to:
+  /// **'Agua'**
+  String get guiaDiariaCatAgua;
+
+  /// No description provided for @guiaDiariaCatLuz.
+  ///
+  /// In es, this message translates to:
+  /// **'Luz'**
+  String get guiaDiariaCatLuz;
+
+  /// No description provided for @guiaDiariaCatTemperatura.
+  ///
+  /// In es, this message translates to:
+  /// **'Temperatura'**
+  String get guiaDiariaCatTemperatura;
+
+  /// No description provided for @guiaDiariaCatHumedad.
+  ///
+  /// In es, this message translates to:
+  /// **'Humedad'**
+  String get guiaDiariaCatHumedad;
+
+  /// No description provided for @guiaDiariaCatPesaje.
+  ///
+  /// In es, this message translates to:
+  /// **'Pesaje'**
+  String get guiaDiariaCatPesaje;
+
+  /// No description provided for @guiaDiariaCatVacunacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Vacunación'**
+  String get guiaDiariaCatVacunacion;
+
+  /// No description provided for @guiaDiariaCatManejoGeneral.
+  ///
+  /// In es, this message translates to:
+  /// **'Manejo general'**
+  String get guiaDiariaCatManejoGeneral;
+
+  /// No description provided for @guiaDiariaVolverHoy.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a hoy'**
+  String get guiaDiariaVolverHoy;
+
+  /// No description provided for @guiaDiariaProximaVacuna.
+  ///
+  /// In es, this message translates to:
+  /// **'Próxima vacuna: día {dia}'**
+  String guiaDiariaProximaVacuna(int dia);
+
+  /// No description provided for @guiaDiariaProximoPesaje.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximo pesaje: día {dia}'**
+  String guiaDiariaProximoPesaje(int dia);
+
+  /// No description provided for @guiaDiariaCatPostura.
+  ///
+  /// In es, this message translates to:
+  /// **'Postura / Huevos'**
+  String get guiaDiariaCatPostura;
+
+  /// No description provided for @guiaDiariaCatBioseguridad.
+  ///
+  /// In es, this message translates to:
+  /// **'Bioseguridad'**
+  String get guiaDiariaCatBioseguridad;
+
+  /// No description provided for @guiaDiariaCatEquipos.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos'**
+  String get guiaDiariaCatEquipos;
+
+  /// No description provided for @guiaDiariaRealizado.
+  ///
+  /// In es, this message translates to:
+  /// **'Realizado'**
+  String get guiaDiariaRealizado;
+
+  /// No description provided for @guiaDiariaPorAve.
+  ///
+  /// In es, this message translates to:
+  /// **'por ave'**
+  String get guiaDiariaPorAve;
+
+  /// No description provided for @guiaDiariaTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'total lote'**
+  String get guiaDiariaTotal;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

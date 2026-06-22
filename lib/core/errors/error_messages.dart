@@ -418,6 +418,8 @@ class ErrorMessages {
           'Los huevos buenos no pueden ser negativos',
       'REG_PROD_BUENOS_NO_SUPERAR':
           'Los huevos buenos no pueden superar los recolectados',
+      'REG_PROD_DEFECTOS_NO_SUPERAR':
+          'Los huevos rotos + sucios no pueden superar los recolectados',
       'REG_PROD_AVES_MAYOR_CERO': 'La cantidad de aves debe ser mayor a 0',
       'REG_PROD_MAX_FOTOS': 'Máximo 3 fotos por registro',
       'REG_PROD_PESO_POSITIVO': 'El peso promedio debe ser positivo',
@@ -527,6 +529,7 @@ class ErrorMessages {
       'AUTH_LOADING_PROFILE': 'Actualizando perfil...',
       'AUTH_LOADING_VERIFYING': 'Verificando identidad...',
       'AUTH_LOADING_LINKING': 'Vinculando cuenta de {provider}...',
+      'AUTH_LOADING_DELETE': 'Eliminando cuenta...',
       'AUTH_SESSION_CLOSED': 'Sesión cerrada',
       'AUTH_NO_PENDING_CREDENTIAL': 'No hay credencial pendiente para vincular',
       'AUTH_PASSWORD_UPDATED': 'Contraseña actualizada correctamente',
@@ -822,15 +825,18 @@ class ErrorMessages {
       'ERR_SAVING_INSPECTION': 'Error al guardar inspección: {e}',
       'ERR_LOADING_PROGRAMS': 'Error al cargar programas: {e}',
       'ERR_LOADING_NECROPSIES': 'Error al cargar necropsias: {e}',
-      'ERR_LOADING_BATCH_NECROPSIES': 'Error al cargar necropsias del lote: {e}',
+      'ERR_LOADING_BATCH_NECROPSIES':
+          'Error al cargar necropsias del lote: {e}',
       'ERR_REGISTERING_NECROPSY': 'Error al registrar necropsia: {e}',
       'ERR_UPDATING_RESULT': 'Error al actualizar resultado: {e}',
       'ERR_CONFIRMING_DIAGNOSIS': 'Error al confirmar diagnóstico: {e}',
       'ERR_DELETING_NECROPSY': 'Error al eliminar necropsia: {e}',
       'ERR_LOADING_STATISTICS': 'Error al cargar estadísticas: {e}',
-      'ERR_LOADING_ANTIMICROBIAL_USES': 'Error al cargar usos de antimicrobianos: {e}',
+      'ERR_LOADING_ANTIMICROBIAL_USES':
+          'Error al cargar usos de antimicrobianos: {e}',
       'ERR_LOADING_WITHDRAWAL_BATCHES': 'Error al cargar lotes en retiro: {e}',
-      'ERR_REGISTERING_ANTIMICROBIAL_USE': 'Error al registrar uso de antimicrobiano: {e}',
+      'ERR_REGISTERING_ANTIMICROBIAL_USE':
+          'Error al registrar uso de antimicrobiano: {e}',
       'ERR_GENERATING_REPORT': 'Error al generar reporte: {e}',
       'ERR_UPDATING_USE': 'Error al actualizar uso: {e}',
       'ERR_DELETING_USE': 'Error al eliminar uso: {e}',
@@ -840,7 +846,8 @@ class ErrorMessages {
       'ERR_CANCELING_EVENT': 'Error al cancelar evento: {e}',
       'ERR_RESCHEDULING_EVENT': 'Error al reprogramar evento: {e}',
       'ERR_DELETING_EVENT': 'Error al eliminar evento: {e}',
-      'ERR_CREATING_EVENTS_FROM_PROGRAM': 'Error al crear eventos desde programa: {e}',
+      'ERR_CREATING_EVENTS_FROM_PROGRAM':
+          'Error al crear eventos desde programa: {e}',
 
       // Infrastructure error messages
       'ERR_NO_CONNECTION': 'Sin conexión a internet',
@@ -854,8 +861,10 @@ class ErrorMessages {
       'ERR_IMAGE_TOO_LARGE': 'La imagen excede el tamaño máximo (5MB)',
       'ERR_NO_PENDING_CREDENTIAL': 'No hay credencial pendiente para vincular',
       'ERR_LINK_ACCOUNT_FAILED': 'Error al vincular la cuenta',
-      'ERR_GOOGLE_ALREADY_LINKED': 'Esta cuenta de Google ya está vinculada a otro usuario',
-      'ERR_PROVIDER_ALREADY_LINKED': 'Este proveedor ya está vinculado a tu cuenta',
+      'ERR_GOOGLE_ALREADY_LINKED':
+          'Esta cuenta de Google ya está vinculada a otro usuario',
+      'ERR_PROVIDER_ALREADY_LINKED':
+          'Este proveedor ya está vinculado a tu cuenta',
       'ERR_UNKNOWN': 'Error desconocido',
       'ERR_CREATE_FARM': 'Error al crear granja',
       'ERR_GET_FARM': 'Error al obtener granja',
@@ -865,11 +874,20 @@ class ErrorMessages {
       'ERR_VERIFY_RUC': 'Error al verificar RUC',
       'ERR_COUNT_FARMS': 'Error al contar granjas',
       'ERR_CANNOT_INVITE_OWNER': 'No se puede invitar con rol de propietario',
-      'ERR_NO_INVITE_PERMISSION': 'No tienes permiso para invitar usuarios a esta granja',
+      'ERR_NO_INVITE_PERMISSION':
+          'No tienes permiso para invitar usuarios a esta granja',
       'ERR_INVITATION_NOT_FOUND': 'Invitación no encontrada',
       'ERR_INVITATION_INVALID': 'Invitación no válida o expirada',
       'ERR_ALREADY_MEMBER': 'Ya eres miembro de esta granja',
       'ERR_CANNOT_ACCEPT_OWN': 'No puedes aceptar tu propia invitación',
+      'ERR_INVITATION_EMAIL_MISMATCH':
+          'Esta invitación está dirigida a otro correo electrónico',
+      'ERR_DUPLICATE_INVITATION':
+          'Ya existe una invitación activa para este correo en esta granja',
+      'ERR_CANNOT_CHANGE_OWNER_ROLE':
+          'No se puede cambiar el rol del propietario',
+      'ERR_CANNOT_ASSIGN_OWNER_ROLE':
+          'No se puede asignar el rol de propietario a un colaborador',
       'ERR_REMOVE_USER': 'Error al remover usuario de la granja',
       'ERR_FARM_NOT_FOUND': 'Granja no encontrada',
       'ERR_FARM_NOT_EXISTS': 'La granja no existe',
@@ -919,12 +937,14 @@ class ErrorMessages {
       'ERR_CLEAR_CACHE': 'Error al limpiar cache: {e}',
 
       // Infraestructura - usuarios granja
-      'ERR_NO_CONNECTION_PHOTO': 'No hay conexión a internet. La foto de perfil se actualizará cuando tengas señal.',
+      'ERR_NO_CONNECTION_PHOTO':
+          'No hay conexión a internet. La foto de perfil se actualizará cuando tengas señal.',
       'ERR_GET_FARM_USERS': 'Error al obtener usuarios de la granja',
       'ERR_ASSIGN_USER': 'Error al asignar usuario a la granja',
       'ERR_USER_NOT_FOUND_IN_FARM': 'Usuario no encontrado en la granja',
       'ERR_CHANGE_ROLE': 'Error al cambiar rol del usuario',
-      'ERR_TRANSFER_OR_DELETE': 'Debes transferir la propiedad o eliminar la granja',
+      'ERR_TRANSFER_OR_DELETE':
+          'Debes transferir la propiedad o eliminar la granja',
       'ERR_GET_USER_FARMS': 'Error al obtener granjas del usuario',
       'ERR_CREATE_INVITATION': 'Error al crear invitación',
       'ERR_MARK_INVITATION_USED': 'Error al marcar invitación como usada',
@@ -1155,8 +1175,10 @@ class ErrorMessages {
       'ERR_UPDATE_HEALTH_EVENT': 'Error al actualizar evento: {e}',
 
       // Excepciones misceláneas
-      'ERR_VACCINATION_NOT_FOUND_AFTER_UPDATE': 'Vacunación no encontrada después de actualizar',
-      'ERR_RECORD_NOT_FOUND_AFTER_UPDATE': 'Registro no encontrado después de actualizar',
+      'ERR_VACCINATION_NOT_FOUND_AFTER_UPDATE':
+          'Vacunación no encontrada después de actualizar',
+      'ERR_RECORD_NOT_FOUND_AFTER_UPDATE':
+          'Registro no encontrado después de actualizar',
       'ERR_NECROPSY_NOT_FOUND': 'Necropsia no encontrada',
       'ERR_EVENT_NOT_FOUND': 'Evento no encontrado',
       'ERR_NO_ACTIVE_BATCH': 'No hay lote activo',
@@ -1221,9 +1243,11 @@ class ErrorMessages {
       'PDF_BALANCE': 'BALANCE',
 
       // PDF - Análisis
-      'PDF_HIGH_MORTALITY': '⚠ Mortalidad alta ({pct}%). Se recomienda revisión de condiciones sanitarias.',
+      'PDF_HIGH_MORTALITY':
+          '⚠ Mortalidad alta ({pct}%). Se recomienda revisión de condiciones sanitarias.',
       'PDF_GOOD_SURVIVAL': '✓ Excelente índice de supervivencia ({pct}%).',
-      'PDF_HIGH_CONVERSION': '⚠ Conversión alimenticia alta ({value}). Revisar calidad de alimento.',
+      'PDF_HIGH_CONVERSION':
+          '⚠ Conversión alimenticia alta ({value}). Revisar calidad de alimento.',
       'PDF_GOOD_CONVERSION': '✓ Excelente conversión alimenticia ({value}).',
       'PDF_WEIGHT_BELOW': '⚠ Peso por debajo del objetivo ({diff}g menos).',
       'PDF_WEIGHT_ABOVE': '✓ Peso por encima del objetivo (+{diff}g).',
@@ -1287,8 +1311,7 @@ class ErrorMessages {
       'ERR_VACCINATION_NOT_FOUND': 'Vacunación no encontrada',
       'ERR_RECORD_NOT_FOUND': 'Registro no encontrado',
       'EVT_VACCINATION_TITLE': 'Vacunación: {name}',
-      'EVT_VACCINATION_DESC':
-          'Aplicar {name} según programa de vacunación',
+      'EVT_VACCINATION_DESC': 'Aplicar {name} según programa de vacunación',
       'LABEL_SYSTEM': 'Sistema',
 
       // Alertas sanitarias
@@ -1308,8 +1331,7 @@ class ErrorMessages {
       // Domain defaults
       'DEFAULT_NO_DESCRIPTION': 'Sin descripción disponible',
       'DEFAULT_MORTALITY_RECORD': 'Registro de mortalidad',
-      'GRANJA_MAINTENANCE_NOTE':
-          'Granja en mantenimiento el {date}',
+      'GRANJA_MAINTENANCE_NOTE': 'Granja en mantenimiento el {date}',
       'GRANJA_MAINTENANCE_NOTE_REASON':
           'Granja en mantenimiento el {date} - Motivo: {reason}',
 
@@ -1707,6 +1729,8 @@ class ErrorMessages {
       'REG_PROD_HUEVOS_NO_NEGATIVO': 'Collected eggs cannot be negative',
       'REG_PROD_BUENOS_NO_NEGATIVO': 'Good eggs cannot be negative',
       'REG_PROD_BUENOS_NO_SUPERAR': 'Good eggs cannot exceed collected eggs',
+      'REG_PROD_DEFECTOS_NO_SUPERAR':
+          'Broken + dirty eggs cannot exceed collected eggs',
       'REG_PROD_AVES_MAYOR_CERO': 'Bird count must be greater than 0',
       'REG_PROD_MAX_FOTOS': 'Maximum 3 photos per record',
       'REG_PROD_PESO_POSITIVO': 'Average weight must be positive',
@@ -1811,6 +1835,7 @@ class ErrorMessages {
       'AUTH_LOADING_PROFILE': 'Updating profile...',
       'AUTH_LOADING_VERIFYING': 'Verifying identity...',
       'AUTH_LOADING_LINKING': 'Linking {provider} account...',
+      'AUTH_LOADING_DELETE': 'Deleting account...',
       'AUTH_SESSION_CLOSED': 'Session closed',
       'AUTH_NO_PENDING_CREDENTIAL': 'No pending credential to link',
       'AUTH_PASSWORD_UPDATED': 'Password updated successfully',
@@ -2111,7 +2136,8 @@ class ErrorMessages {
       'ERR_LOADING_STATISTICS': 'Error loading statistics: {e}',
       'ERR_LOADING_ANTIMICROBIAL_USES': 'Error loading antimicrobial uses: {e}',
       'ERR_LOADING_WITHDRAWAL_BATCHES': 'Error loading withdrawal batches: {e}',
-      'ERR_REGISTERING_ANTIMICROBIAL_USE': 'Error registering antimicrobial use: {e}',
+      'ERR_REGISTERING_ANTIMICROBIAL_USE':
+          'Error registering antimicrobial use: {e}',
       'ERR_GENERATING_REPORT': 'Error generating report: {e}',
       'ERR_UPDATING_USE': 'Error updating use: {e}',
       'ERR_DELETING_USE': 'Error deleting use: {e}',
@@ -2121,7 +2147,8 @@ class ErrorMessages {
       'ERR_CANCELING_EVENT': 'Error canceling event: {e}',
       'ERR_RESCHEDULING_EVENT': 'Error rescheduling event: {e}',
       'ERR_DELETING_EVENT': 'Error deleting event: {e}',
-      'ERR_CREATING_EVENTS_FROM_PROGRAM': 'Error creating events from program: {e}',
+      'ERR_CREATING_EVENTS_FROM_PROGRAM':
+          'Error creating events from program: {e}',
 
       // Infrastructure error messages
       'ERR_NO_CONNECTION': 'No internet connection',
@@ -2135,8 +2162,10 @@ class ErrorMessages {
       'ERR_IMAGE_TOO_LARGE': 'Image exceeds maximum size (5MB)',
       'ERR_NO_PENDING_CREDENTIAL': 'No pending credential to link',
       'ERR_LINK_ACCOUNT_FAILED': 'Error linking account',
-      'ERR_GOOGLE_ALREADY_LINKED': 'This Google account is already linked to another user',
-      'ERR_PROVIDER_ALREADY_LINKED': 'This provider is already linked to your account',
+      'ERR_GOOGLE_ALREADY_LINKED':
+          'This Google account is already linked to another user',
+      'ERR_PROVIDER_ALREADY_LINKED':
+          'This provider is already linked to your account',
       'ERR_UNKNOWN': 'Unknown error',
       'ERR_CREATE_FARM': 'Error creating farm',
       'ERR_GET_FARM': 'Error getting farm',
@@ -2146,11 +2175,19 @@ class ErrorMessages {
       'ERR_VERIFY_RUC': 'Error verifying RUC',
       'ERR_COUNT_FARMS': 'Error counting farms',
       'ERR_CANNOT_INVITE_OWNER': 'Cannot invite with owner role',
-      'ERR_NO_INVITE_PERMISSION': 'You do not have permission to invite users to this farm',
+      'ERR_NO_INVITE_PERMISSION':
+          'You do not have permission to invite users to this farm',
       'ERR_INVITATION_NOT_FOUND': 'Invitation not found',
       'ERR_INVITATION_INVALID': 'Invalid or expired invitation',
       'ERR_ALREADY_MEMBER': 'You are already a member of this farm',
       'ERR_CANNOT_ACCEPT_OWN': 'You cannot accept your own invitation',
+      'ERR_INVITATION_EMAIL_MISMATCH':
+          'This invitation is addressed to a different email',
+      'ERR_DUPLICATE_INVITATION':
+          'There is already an active invitation for this email in this farm',
+      'ERR_CANNOT_CHANGE_OWNER_ROLE': 'The owner role cannot be changed',
+      'ERR_CANNOT_ASSIGN_OWNER_ROLE':
+          'The owner role cannot be assigned to a collaborator',
       'ERR_REMOVE_USER': 'Error removing user from farm',
       'ERR_FARM_NOT_FOUND': 'Farm not found',
       'ERR_FARM_NOT_EXISTS': 'The farm does not exist',
@@ -2200,12 +2237,14 @@ class ErrorMessages {
       'ERR_CLEAR_CACHE': 'Error clearing cache: {e}',
 
       // Infrastructure - farm users
-      'ERR_NO_CONNECTION_PHOTO': 'No internet connection. Profile photo will update when you have signal.',
+      'ERR_NO_CONNECTION_PHOTO':
+          'No internet connection. Profile photo will update when you have signal.',
       'ERR_GET_FARM_USERS': 'Error fetching farm users',
       'ERR_ASSIGN_USER': 'Error assigning user to farm',
       'ERR_USER_NOT_FOUND_IN_FARM': 'User not found in farm',
       'ERR_CHANGE_ROLE': 'Error changing user role',
-      'ERR_TRANSFER_OR_DELETE': 'You must transfer ownership or delete the farm',
+      'ERR_TRANSFER_OR_DELETE':
+          'You must transfer ownership or delete the farm',
       'ERR_GET_USER_FARMS': 'Error fetching user farms',
       'ERR_CREATE_INVITATION': 'Error creating invitation',
       'ERR_MARK_INVITATION_USED': 'Error marking invitation as used',
@@ -2436,7 +2475,8 @@ class ErrorMessages {
       'ERR_UPDATE_HEALTH_EVENT': 'Error updating event: {e}',
 
       // Miscellaneous exceptions
-      'ERR_VACCINATION_NOT_FOUND_AFTER_UPDATE': 'Vaccination not found after update',
+      'ERR_VACCINATION_NOT_FOUND_AFTER_UPDATE':
+          'Vaccination not found after update',
       'ERR_RECORD_NOT_FOUND_AFTER_UPDATE': 'Record not found after update',
       'ERR_NECROPSY_NOT_FOUND': 'Necropsy not found',
       'ERR_EVENT_NOT_FOUND': 'Event not found',
@@ -2502,9 +2542,11 @@ class ErrorMessages {
       'PDF_BALANCE': 'BALANCE',
 
       // PDF - Analysis
-      'PDF_HIGH_MORTALITY': '⚠ High mortality ({pct}%). Sanitary condition review recommended.',
+      'PDF_HIGH_MORTALITY':
+          '⚠ High mortality ({pct}%). Sanitary condition review recommended.',
       'PDF_GOOD_SURVIVAL': '✓ Excellent survival rate ({pct}%).',
-      'PDF_HIGH_CONVERSION': '⚠ High feed conversion ({value}). Review feed quality.',
+      'PDF_HIGH_CONVERSION':
+          '⚠ High feed conversion ({value}). Review feed quality.',
       'PDF_GOOD_CONVERSION': '✓ Excellent feed conversion ({value}).',
       'PDF_WEIGHT_BELOW': '⚠ Weight below target ({diff}g less).',
       'PDF_WEIGHT_ABOVE': '✓ Weight above target (+{diff}g).',
@@ -2555,8 +2597,7 @@ class ErrorMessages {
 
       // Inventory
       'ERR_ITEM_NOT_FOUND': 'Item not found',
-      'ERR_INSUFFICIENT_STOCK':
-          'Insufficient stock. Available: {stock} {unit}',
+      'ERR_INSUFFICIENT_STOCK': 'Insufficient stock. Available: {stock} {unit}',
 
       // Shed events
       'EVT_SHED_CREATED': 'Shed created: {name}',
@@ -2568,8 +2609,7 @@ class ErrorMessages {
       'ERR_VACCINATION_NOT_FOUND': 'Vaccination not found',
       'ERR_RECORD_NOT_FOUND': 'Record not found',
       'EVT_VACCINATION_TITLE': 'Vaccination: {name}',
-      'EVT_VACCINATION_DESC':
-          'Apply {name} according to vaccination program',
+      'EVT_VACCINATION_DESC': 'Apply {name} according to vaccination program',
       'LABEL_SYSTEM': 'System',
 
       // Health alerts
@@ -2583,14 +2623,12 @@ class ErrorMessages {
       'ALERT_ABNORMAL_TEMP_DESC':
           'Temperature ({temp}°C) is outside the optimal range ({min}°C - {max}°C)',
       'ALERT_TEMP_INDICATOR': 'Temperature',
-      'ALERT_TEMP_REC':
-          'Adjust ventilation and heating as needed.',
+      'ALERT_TEMP_REC': 'Adjust ventilation and heating as needed.',
 
       // Domain defaults
       'DEFAULT_NO_DESCRIPTION': 'No description available',
       'DEFAULT_MORTALITY_RECORD': 'Mortality record',
-      'GRANJA_MAINTENANCE_NOTE':
-          'Farm under maintenance on {date}',
+      'GRANJA_MAINTENANCE_NOTE': 'Farm under maintenance on {date}',
       'GRANJA_MAINTENANCE_NOTE_REASON':
           'Farm under maintenance on {date} - Reason: {reason}',
 
@@ -2598,8 +2636,7 @@ class ErrorMessages {
       'ERR_DOC_NO_DATA': 'Document {id} has no data',
       'ERR_UNIMPLEMENTED_VACCINATION_INTEGRATION':
           'Integration with VaccinationProgram pending',
-      'ERR_UNIMPLEMENTED_GRANJA_ID_REQUIRED':
-          'Farm ID required for deletion',
+      'ERR_UNIMPLEMENTED_GRANJA_ID_REQUIRED': 'Farm ID required for deletion',
 
       // Collaborators
       'ERR_GENERIC_PREFIX': 'Error: {e}',
@@ -2687,8 +2724,7 @@ class ErrorMessages {
       'VENTA_PESO_FAENADO_GREATER_ZERO': 'O peso abatido deve ser maior que 0',
       'VENTA_HUEVOS_CLASIFICACION':
           'Deve especificar pelo menos uma classificação de ovos',
-      'VENTA_HUEVOS_PRECIOS':
-          'Deve especificar preços para as classificações',
+      'VENTA_HUEVOS_PRECIOS': 'Deve especificar preços para as classificações',
       'VENTA_HUEVOS_TOTAL_GREATER_ZERO':
           'A quantidade total de ovos deve ser maior que 0',
       'VENTA_POLLINAZA_GREATER_ZERO':
@@ -2707,8 +2743,7 @@ class ErrorMessages {
       'COSTO_SELECT_GRANJA': 'Deve selecionar uma granja',
       'COSTO_CONCEPTO_REQUIRED': 'O conceito não pode estar vazio',
       'COSTO_MONTO_GREATER_ZERO': 'O valor deve ser maior que 0',
-      'COSTO_REGISTRADO_POR_REQUIRED':
-          'Deve especificar quem registra o custo',
+      'COSTO_REGISTRADO_POR_REQUIRED': 'Deve especificar quem registra o custo',
       'COSTO_LOTE_ID_REQUIRED': 'O ID do lote é obrigatório',
       'COSTO_ID_REQUIRED': 'O ID do custo é obrigatório',
       'COSTO_APROBADOR_REQUIRED': 'Deve especificar quem aprova',
@@ -2855,7 +2890,8 @@ class ErrorMessages {
       'LOTE_PESO_MAYOR_CERO': 'O peso médio deve ser maior que 0',
       'LOTE_NO_ELIMINAR_ACTIVO':
           'Não é possível excluir um lote ativo. Primeiro encerre-o.',
-      'LOTE_CANTIDAD_MINIMA': 'A quantidade inicial deve ser de pelo menos 10 aves',
+      'LOTE_CANTIDAD_MINIMA':
+          'A quantidade inicial deve ser de pelo menos 10 aves',
 
       // Galpones usecases
       'GALPON_SIN_LOTE': 'O galpão não tem nenhum lote atribuído.',
@@ -3001,10 +3037,11 @@ class ErrorMessages {
       // Entity validation - registro_produccion
       'REG_PROD_HUEVOS_NO_NEGATIVO':
           'Os ovos coletados não podem ser negativos',
-      'REG_PROD_BUENOS_NO_NEGATIVO':
-          'Os ovos bons não podem ser negativos',
+      'REG_PROD_BUENOS_NO_NEGATIVO': 'Os ovos bons não podem ser negativos',
       'REG_PROD_BUENOS_NO_SUPERAR':
           'Os ovos bons não podem superar os coletados',
+      'REG_PROD_DEFECTOS_NO_SUPERAR':
+          'Os ovos quebrados + sujos não podem superar os coletados',
       'REG_PROD_AVES_MAYOR_CERO': 'A quantidade de aves deve ser maior que 0',
       'REG_PROD_MAX_FOTOS': 'Máximo 3 fotos por registro',
       'REG_PROD_PESO_POSITIVO': 'O peso médio deve ser positivo',
@@ -3059,8 +3096,7 @@ class ErrorMessages {
       // Galpones - actualizar duplicados
       'GALPON_CODIGO_DUPLICADO_ACTUALIZAR':
           'Já existe um galpão com esse código',
-      'GALPON_NOMBRE_DUPLICADO_ACTUALIZAR':
-          'Já existe um galpão com esse nome',
+      'GALPON_NOMBRE_DUPLICADO_ACTUALIZAR': 'Já existe um galpão com esse nome',
 
       // Granjas - dashboard
       'GRANJA_NO_ENCONTRADA_DASHBOARD': 'A granja não existe',
@@ -3114,6 +3150,7 @@ class ErrorMessages {
       'AUTH_LOADING_PROFILE': 'Atualizando perfil...',
       'AUTH_LOADING_VERIFYING': 'Verificando identidade...',
       'AUTH_LOADING_LINKING': 'Vinculando conta do {provider}...',
+      'AUTH_LOADING_DELETE': 'Excluindo conta...',
       'AUTH_SESSION_CLOSED': 'Sessão encerrada',
       'AUTH_NO_PENDING_CREDENTIAL': 'Não há credencial pendente para vincular',
       'AUTH_PASSWORD_UPDATED': 'Senha atualizada com sucesso',
@@ -3394,12 +3431,10 @@ class ErrorMessages {
           'Morte súbita de aves aparentemente saudáveis|Aves em posição dorsal|Mais comum em machos de crescimento rápido',
       'ENF_MUERTESUBITA_TRAT':
           'Restrição alimentar|Controle de crescimento|Programas de luz',
-      'ENF_DEFICIENCIAVITAMINAE_SINT':
-          'Ataxia|Torcicolo|Convulsões|Paralisia',
+      'ENF_DEFICIENCIAVITAMINAE_SINT': 'Ataxia|Torcicolo|Convulsões|Paralisia',
       'ENF_DEFICIENCIAVITAMINAE_TRAT':
           'Suplementação de Vitamina E|Antioxidantes na ração',
-      'ENF_RAQUITISMO_SINT':
-          'Ossos moles|Patas tortas|Bico mole|Cascas fracas',
+      'ENF_RAQUITISMO_SINT': 'Ossos moles|Patas tortas|Bico mole|Cascas fracas',
       'ENF_RAQUITISMO_TRAT':
           'Correção dos níveis de Cálcio, Fósforo e Vitamina D3|Exposição à luz solar',
 
@@ -3409,15 +3444,19 @@ class ErrorMessages {
       'ERR_SAVING_INSPECTION': 'Erro ao salvar inspeção: {e}',
       'ERR_LOADING_PROGRAMS': 'Erro ao carregar programas: {e}',
       'ERR_LOADING_NECROPSIES': 'Erro ao carregar necropsias: {e}',
-      'ERR_LOADING_BATCH_NECROPSIES': 'Erro ao carregar necropsias do lote: {e}',
+      'ERR_LOADING_BATCH_NECROPSIES':
+          'Erro ao carregar necropsias do lote: {e}',
       'ERR_REGISTERING_NECROPSY': 'Erro ao registrar necropsia: {e}',
       'ERR_UPDATING_RESULT': 'Erro ao atualizar resultado: {e}',
       'ERR_CONFIRMING_DIAGNOSIS': 'Erro ao confirmar diagnóstico: {e}',
       'ERR_DELETING_NECROPSY': 'Erro ao excluir necropsia: {e}',
       'ERR_LOADING_STATISTICS': 'Erro ao carregar estatísticas: {e}',
-      'ERR_LOADING_ANTIMICROBIAL_USES': 'Erro ao carregar usos de antimicrobianos: {e}',
-      'ERR_LOADING_WITHDRAWAL_BATCHES': 'Erro ao carregar lotes em carência: {e}',
-      'ERR_REGISTERING_ANTIMICROBIAL_USE': 'Erro ao registrar uso de antimicrobiano: {e}',
+      'ERR_LOADING_ANTIMICROBIAL_USES':
+          'Erro ao carregar usos de antimicrobianos: {e}',
+      'ERR_LOADING_WITHDRAWAL_BATCHES':
+          'Erro ao carregar lotes em carência: {e}',
+      'ERR_REGISTERING_ANTIMICROBIAL_USE':
+          'Erro ao registrar uso de antimicrobiano: {e}',
       'ERR_GENERATING_REPORT': 'Erro ao gerar relatório: {e}',
       'ERR_UPDATING_USE': 'Erro ao atualizar uso: {e}',
       'ERR_DELETING_USE': 'Erro ao excluir uso: {e}',
@@ -3427,7 +3466,8 @@ class ErrorMessages {
       'ERR_CANCELING_EVENT': 'Erro ao cancelar evento: {e}',
       'ERR_RESCHEDULING_EVENT': 'Erro ao reprogramar evento: {e}',
       'ERR_DELETING_EVENT': 'Erro ao excluir evento: {e}',
-      'ERR_CREATING_EVENTS_FROM_PROGRAM': 'Erro ao criar eventos a partir do programa: {e}',
+      'ERR_CREATING_EVENTS_FROM_PROGRAM':
+          'Erro ao criar eventos a partir do programa: {e}',
 
       // Infrastructure error messages
       'ERR_NO_CONNECTION': 'Sem conexão com a internet',
@@ -3441,8 +3481,10 @@ class ErrorMessages {
       'ERR_IMAGE_TOO_LARGE': 'A imagem excede o tamanho máximo (5MB)',
       'ERR_NO_PENDING_CREDENTIAL': 'Não há credencial pendente para vincular',
       'ERR_LINK_ACCOUNT_FAILED': 'Erro ao vincular a conta',
-      'ERR_GOOGLE_ALREADY_LINKED': 'Esta conta do Google já está vinculada a outro usuário',
-      'ERR_PROVIDER_ALREADY_LINKED': 'Este provedor já está vinculado à sua conta',
+      'ERR_GOOGLE_ALREADY_LINKED':
+          'Esta conta do Google já está vinculada a outro usuário',
+      'ERR_PROVIDER_ALREADY_LINKED':
+          'Este provedor já está vinculado à sua conta',
       'ERR_UNKNOWN': 'Erro desconhecido',
       'ERR_CREATE_FARM': 'Erro ao criar granja',
       'ERR_GET_FARM': 'Erro ao obter granja',
@@ -3451,12 +3493,22 @@ class ErrorMessages {
       'ERR_DELETE_FARM': 'Erro ao excluir granja',
       'ERR_VERIFY_RUC': 'Erro ao verificar CNPJ',
       'ERR_COUNT_FARMS': 'Erro ao contar granjas',
-      'ERR_CANNOT_INVITE_OWNER': 'Não é possível convidar com cargo de proprietário',
-      'ERR_NO_INVITE_PERMISSION': 'Você não tem permissão para convidar usuários para esta granja',
+      'ERR_CANNOT_INVITE_OWNER':
+          'Não é possível convidar com cargo de proprietário',
+      'ERR_NO_INVITE_PERMISSION':
+          'Você não tem permissão para convidar usuários para esta granja',
       'ERR_INVITATION_NOT_FOUND': 'Convite não encontrado',
       'ERR_INVITATION_INVALID': 'Convite inválido ou expirado',
       'ERR_ALREADY_MEMBER': 'Você já é membro desta granja',
       'ERR_CANNOT_ACCEPT_OWN': 'Você não pode aceitar seu próprio convite',
+      'ERR_INVITATION_EMAIL_MISMATCH':
+          'Este convite é destinado a outro e-mail',
+      'ERR_DUPLICATE_INVITATION':
+          'Já existe um convite ativo para este e-mail nesta granja',
+      'ERR_CANNOT_CHANGE_OWNER_ROLE':
+          'Não é possível alterar o papel do proprietário',
+      'ERR_CANNOT_ASSIGN_OWNER_ROLE':
+          'Não é possível atribuir o papel de proprietário a um colaborador',
       'ERR_REMOVE_USER': 'Erro ao remover usuário da granja',
       'ERR_FARM_NOT_FOUND': 'Granja não encontrada',
       'ERR_FARM_NOT_EXISTS': 'A granja não existe',
@@ -3506,12 +3558,14 @@ class ErrorMessages {
       'ERR_CLEAR_CACHE': 'Erro ao limpar cache: {e}',
 
       // Infraestructura - usuarios granja
-      'ERR_NO_CONNECTION_PHOTO': 'Sem conexão com a internet. A foto de perfil será atualizada quando houver sinal.',
+      'ERR_NO_CONNECTION_PHOTO':
+          'Sem conexão com a internet. A foto de perfil será atualizada quando houver sinal.',
       'ERR_GET_FARM_USERS': 'Erro ao obter usuários da granja',
       'ERR_ASSIGN_USER': 'Erro ao atribuir usuário à granja',
       'ERR_USER_NOT_FOUND_IN_FARM': 'Usuário não encontrado na granja',
       'ERR_CHANGE_ROLE': 'Erro ao alterar cargo do usuário',
-      'ERR_TRANSFER_OR_DELETE': 'Deve transferir a propriedade ou excluir a granja',
+      'ERR_TRANSFER_OR_DELETE':
+          'Deve transferir a propriedade ou excluir a granja',
       'ERR_GET_USER_FARMS': 'Erro ao obter granjas do usuário',
       'ERR_CREATE_INVITATION': 'Erro ao criar convite',
       'ERR_MARK_INVITATION_USED': 'Erro ao marcar convite como usado',
@@ -3742,8 +3796,10 @@ class ErrorMessages {
       'ERR_UPDATE_HEALTH_EVENT': 'Erro ao atualizar evento: {e}',
 
       // Excepciones misceláneas
-      'ERR_VACCINATION_NOT_FOUND_AFTER_UPDATE': 'Vacinação não encontrada após atualização',
-      'ERR_RECORD_NOT_FOUND_AFTER_UPDATE': 'Registro não encontrado após atualização',
+      'ERR_VACCINATION_NOT_FOUND_AFTER_UPDATE':
+          'Vacinação não encontrada após atualização',
+      'ERR_RECORD_NOT_FOUND_AFTER_UPDATE':
+          'Registro não encontrado após atualização',
       'ERR_NECROPSY_NOT_FOUND': 'Necropsia não encontrada',
       'ERR_EVENT_NOT_FOUND': 'Evento não encontrado',
       'ERR_NO_ACTIVE_BATCH': 'Não há lote ativo',
@@ -3808,9 +3864,11 @@ class ErrorMessages {
       'PDF_BALANCE': 'SALDO',
 
       // PDF - Análisis
-      'PDF_HIGH_MORTALITY': '⚠ Mortalidade alta ({pct}%). Recomenda-se revisão das condições sanitárias.',
+      'PDF_HIGH_MORTALITY':
+          '⚠ Mortalidade alta ({pct}%). Recomenda-se revisão das condições sanitárias.',
       'PDF_GOOD_SURVIVAL': '✓ Excelente índice de sobrevivência ({pct}%).',
-      'PDF_HIGH_CONVERSION': '⚠ Conversão alimentar alta ({value}). Revisar qualidade da ração.',
+      'PDF_HIGH_CONVERSION':
+          '⚠ Conversão alimentar alta ({value}). Revisar qualidade da ração.',
       'PDF_GOOD_CONVERSION': '✓ Excelente conversão alimentar ({value}).',
       'PDF_WEIGHT_BELOW': '⚠ Peso abaixo do objetivo ({diff}g a menos).',
       'PDF_WEIGHT_ABOVE': '✓ Peso acima do objetivo (+{diff}g).',
@@ -3874,8 +3932,7 @@ class ErrorMessages {
       'ERR_VACCINATION_NOT_FOUND': 'Vacinação não encontrada',
       'ERR_RECORD_NOT_FOUND': 'Registro não encontrado',
       'EVT_VACCINATION_TITLE': 'Vacinação: {name}',
-      'EVT_VACCINATION_DESC':
-          'Aplicar {name} conforme programa de vacinação',
+      'EVT_VACCINATION_DESC': 'Aplicar {name} conforme programa de vacinação',
       'LABEL_SYSTEM': 'Sistema',
 
       // Alertas sanitarias
@@ -3889,14 +3946,12 @@ class ErrorMessages {
       'ALERT_ABNORMAL_TEMP_DESC':
           'A temperatura ({temp}°C) está fora da faixa ideal ({min}°C - {max}°C)',
       'ALERT_TEMP_INDICATOR': 'Temperatura',
-      'ALERT_TEMP_REC':
-          'Ajustar ventilação e aquecimento conforme necessário.',
+      'ALERT_TEMP_REC': 'Ajustar ventilação e aquecimento conforme necessário.',
 
       // Domain defaults
       'DEFAULT_NO_DESCRIPTION': 'Sem descrição disponível',
       'DEFAULT_MORTALITY_RECORD': 'Registro de mortalidade',
-      'GRANJA_MAINTENANCE_NOTE':
-          'Granja em manutenção em {date}',
+      'GRANJA_MAINTENANCE_NOTE': 'Granja em manutenção em {date}',
       'GRANJA_MAINTENANCE_NOTE_REASON':
           'Granja em manutenção em {date} - Motivo: {reason}',
 

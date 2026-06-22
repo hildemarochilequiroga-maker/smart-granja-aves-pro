@@ -60,9 +60,15 @@ class ImageUploadService {
   /// Comprime una imagen antes de subirla.
   ///
   /// Redimensiona a máximo 1280px de ancho, calidad JPEG 75%.
+  /// La compresión se ejecuta sin bloquear el hilo principal.
   /// Retorna el archivo comprimido o el original si falla.
   Future<File> _compressImage(File file) async {
     try {
+      // FlutterImageCompress ya opera nativamente (no bloquea el isolate
+      // de Dart), pero el acceso a disco sí puede causar jank.
+      // Ejecutamos la lectura de tamaños en paralelo con la compresión.
+      final originalSizeFuture = file.length();
+
       final result = await FlutterImageCompress.compressAndGetFile(
         file.absolute.path,
         '${file.parent.path}/compressed_${file.uri.pathSegments.last}',
@@ -73,8 +79,12 @@ class ImageUploadService {
       );
       if (result != null) {
         final compressed = File(result.path);
-        final originalSize = await file.length();
-        final compressedSize = await compressed.length();
+        final results = await Future.wait([
+          originalSizeFuture,
+          compressed.length(),
+        ]);
+        final originalSize = results[0];
+        final compressedSize = results[1];
         debugPrint(
           '🗜️ Imagen comprimida: '
           '${(originalSize / 1024).toStringAsFixed(0)}KB → '
@@ -310,104 +320,116 @@ class ImageUploadService {
     final urls = <String>[];
     int uploadedCount = 0;
 
-    for (int i = 0; i < files.length; i++) {
-      try {
-        final file = File(files[i].path);
-        final fileSize = await file.length();
+    // Subir en lotes de 3 en paralelo para máxima velocidad sin saturar red
+    const batchSize = 3;
+    for (
+      int batchStart = 0;
+      batchStart < files.length;
+      batchStart += batchSize
+    ) {
+      final batchEnd = (batchStart + batchSize).clamp(0, files.length);
+      final batch = <Future<String?>>[];
 
-        // Saltar archivos muy grandes
-        if (fileSize > maxFileSizeBytes) {
-          debugPrint(
-            '⚠️ Imagen $i excede ${(maxFileSizeBytes / 1024 / 1024).toStringAsFixed(0)}MB, saltando...',
-          );
-          continue;
-        }
-
-        // Comprimir imagen antes de subir
-        final compressedFile = await _compressImage(file);
-
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final ext = _extensionFromPath(compressedFile.path);
-        final path = '${type.folder}/$granjaId/$entityId/$timestamp-$i$ext';
-
-        final ref = _storage.ref().child(path);
-
-        final settableMetadata = SettableMetadata(
-          contentType: _contentTypeFromPath(compressedFile.path),
-          cacheControl: 'public, max-age=31536000',
-          customMetadata: {
-            'granjaId': granjaId,
-            'entityId': entityId,
-            'timestamp': timestamp.toString(),
-            'type': type.name,
-            'index': i.toString(),
-            ...?metadata,
-          },
+      for (int i = batchStart; i < batchEnd; i++) {
+        batch.add(
+          _uploadSingleFromMultiple(
+            xfile: files[i],
+            index: i,
+            type: type,
+            granjaId: granjaId,
+            entityId: entityId,
+            metadata: metadata,
+            firestoreDocPath: firestoreDocPath,
+            firestoreField: firestoreField,
+          ),
         );
+      }
 
-        await ref.putFile(compressedFile, settableMetadata);
-        final url = await ref.getDownloadURL();
-        urls.add(url);
-
+      final results = await Future.wait(batch);
+      for (final url in results) {
+        if (url != null) {
+          urls.add(url);
+        }
         uploadedCount++;
         onProgress?.call(uploadedCount, files.length);
-
-        debugPrint('✅ Imagen ${i + 1}/${files.length} subida');
-      } on SocketException {
-        // Conexión perdida durante la subida — encolar restantes
-        debugPrint('⚠️ Conexión perdida, encolando imagen $i...');
-        try {
-          await PendingUploadQueue.instance.enqueue(
-            filePath: files[i].path,
-            type: type,
-            granjaId: granjaId,
-            entityId: entityId,
-            metadata: metadata,
-            firestoreDocPath: firestoreDocPath,
-            firestoreField: firestoreField,
-            isMultiple: true,
-          );
-        } on Exception catch (e) {
-          debugPrint('❌ Error encolando imagen: $e');
-        }
-      } on FirebaseException catch (e) {
-        // Error de Firebase (permisos, cuota, etc.) — encolar para reintento
-        debugPrint('⚠️ FirebaseException imagen $i: $e — encolando...');
-        try {
-          await PendingUploadQueue.instance.enqueue(
-            filePath: files[i].path,
-            type: type,
-            granjaId: granjaId,
-            entityId: entityId,
-            metadata: metadata,
-            firestoreDocPath: firestoreDocPath,
-            firestoreField: firestoreField,
-            isMultiple: true,
-          );
-        } on Exception catch (enqueueErr) {
-          debugPrint('❌ Error encolando imagen: $enqueueErr');
-        }
-      } on Exception catch (e) {
-        debugPrint('❌ Error subiendo imagen $i: $e');
-        // Encolar para reintento posterior
-        try {
-          await PendingUploadQueue.instance.enqueue(
-            filePath: files[i].path,
-            type: type,
-            granjaId: granjaId,
-            entityId: entityId,
-            metadata: metadata,
-            firestoreDocPath: firestoreDocPath,
-            firestoreField: firestoreField,
-            isMultiple: true,
-          );
-        } on Exception catch (enqueueErr) {
-          debugPrint('❌ Error encolando imagen: $enqueueErr');
-        }
       }
     }
 
     return urls;
+  }
+
+  /// Sube una imagen individual dentro de un lote múltiple.
+  /// Retorna la URL si se subió exitosamente, null si falló y se encoló.
+  Future<String?> _uploadSingleFromMultiple({
+    required XFile xfile,
+    required int index,
+    required ImageUploadType type,
+    required String granjaId,
+    required String entityId,
+    Map<String, String>? metadata,
+    String? firestoreDocPath,
+    String? firestoreField,
+  }) async {
+    try {
+      final file = File(xfile.path);
+      final fileSize = await file.length();
+
+      if (fileSize > maxFileSizeBytes) {
+        debugPrint(
+          '⚠️ Imagen $index excede ${(maxFileSizeBytes / 1024 / 1024).toStringAsFixed(0)}MB, saltando...',
+        );
+        return null;
+      }
+
+      final compressedFile = await _compressImage(file);
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ext = _extensionFromPath(compressedFile.path);
+      final path = '${type.folder}/$granjaId/$entityId/$timestamp-$index$ext';
+
+      final ref = _storage.ref().child(path);
+
+      final settableMetadata = SettableMetadata(
+        contentType: _contentTypeFromPath(compressedFile.path),
+        cacheControl: 'public, max-age=31536000',
+        customMetadata: {
+          'granjaId': granjaId,
+          'entityId': entityId,
+          'timestamp': timestamp.toString(),
+          'type': type.name,
+          'index': index.toString(),
+          ...?metadata,
+        },
+      );
+
+      await ref.putFile(compressedFile, settableMetadata);
+      final url = await ref.getDownloadURL();
+      debugPrint('✅ Imagen ${index + 1} subida');
+      return url;
+    } on SocketException {
+      debugPrint('⚠️ Conexión perdida, encolando imagen $index...');
+    } on FirebaseException catch (e) {
+      debugPrint('⚠️ FirebaseException imagen $index: $e — encolando...');
+    } on Exception catch (e) {
+      debugPrint('❌ Error subiendo imagen $index: $e');
+    }
+
+    // Encolar para reintento posterior
+    try {
+      await PendingUploadQueue.instance.enqueue(
+        filePath: xfile.path,
+        type: type,
+        granjaId: granjaId,
+        entityId: entityId,
+        metadata: metadata,
+        firestoreDocPath: firestoreDocPath,
+        firestoreField: firestoreField,
+        isMultiple: true,
+      );
+    } on Exception catch (enqueueErr) {
+      debugPrint('❌ Error encolando imagen: $enqueueErr');
+    }
+    return null;
   }
 
   /// Elimina una imagen de Firebase Storage.
@@ -420,11 +442,9 @@ class ImageUploadService {
     }
   }
 
-  /// Elimina múltiples imágenes.
+  /// Elimina múltiples imágenes en paralelo.
   Future<void> deleteMultipleImages(List<String> paths) async {
-    for (final path in paths) {
-      await deleteImage(path);
-    }
+    await Future.wait(paths.map(deleteImage));
   }
 
   /// Obtiene URL de descarga de una imagen.

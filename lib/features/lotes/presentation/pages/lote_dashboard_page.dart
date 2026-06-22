@@ -517,6 +517,60 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
           ),
 
           // ================================================================
+          // BOTÓN GUÍA DIARIA INTERACTIVA
+          // ================================================================
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Card(
+              elevation: 2,
+              shadowColor: AppColors.success.withValues(alpha: 0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: AppRadius.allMd,
+                side: const BorderSide(color: AppColors.success, width: 1.2),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => context.push(
+                  AppRoutes.loteGuiaDiariaById(widget.granjaId, widget.lote.id),
+                  extra: widget.lote,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              S.of(context).guiaDiariaBotonLabel,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              S.of(context).guiaDiariaBotonSubtitle,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ================================================================
           // BOTÓN VETERINARIO VIRTUAL IA
           // ================================================================
           Padding(

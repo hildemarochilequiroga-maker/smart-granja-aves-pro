@@ -6,16 +6,17 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../inventario/inventario.dart';
@@ -485,9 +486,12 @@ class _ProgramarVacunacionPageState
   }
 
   void _nextStep() {
-    if (!_validateCurrentStep()) return;
+    if (!_validateCurrentStep()) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -501,7 +505,7 @@ class _ProgramarVacunacionPageState
   }
 
   void _previousStep() {
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -517,9 +521,6 @@ class _ProgramarVacunacionPageState
   bool _validateCurrentStep() {
     // Activar validación automática solo para el step actual
     setState(() => _autoValidatePerStep[_currentStep] = true);
-
-    // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
 
     switch (_currentStep) {
       case 0: // Información de la Vacuna
@@ -574,7 +575,7 @@ class _ProgramarVacunacionPageState
       if (vacunacionState.errorMessage != null) {
         setState(() => _isLoading = false);
         if (mounted) {
-          unawaited(HapticFeedback.heavyImpact());
+          unawaited(AppHaptics.error());
           AppSnackBar.error(
             context,
             message: S.of(context).vacErrorScheduling,
@@ -616,16 +617,17 @@ class _ProgramarVacunacionPageState
 
       if (!mounted) return;
 
-      // Feedback háptico de éxito
-      unawaited(HapticFeedback.mediumImpact());
+      // Overlay animado de éxito
+      await SaveSuccessOverlay.show(
+        context,
+        message: S.of(context).vacScheduledSuccess,
+      );
 
-      AppSnackBar.success(context, message: S.of(context).vacScheduledSuccess);
-
-      Navigator.of(context).pop(true);
+      if (mounted) Navigator.of(context).pop(true);
     } on Exception catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        unawaited(HapticFeedback.heavyImpact());
+        unawaited(AppHaptics.error());
         AppSnackBar.error(
           context,
           message: S.of(context).vacErrorSchedulingDetail,

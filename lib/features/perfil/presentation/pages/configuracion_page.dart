@@ -21,6 +21,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/application/providers/auth_provider.dart';
+import '../../../auth/application/state/auth_state.dart';
 
 /// Página principal de configuración.
 class ConfiguracionPage extends ConsumerStatefulWidget {
@@ -506,6 +508,8 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
 
   Future<void> _eliminarCuenta(ThemeData theme) async {
     final l = S.of(context);
+
+    // 1. Primer diálogo de confirmación
     final confirmar = await showAppConfirmDialog(
       context: context,
       title: l.settingsDeleteAccountConfirm,
@@ -513,8 +517,64 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
       type: AppDialogType.danger,
     );
 
-    if (confirmar == true) {
-      _mostrarSnackBar(l.commonComingSoon);
+    if (confirmar != true || !mounted) return;
+
+    // 2. Solicitar contraseña para reautenticación
+    final passwordController = TextEditingController();
+    try {
+      final password = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.settingsDeleteAccountConfirm),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l.settingsDeleteAccountWarning),
+              AppSpacing.gapBase,
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: l.authPassword,
+                  hintText: l.authEnterPassword,
+                  border: OutlineInputBorder(borderRadius: AppRadius.allMd),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.pop(ctx, passwordController.text.trim()),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: AppColors.onError,
+              ),
+              child: Text(l.settingsDeleteAccount),
+            ),
+          ],
+        ),
+      );
+
+      if (password == null || password.isEmpty || !mounted) return;
+
+      // 3. Ejecutar eliminación
+      await ref.read(authProvider.notifier).eliminarCuenta(password: password);
+
+      if (!mounted) return;
+
+      final state = ref.read(authProvider);
+      if (state is AuthError) {
+        _mostrarSnackBar(state.mensaje);
+      }
+      // Si fue exitoso, AuthNotifier cambia a AuthUnauthenticated
+      // y el router redirige automáticamente al login
+    } finally {
+      passwordController.dispose();
     }
   }
 

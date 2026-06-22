@@ -15,15 +15,18 @@ import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../notificaciones/application/providers/notificaciones_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/lote.dart';
 import '../../domain/entities/registro_mortalidad.dart';
 import '../../../salud/domain/enums/causa_mortalidad.dart';
 import '../../application/providers/registro_providers.dart';
+import '../../application/services/registro_quick_cache_service.dart';
 import '../widgets/mortalidad_form_steps/evento_info_step.dart';
 import '../widgets/mortalidad_form_steps/detalles_descripcion_step.dart';
 import '../widgets/mortalidad_form_steps/evidencia_fotografica_step.dart';
@@ -103,6 +106,7 @@ class _RegistrarMortalidadPageState
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _debounceSaveTimer?.cancel();
     _cantidadController.removeListener(_onFieldChanged);
     _descripcionController.removeListener(_onFieldChanged);
     _cantidadController.dispose();
@@ -113,6 +117,8 @@ class _RegistrarMortalidadPageState
 
   // ==================== AUTO-SAVE ====================
 
+  Timer? _debounceSaveTimer;
+
   void _startAutoSave() {
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (_hasUnsavedChanges && !_isSaving) {
@@ -122,9 +128,13 @@ class _RegistrarMortalidadPageState
   }
 
   void _onFieldChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    _hasUnsavedChanges = true;
+    _debounceSaveTimer?.cancel();
+    _debounceSaveTimer = Timer(const Duration(seconds: 2), () {
+      if (_hasUnsavedChanges && !_isSaving) {
+        _saveDraft();
+      }
+    });
   }
 
   void _attachChangeListeners() {
@@ -133,8 +143,10 @@ class _RegistrarMortalidadPageState
   }
 
   Future<void> _saveDraft() async {
+    if (!mounted || _isSaving) return;
+    _isSaving = true;
+
     try {
-      setState(() => _isSaving = true);
       final prefs = await SharedPreferences.getInstance();
       final draft = {
         'loteId': widget.lote.id,
@@ -148,16 +160,12 @@ class _RegistrarMortalidadPageState
         'mortalidad_draft_${widget.lote.id}',
         jsonEncode(draft),
       );
-      setState(() {
-        _hasUnsavedChanges = false;
-        _lastSaveTime = DateTime.now();
-        _isSaving = false;
-      });
+      _hasUnsavedChanges = false;
+      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+    } finally {
+      _isSaving = false;
     }
   }
 
@@ -502,10 +510,14 @@ class _RegistrarMortalidadPageState
   }
 
   void _nextStep() {
-    if (!_validateCurrentStep()) return;
+    if (!_validateCurrentStep()) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
     // Unfocus para ocultar teclado
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep++;
@@ -521,6 +533,7 @@ class _RegistrarMortalidadPageState
   void _previousStep() {
     // Unfocus para ocultar teclado
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep--;
@@ -657,6 +670,12 @@ class _RegistrarMortalidadPageState
   Future<void> _submit() async {
     // Validación final
     if (!_validateCurrentStep()) return;
+
+    // Validar que el lote esté activo
+    if (!widget.lote.estaActivo) {
+      _showError(S.of(context).batchClosedCannotRegister);
+      return;
+    }
 
     // Validar usuario
     final usuario = ref.read(currentUserProvider);
@@ -853,6 +872,16 @@ class _RegistrarMortalidadPageState
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('mortalidad_draft_${widget.lote.id}');
 
+      // Persistir cache rápido para futuros prefills
+      try {
+        final cache = await ref.read(registroQuickCacheAsyncProvider.future);
+        await cache.save(widget.lote.id, RegistroQuickType.mortalidad, {
+          'causa': registro.causa.name,
+        });
+      } on Exception catch (e) {
+        debugPrint('No se pudo guardar cache rápido mortalidad: $e');
+      }
+
       if (!mounted) return;
 
       setState(() => _isSaving = false);
@@ -864,7 +893,8 @@ class _RegistrarMortalidadPageState
 
       if (!mounted) return;
 
-      AppSnackBar.success(
+      // Overlay animado de éxito + haptic
+      await SaveSuccessOverlay.show(
         context,
         message: S.of(context).mortalityRegistered,
         detail: S
@@ -875,12 +905,9 @@ class _RegistrarMortalidadPageState
             ),
       );
 
-      // Navegar con delay para mostrar celebración
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) {
-          Navigator.of(context).pop(true);
-        }
-      });
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
     } on FirebaseException catch (e) {
       debugPrint(
         '? Error Firebase en registro mortalidad: ${e.code} - ${e.message}',

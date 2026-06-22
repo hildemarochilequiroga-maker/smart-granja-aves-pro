@@ -17,9 +17,11 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/storage/image_upload_service.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../application/providers/providers.dart';
@@ -544,9 +546,12 @@ class _CrearItemInventarioPageState
   }
 
   void _nextStep() {
-    if (!_validateCurrentStep()) return;
+    if (!_validateCurrentStep()) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -560,7 +565,7 @@ class _CrearItemInventarioPageState
   }
 
   void _previousStep() {
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -801,18 +806,17 @@ class _CrearItemInventarioPageState
       }
 
       if (mounted) {
-        unawaited(HapticFeedback.mediumImpact());
-        AppSnackBar.success(
+        await SaveSuccessOverlay.show(
           context,
           message: _isEditing
               ? l.invItemUpdatedSuccess
               : l.invItemCreated(_nombreController.text),
         );
-        context.pop();
+        if (mounted) context.pop();
       }
     } on Exception catch (e) {
       if (mounted) {
-        unawaited(HapticFeedback.heavyImpact());
+        unawaited(AppHaptics.error());
         AppSnackBar.error(
           context,
           message: S.of(context).errorGeneric,

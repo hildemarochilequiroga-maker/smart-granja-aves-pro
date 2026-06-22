@@ -16,21 +16,19 @@ class HomeKpisGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final granjaSeleccionada = ref.watch(granjaSeleccionadaProvider);
+    final granjaId = ref.watch(granjaSeleccionadaProvider.select((g) => g?.id));
 
     // Si no hay granja seleccionada, mostrar mensaje
-    if (granjaSeleccionada == null) {
+    if (granjaId == null) {
       return _buildNoGranjaSelected(context);
     }
 
     // Estadísticas de lotes
-    final lotesStatsAsync = ref.watch(
-      estadisticasLotesProvider(granjaSeleccionada.id),
-    );
+    final lotesStatsAsync = ref.watch(estadisticasLotesProvider(granjaId));
 
     // Estadísticas de galpones
     final galponesStatsAsync = ref.watch(
-      estadisticasGalponesProvider(granjaSeleccionada.id),
+      estadisticasGalponesProvider(granjaId),
     );
 
     return Column(

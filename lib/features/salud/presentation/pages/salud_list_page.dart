@@ -73,8 +73,10 @@ class _SaludListPageState extends ConsumerState<SaludListPage> {
     final theme = Theme.of(context);
     final l = S.of(context);
     // Usar el stream correcto: por loteId > por lote seleccionado > por granjaId > granja seleccionada
-    final granjaActiva = ref.watch(granjaSeleccionadaProvider);
-    final granjaIdEfectivo = widget.granjaId ?? granjaActiva?.id;
+    final granjaIdSeleccionada = ref.watch(
+      granjaSeleccionadaProvider.select((g) => g?.id),
+    );
+    final granjaIdEfectivo = widget.granjaId ?? granjaIdSeleccionada;
     final registrosAsync = widget.loteId != null
         ? ref.watch(streamSaludPorLoteProvider(widget.loteId!))
         : _selectedLoteId != null
@@ -189,6 +191,7 @@ class _SaludListPageState extends ConsumerState<SaludListPage> {
                                 index == filteredRegistros.length - 1;
 
                             return Padding(
+                              key: ValueKey('salud_${registro.id}'),
                               padding: EdgeInsets.only(
                                 top: isFirst ? 8 : 0,
                                 bottom: isLast ? 100 : 12,

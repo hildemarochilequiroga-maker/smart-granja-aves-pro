@@ -41,32 +41,34 @@ class _VeterinarioVirtualFabState extends State<VeterinarioVirtualFab>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(scale: _pulseAnimation.value, child: child);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: _kVetColor.withValues(alpha: 0.4),
-              blurRadius: 12,
-              spreadRadius: 2,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Transform.scale(scale: _pulseAnimation.value, child: child);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: _kVetColor.withValues(alpha: 0.4),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          height: 56,
+          child: FloatingActionButton.extended(
+            heroTag: 'veterinario_virtual',
+            backgroundColor: _kVetColor,
+            foregroundColor: AppColors.white,
+            elevation: 4,
+            onPressed: () => context.push(AppRoutes.veterinarioVirtual),
+            label: const Text(
+              'Veterinario Virtual',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
-          ],
-        ),
-        height: 56,
-        child: FloatingActionButton.extended(
-          heroTag: 'veterinario_virtual',
-          backgroundColor: _kVetColor,
-          foregroundColor: AppColors.white,
-          elevation: 4,
-          onPressed: () => context.push(AppRoutes.veterinarioVirtual),
-          label: const Text(
-            'Veterinario Virtual',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
         ),
       ),

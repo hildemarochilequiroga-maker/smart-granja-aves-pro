@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/errors/error_messages.dart';
 import '../../../../core/errors/failures.dart';
-import '../../../../core/network/network_info.dart';
 import '../../domain/entities/granja_usuario.dart';
 import '../../domain/entities/invitacion_granja.dart';
 import '../../domain/enums/rol_granja_enum.dart';
@@ -16,12 +15,9 @@ import '../datasources/granja_usuarios_firebase_datasource.dart';
 class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
   GranjaUsuariosRepositoryImpl({
     required GranjaUsuariosFirebaseDatasource datasource,
-    NetworkInfo? networkInfo,
-  }) : _datasource = datasource,
-       _networkInfo = networkInfo ?? NetworkInfo();
+  }) : _datasource = datasource;
 
   final GranjaUsuariosFirebaseDatasource _datasource;
-  final NetworkInfo _networkInfo;
 
   @override
   Future<Either<Failure, List<GranjaUsuario>>> obtenerUsuariosPorGranja({
@@ -31,11 +27,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     debugPrint('📚 [GranjaUsuariosRepo] obtenerUsuariosPorGranja');
     debugPrint('   ├─ granjaId: $granjaId');
     debugPrint('   └─ soloActivos: $soloActivos');
-
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [GranjaUsuariosRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
 
     try {
       final usuarios = await _datasource.obtenerUsuariosPorGranja(
@@ -57,10 +48,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     required String granjaId,
     required String usuarioId,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       final rol = await _datasource.obtenerRolUsuarioEnGranja(
         granjaId: granjaId,
@@ -81,10 +68,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     String? nombreCompleto,
     String? email,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       final usuario = await _datasource.asignarUsuarioAGranja(
         granjaId: granjaId,
@@ -111,11 +94,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     debugPrint('   ├─ usuarioId: ${usuarioId.substring(0, 8)}...');
     debugPrint('   └─ nuevoRol: ${nuevoRol.name}');
 
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [GranjaUsuariosRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       final usuario = await _datasource.cambiarRolUsuario(
         granjaId: granjaId,
@@ -139,11 +117,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     debugPrint('   ├─ granjaId: $granjaId');
     debugPrint('   └─ usuarioId: ${usuarioId.substring(0, 8)}...');
 
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [GranjaUsuariosRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       await _datasource.removerUsuarioDeLaGranja(
         granjaId: granjaId,
@@ -166,11 +139,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     debugPrint('   ├─ granjaId: $granjaId');
     debugPrint('   └─ usuarioId: ${usuarioId.substring(0, 8)}...');
 
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [GranjaUsuariosRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       await _datasource.abandonarGranja(
         granjaId: granjaId,
@@ -189,10 +157,6 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
     required String usuarioId,
     bool soloActivas = true,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       final granjas = await _datasource.obtenerGranjasPorUsuario(
         usuarioId: usuarioId,
@@ -209,12 +173,9 @@ class GranjaUsuariosRepositoryImpl implements GranjaUsuariosRepository {
 class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
   InvitacionesGranjaRepositoryImpl({
     required GranjaUsuariosFirebaseDatasource datasource,
-    NetworkInfo? networkInfo,
-  }) : _datasource = datasource,
-       _networkInfo = networkInfo ?? NetworkInfo();
+  }) : _datasource = datasource;
 
   final GranjaUsuariosFirebaseDatasource _datasource;
-  final NetworkInfo _networkInfo;
 
   @override
   Future<Either<Failure, InvitacionGranja>> crearInvitacion({
@@ -231,11 +192,6 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
     debugPrint('   ├─ rol: ${rol.name}');
     debugPrint('   ├─ creadoPorId: ${creadoPorId.substring(0, 8)}...');
     debugPrint('   └─ emailDestino: ${emailDestino ?? "ninguno"}');
-
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [InvitacionesRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
 
     // No se puede invitar con rol owner
     if (rol == RolGranja.owner) {
@@ -256,9 +212,7 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
       if (rolCreador == null || !rolCreador.canInviteUsers) {
         debugPrint('❌ [InvitacionesRepo] Usuario sin permisos para invitar');
         return Left(
-          ServerFailure(
-            message: ErrorMessages.get('ERR_NO_INVITE_PERMISSION'),
-          ),
+          ServerFailure(message: ErrorMessages.get('ERR_NO_INVITE_PERMISSION')),
         );
       }
       debugPrint('   ├─ Permisos verificados: ${rolCreador.name}');
@@ -288,11 +242,6 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
     debugPrint('🔍 [InvitacionesRepo] obtenerInvitacionPorCodigo');
     debugPrint('   └─ codigo: $codigo');
 
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [InvitacionesRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       final invitacion = await _datasource.obtenerInvitacionPorCodigo(
         codigo: codigo,
@@ -317,10 +266,6 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
     required String invitacionId,
     required String usuarioId,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       await _datasource.marcarInvitacionComoUsada(
         invitacionId: invitacionId,
@@ -337,10 +282,6 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
     required String granjaId,
     bool soloValidas = true,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       final invitaciones = await _datasource.obtenerInvitacionesPorGranja(
         granjaId: granjaId,
@@ -363,11 +304,6 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
     debugPrint('   ├─ codigo: $codigo');
     debugPrint('   └─ usuarioId: ${usuarioId.substring(0, 8)}...');
 
-    if (!await _networkInfo.isConnected) {
-      debugPrint('❌ [InvitacionesRepo] Sin conexión a internet');
-      return Left(NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')));
-    }
-
     try {
       // Obtener invitación
       debugPrint('   ├─ Buscando invitación...');
@@ -384,7 +320,9 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
           if (invitacion == null) {
             debugPrint('❌ [InvitacionesRepo] Invitación no encontrada');
             return Left(
-              ServerFailure(message: ErrorMessages.get('ERR_INVITATION_NOT_FOUND')),
+              ServerFailure(
+                message: ErrorMessages.get('ERR_INVITATION_NOT_FOUND'),
+              ),
             );
           }
 
@@ -396,7 +334,9 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
           if (!invitacion.esValida) {
             debugPrint('❌ [InvitacionesRepo] Invitación no válida o expirada');
             return Left(
-              ServerFailure(message: ErrorMessages.get('ERR_INVITATION_INVALID')),
+              ServerFailure(
+                message: ErrorMessages.get('ERR_INVITATION_INVALID'),
+              ),
             );
           }
 
@@ -423,29 +363,45 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
               '❌ [InvitacionesRepo] Usuario intentó aceptar su propia invitación',
             );
             return Left(
-              ServerFailure(message: ErrorMessages.get('ERR_CANNOT_ACCEPT_OWN')),
+              ServerFailure(
+                message: ErrorMessages.get('ERR_CANNOT_ACCEPT_OWN'),
+              ),
             );
           }
 
-          // Asignar usuario a granja
+          // Si la invitación tiene email destino, debe coincidir con
+          // el email del usuario actual (case-insensitive). Esto evita
+          // que un usuario "robe" un código de invitación dirigido
+          // a otra cuenta.
+          final emailInvitacion = invitacion.emailDestino?.trim().toLowerCase();
+          final emailUsuario = email?.trim().toLowerCase();
+          if (emailInvitacion != null &&
+              emailInvitacion.isNotEmpty &&
+              emailUsuario != emailInvitacion) {
+            debugPrint(
+              '❌ [InvitacionesRepo] Email del usuario no coincide con destino de la invitación',
+            );
+            return Left(
+              ServerFailure(
+                message: ErrorMessages.get('ERR_INVITATION_EMAIL_MISMATCH'),
+              ),
+            );
+          }
+
+          // Aceptar invitación de manera atómica: crea granja_usuario,
+          // marca invitación como usada y actualiza usuariosAccesoIds
+          // en una sola transacción.
           try {
-            debugPrint('   ├─ Asignando usuario a granja...');
-            final usuario = await _datasource.asignarUsuarioAGranja(
+            debugPrint('   ├─ Aceptando invitación atómicamente...');
+            final usuario = await _datasource.aceptarInvitacionAtomico(
+              invitacionId: invitacion.id,
               granjaId: invitacion.granjaId,
               usuarioId: usuarioId,
               rol: invitacion.rol,
               nombreCompleto: nombreCompleto,
-              email: email,
+              email: emailUsuario,
             );
-            debugPrint('   ├─ Usuario asignado exitosamente');
-
-            // Marcar invitación como usada
-            debugPrint('   ├─ Marcando invitación como usada...');
-            await _datasource.marcarInvitacionComoUsada(
-              invitacionId: invitacion.id,
-              usuarioId: usuarioId,
-            );
-            debugPrint('   ├─ Invitación marcada como usada');
+            debugPrint('   ├─ Aceptación atómica exitosa');
 
             // Convertir modelo a entidad
             final usuarioEntidad = GranjaUsuario(
@@ -467,7 +423,13 @@ class InvitacionesGranjaRepositoryImpl implements InvitacionesGranjaRepository {
             return Right(usuarioEntidad);
           } on Exception catch (e) {
             debugPrint('❌ [InvitacionesRepo] Error asignando usuario: $e');
-            return Left(ServerFailure(message: ErrorMessages.format('ERR_GENERIC_PREFIX', {'e': '$e'})));
+            return Left(
+              ServerFailure(
+                message: ErrorMessages.format('ERR_GENERIC_PREFIX', {
+                  'e': '$e',
+                }),
+              ),
+            );
           }
         },
       );

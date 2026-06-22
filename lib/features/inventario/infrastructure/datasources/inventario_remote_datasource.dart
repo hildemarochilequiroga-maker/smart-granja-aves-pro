@@ -140,7 +140,7 @@ class InventarioRemoteDatasourceImpl implements InventarioRemoteDatasource {
   Future<void> eliminarItem(String itemId) async {
     await _itemsRef.doc(itemId).update({
       'activo': false,
-      'fechaActualizacion': Timestamp.now(),
+      'fechaActualizacion': FieldValue.serverTimestamp(),
     });
   }
 
@@ -258,7 +258,7 @@ class InventarioRemoteDatasourceImpl implements InventarioRemoteDatasource {
   Future<void> actualizarStockItem(String itemId, double nuevoStock) async {
     await _itemsRef.doc(itemId).update({
       'stockActual': nuevoStock,
-      'fechaActualizacion': Timestamp.now(),
+      'fechaActualizacion': FieldValue.serverTimestamp(),
     });
   }
 
@@ -272,7 +272,7 @@ class InventarioRemoteDatasourceImpl implements InventarioRemoteDatasource {
     // 1. Actualizar stock del item
     batch.update(_itemsRef.doc(movimiento.itemId), {
       'stockActual': nuevoStock,
-      'fechaActualizacion': Timestamp.now(),
+      'fechaActualizacion': FieldValue.serverTimestamp(),
     });
 
     // 2. Crear documento de movimiento

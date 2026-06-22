@@ -33,12 +33,15 @@ import '../../features/salud/presentation/pages/inspeccion_bioseguridad_page.dar
 import '../../features/galpones/galpones.dart';
 import '../../features/granjas/granjas.dart';
 import '../../features/guias_manejo/presentation/pages/guias_manejo_page.dart';
+import '../../features/guias_manejo/presentation/pages/guia_diaria_page.dart';
 import '../../features/lotes/lotes.dart';
 import '../../features/notificaciones/presentation/pages/notificaciones_page.dart';
 import '../../features/veterinario_virtual/presentation/pages/veterinario_home_page.dart';
 import '../../features/veterinario_virtual/presentation/pages/chat_consulta_page.dart';
 import '../../features/veterinario_virtual/application/services/contexto_builder.dart';
 import '../../features/veterinario_virtual/domain/entities/tipo_consulta.dart';
+import '../../features/planificador/presentation/pages/planificador_page.dart';
+import '../../features/planificador/presentation/pages/resultado_plan_page.dart';
 import '../navigation/main_shell_page.dart';
 import '../pages/error_page.dart';
 import '../pages/legal_page.dart';
@@ -492,6 +495,19 @@ abstract final class AppRouter {
         return GuiasManejoPage(lote: lote);
       },
     ),
+    GoRoute(
+      path: AppRoutes.loteGuiaDiaria,
+      name: 'loteGuiaDiaria',
+      builder: (context, state) {
+        final lote = state.extra as Lote?;
+        if (lote == null) {
+          return ErrorPage(
+            error: ErrorMessages.get('ROUTER_BATCH_INFO_MISSING'),
+          );
+        }
+        return GuiaDiariaPage(lote: lote);
+      },
+    ),
 
     // Salud
     GoRoute(
@@ -802,6 +818,18 @@ abstract final class AppRouter {
             state.extra as ({TipoConsulta tipo, ContextoGranja contexto});
         return ChatConsultaPage(tipo: extra.tipo, contexto: extra.contexto);
       },
+    ),
+
+    // Planificador Avícola
+    GoRoute(
+      path: AppRoutes.planificador,
+      name: 'planificador',
+      builder: (context, state) => const PlanificadorPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.planificadorResultado,
+      name: 'planificadorResultado',
+      builder: (context, state) => const ResultadoPlanPage(),
     ),
 
     // Legal

@@ -5,7 +5,6 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,8 +13,10 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../galpones/domain/entities/galpon.dart';
@@ -233,7 +234,7 @@ class _InspeccionBioseguridadPageState
         ChecklistBioseguridadStep(
           itemsPorCategoria: itemsPorCategoria,
           onItemChanged: (codigo, estado) {
-            HapticFeedback.lightImpact();
+            unawaited(AppHaptics.selection());
             ref
                 .read(inspeccionesBioseguridadProvider.notifier)
                 .actualizarItem(codigo, estado);
@@ -420,11 +421,12 @@ class _InspeccionBioseguridadPageState
   void _nextStep() {
     if (!_validateCurrentStep()) {
       setState(() => _autoValidatePerStep[_currentStep] = true);
+      unawaited(AppHaptics.error());
       return;
     }
 
     FocusScope.of(context).unfocus();
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
 
     setState(() => _currentStep++);
     _pageController.animateToPage(
@@ -437,7 +439,7 @@ class _InspeccionBioseguridadPageState
   void _previousStep() {
     if (_currentStep > 0) {
       FocusScope.of(context).unfocus();
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
 
       setState(() => _currentStep--);
       _pageController.animateToPage(
@@ -532,16 +534,21 @@ class _InspeccionBioseguridadPageState
 
       if (!mounted) return;
 
-      unawaited(HapticFeedback.mediumImpact());
-
-      AppSnackBar.success(context, message: S.of(context).bioSavedSuccess);
-
-      context.pop();
-    } on Exception catch (e) {
-      _showSnackBar(
-        S.of(context).errorSavingGeneric(e.toString()),
-        isError: true,
+      // Overlay animado de éxito
+      await SaveSuccessOverlay.show(
+        context,
+        message: S.of(context).bioSavedSuccess,
       );
+
+      if (mounted) context.pop();
+    } on Exception catch (e) {
+      unawaited(AppHaptics.error());
+      if (mounted) {
+        _showSnackBar(
+          S.of(context).errorSavingGeneric(e.toString()),
+          isError: true,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

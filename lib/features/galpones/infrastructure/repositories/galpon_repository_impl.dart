@@ -32,10 +32,6 @@ class GalponRepositoryImpl implements GalponRepository {
 
   @override
   Future<Either<Failure, Galpon>> crear(Galpon galpon) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final model = GalponModel.fromEntity(galpon);
       final result = await _firebaseDatasource.crear(model);
@@ -49,14 +45,18 @@ class GalponRepositoryImpl implements GalponRepository {
         galponId: result.id,
         granjaId: galpon.granjaId,
         tipo: TipoEventoGalpon.creacion,
-        descripcion: ErrorMessages.format('EVT_SHED_CREATED', {'name': galpon.nombre}),
+        descripcion: ErrorMessages.format('EVT_SHED_CREATED', {
+          'name': galpon.nombre,
+        }),
       );
 
       return Right(entity);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on UnknownException catch (e) {
-      return Left(UnknownFailure(message: e.details ?? ErrorMessages.get('ERR_UNKNOWN')));
+      return Left(
+        UnknownFailure(message: e.details ?? ErrorMessages.get('ERR_UNKNOWN')),
+      );
     } on Exception catch (e) {
       return Left(UnknownFailure(message: e.toString()));
     }
@@ -64,10 +64,6 @@ class GalponRepositoryImpl implements GalponRepository {
 
   @override
   Future<Either<Failure, Galpon>> actualizar(Galpon galpon) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final model = GalponModel.fromEntity(galpon);
       final result = await _firebaseDatasource.actualizar(model);
@@ -85,10 +81,6 @@ class GalponRepositoryImpl implements GalponRepository {
 
   @override
   Future<Either<Failure, Unit>> eliminar(String id) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       await _firebaseDatasource.eliminar(id);
 
@@ -120,7 +112,10 @@ class GalponRepositoryImpl implements GalponRepository {
           return Right(result.toEntity());
         }
         return Left(
-          ServerFailure(message: ErrorMessages.get('ERR_SHED_NOT_FOUND'), code: 'NOT_FOUND'),
+          ServerFailure(
+            message: ErrorMessages.get('ERR_SHED_NOT_FOUND'),
+            code: 'NOT_FOUND',
+          ),
         );
       }
 
@@ -325,10 +320,6 @@ class GalponRepositoryImpl implements GalponRepository {
     EstadoGalpon nuevoEstado, {
     String? motivo,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final galponResult = await obtenerPorId(id);
       return await galponResult.fold((failure) => Left(failure), (
@@ -365,10 +356,6 @@ class GalponRepositoryImpl implements GalponRepository {
     String galponId,
     String loteId,
   ) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final galponResult = await obtenerPorId(galponId);
       return await galponResult.fold((failure) => Left(failure), (
@@ -382,7 +369,9 @@ class GalponRepositoryImpl implements GalponRepository {
           galponId: galponId,
           granjaId: galpon.granjaId,
           tipo: TipoEventoGalpon.asignacionLote,
-          descripcion: ErrorMessages.format('EVT_BATCH_ASSIGNED', {'id': loteId}),
+          descripcion: ErrorMessages.format('EVT_BATCH_ASSIGNED', {
+            'id': loteId,
+          }),
           loteId: loteId,
         );
 
@@ -397,10 +386,6 @@ class GalponRepositoryImpl implements GalponRepository {
 
   @override
   Future<Either<Failure, Galpon>> liberar(String galponId) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final galponResult = await obtenerPorId(galponId);
       return await galponResult.fold((failure) => Left(failure), (
@@ -416,7 +401,9 @@ class GalponRepositoryImpl implements GalponRepository {
           galponId: galponId,
           granjaId: galpon.granjaId,
           tipo: TipoEventoGalpon.liberacionLote,
-          descripcion: ErrorMessages.format('EVT_SHED_RELEASED', {'id': loteAnterior ?? ''}),
+          descripcion: ErrorMessages.format('EVT_SHED_RELEASED', {
+            'id': loteAnterior ?? '',
+          }),
           loteId: loteAnterior,
         );
 
@@ -437,10 +424,6 @@ class GalponRepositoryImpl implements GalponRepository {
     DateTime fechaInicio,
     String descripcion,
   ) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final galponResult = await obtenerPorId(galponId);
       return await galponResult.fold((failure) => Left(failure), (
@@ -478,10 +461,6 @@ class GalponRepositoryImpl implements GalponRepository {
     List<String> productos, {
     String? observaciones,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return Left(NetworkFailure.noConnection());
-    }
-
     try {
       final galponResult = await obtenerPorId(galponId);
       return await galponResult.fold((failure) => Left(failure), (
@@ -499,7 +478,8 @@ class GalponRepositoryImpl implements GalponRepository {
           galponId: galponId,
           granjaId: galpon.granjaId,
           tipo: TipoEventoGalpon.desinfeccion,
-          descripcion: observaciones ?? ErrorMessages.get('EVT_DISINFECTION_DONE'),
+          descripcion:
+              observaciones ?? ErrorMessages.get('EVT_DISINFECTION_DONE'),
           datosAdicionales: {
             'fecha': fechaDesinfeccion.toIso8601String(),
             'productos': productos,

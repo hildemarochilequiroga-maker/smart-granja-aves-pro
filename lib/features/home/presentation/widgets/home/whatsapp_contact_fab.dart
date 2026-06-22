@@ -47,29 +47,31 @@ class _WhatsAppContactFabState extends State<WhatsAppContactFab>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(scale: _pulseAnimation.value, child: child);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: _kWhatsAppGreen.withValues(alpha: 0.4),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          heroTag: 'whatsapp_contact',
-          backgroundColor: _kWhatsAppGreen,
-          foregroundColor: AppColors.white,
-          elevation: 4,
-          onPressed: () => _showContactSheet(context),
-          child: const Icon(Icons.chat_rounded, size: 28),
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Transform.scale(scale: _pulseAnimation.value, child: child);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: _kWhatsAppGreen.withValues(alpha: 0.4),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            heroTag: 'whatsapp_contact',
+            backgroundColor: _kWhatsAppGreen,
+            foregroundColor: AppColors.white,
+            elevation: 4,
+            onPressed: () => _showContactSheet(context),
+            child: const Icon(Icons.chat_rounded, size: 28),
+          ),
         ),
       ),
     );

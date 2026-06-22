@@ -198,6 +198,8 @@ class RegistroDropdownField<T> extends StatelessWidget {
       autovalidateMode: autovalidateMode,
       selectedItemBuilder: selectedItemBuilder,
       isExpanded: true,
+      itemHeight: null,
+      menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         hintText: hint,

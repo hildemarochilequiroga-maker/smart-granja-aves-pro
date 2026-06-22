@@ -121,6 +121,31 @@ class VentaRemoteDatasourceImpl implements VentaRemoteDatasource {
   }
 
   @override
+  Future<VentaProducto> createVentaProductoConActualizacionLote({
+    required VentaProducto venta,
+    required Map<String, dynamic> camposLote,
+  }) async {
+    try {
+      final data = VentaProductoModel.toFirestore(venta);
+      final ventaRef = _productosCollection.doc();
+      final loteRef = firestore.collection('lotes').doc(venta.loteId);
+      final updates = Map<String, dynamic>.from(camposLote);
+      updates['ultimaActualizacion'] = FieldValue.serverTimestamp();
+      await firestore.runTransaction((transaction) async {
+        transaction.set(ventaRef, data);
+        transaction.update(loteRef, updates);
+      });
+      final doc = await ventaRef.get();
+      return VentaProductoModel.fromFirestore(doc);
+    } on Exception catch (e) {
+      throw ServerException(
+        message: ErrorMessages.format('ERR_CREATE_SALE_PRODUCT', {'e': '$e'}),
+        code: 'FIRESTORE_ERROR',
+      );
+    }
+  }
+
+  @override
   Future<VentaProducto?> fetchVentaProductoPorId(String id) async {
     try {
       final doc = await _productosCollection.doc(id).get();

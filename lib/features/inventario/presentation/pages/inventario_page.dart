@@ -59,7 +59,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
   /// Obtiene el ID de la granja a usar (parámetro o seleccionada)
   String? get _granjaId {
     if (widget.granjaId != null) return widget.granjaId;
-    return ref.watch(granjaSeleccionadaProvider)?.id;
+    return ref.watch(granjaSeleccionadaProvider.select((g) => g?.id));
   }
 
   /// Indica si hay filtros activos
@@ -234,6 +234,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
                   itemBuilder: (context, index) {
                     final item = filteredItems[index];
                     return Padding(
+                      key: ValueKey('inv_${item.id}'),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 6,
@@ -358,6 +359,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
             itemBuilder: (context, index) {
               final movimiento = filteredMovimientos[index];
               return Padding(
+                key: ValueKey('mov_${movimiento.id}'),
                 padding: const EdgeInsets.only(bottom: 12),
                 child: MovimientoInventarioCard(movimiento: movimiento),
               );

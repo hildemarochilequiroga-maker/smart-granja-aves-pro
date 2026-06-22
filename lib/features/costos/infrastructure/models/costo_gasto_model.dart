@@ -62,7 +62,7 @@ class CostoGastoModel {
     return CostoGastoModel(
       id: doc.id,
       granjaId: data['granjaId'] as String? ?? '',
-      tipo: TipoGasto.fromJson(data['tipo'] as String? ?? 'Operativos'),
+      tipo: TipoGasto.fromJson(data['tipo'] as String? ?? 'otros'),
       concepto: data['concepto'] as String? ?? '',
       monto: (data['monto'] as num?)?.toDouble() ?? 0.0,
       fecha: data['fecha'] != null

@@ -3,6 +3,10 @@
 *.log
 *.pyc
 *.swp
+desc_temp.txt
+
+# Firebase deploy cache
+.firebase/
 .DS_Store
 .atom/
 .build/

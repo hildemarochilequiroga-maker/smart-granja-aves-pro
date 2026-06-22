@@ -10,6 +10,7 @@ library;
 
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/application/providers/auth_provider.dart';
 
 /// Página de configuración de notificaciones.
 class NotificacionesConfigPage extends ConsumerStatefulWidget {
@@ -40,6 +42,7 @@ class _NotificacionesConfigPageState
   bool _alertaInventario = true;
   bool _resumenDiario = false;
   bool _resumenSemanal = true;
+  bool _whatsappMortalidad = false;
 
   // Umbrales
   double _umbralMortalidad = 5.0;
@@ -53,6 +56,7 @@ class _NotificacionesConfigPageState
   late bool _initialAlertaInventario;
   late bool _initialResumenDiario;
   late bool _initialResumenSemanal;
+  late bool _initialWhatsappMortalidad;
   late double _initialUmbralMortalidad;
   late double _initialUmbralProduccion;
 
@@ -64,6 +68,22 @@ class _NotificacionesConfigPageState
 
   Future<void> _loadConfig() async {
     final prefs = await SharedPreferences.getInstance();
+    bool whatsappMortalidad =
+        prefs.getBool('notif_whatsapp_mortalidad') ?? false;
+
+    final usuario = ref.read(currentUserProvider);
+    if (usuario != null) {
+      final usuarioDoc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(usuario.id)
+          .get();
+      final data = usuarioDoc.data() ?? {};
+      whatsappMortalidad =
+          data['whatsappOptIn'] as bool? ??
+          data['notificacionesWhatsApp'] as bool? ??
+          whatsappMortalidad;
+    }
+
     if (!mounted) return;
     setState(() {
       _alertaMortalidad = prefs.getBool('notif_alerta_mortalidad') ?? true;
@@ -74,6 +94,7 @@ class _NotificacionesConfigPageState
       _alertaInventario = prefs.getBool('notif_alerta_inventario') ?? true;
       _resumenDiario = prefs.getBool('notif_resumen_diario') ?? false;
       _resumenSemanal = prefs.getBool('notif_resumen_semanal') ?? true;
+      _whatsappMortalidad = whatsappMortalidad;
       _umbralMortalidad = prefs.getDouble('notif_umbral_mortalidad') ?? 5.0;
       _umbralProduccion = prefs.getDouble('notif_umbral_produccion') ?? 80.0;
       _saveInitialValues();
@@ -88,6 +109,7 @@ class _NotificacionesConfigPageState
     _initialAlertaInventario = _alertaInventario;
     _initialResumenDiario = _resumenDiario;
     _initialResumenSemanal = _resumenSemanal;
+    _initialWhatsappMortalidad = _whatsappMortalidad;
     _initialUmbralMortalidad = _umbralMortalidad;
     _initialUmbralProduccion = _umbralProduccion;
   }
@@ -100,6 +122,7 @@ class _NotificacionesConfigPageState
         _alertaInventario != _initialAlertaInventario ||
         _resumenDiario != _initialResumenDiario ||
         _resumenSemanal != _initialResumenSemanal ||
+        _whatsappMortalidad != _initialWhatsappMortalidad ||
         _umbralMortalidad != _initialUmbralMortalidad ||
         _umbralProduccion != _initialUmbralProduccion;
   }
@@ -108,6 +131,8 @@ class _NotificacionesConfigPageState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = S.of(context);
+    final usuario = ref.watch(currentUserProvider);
+    final tieneTelefono = usuario?.telefono?.trim().isNotEmpty ?? false;
 
     return PopScope(
       canPop: !_hasChanges,
@@ -319,6 +344,37 @@ class _NotificacionesConfigPageState
             ),
             const SizedBox(height: 16),
 
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                'Canales',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+            _buildSeccion(
+              theme,
+              children: [
+                _buildAlertaSwitch(
+                  theme,
+                  titulo: 'WhatsApp',
+                  subtitulo: tieneTelefono
+                      ? 'Enviar registros de mortalidad a mi WhatsApp'
+                      : 'Agrega tu teléfono en el perfil para recibir WhatsApp',
+                  icono: Icons.chat_bubble_outline_rounded,
+                  iconColor: AppColors.success,
+                  valor: _whatsappMortalidad,
+                  onChanged: (value) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _whatsappMortalidad = value);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             // Sección: Resúmenes
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 8),
@@ -497,9 +553,28 @@ class _NotificacionesConfigPageState
       prefs.setBool('notif_alerta_inventario', _alertaInventario),
       prefs.setBool('notif_resumen_diario', _resumenDiario),
       prefs.setBool('notif_resumen_semanal', _resumenSemanal),
+      prefs.setBool('notif_whatsapp_mortalidad', _whatsappMortalidad),
       prefs.setDouble('notif_umbral_mortalidad', _umbralMortalidad),
       prefs.setDouble('notif_umbral_produccion', _umbralProduccion),
     ]);
+
+    final usuario = ref.read(currentUserProvider);
+    if (usuario != null) {
+      final data = <String, dynamic>{
+        'whatsappOptIn': _whatsappMortalidad,
+        'notificacionesWhatsApp': _whatsappMortalidad,
+        'notificaciones': {'whatsapp': _whatsappMortalidad},
+      };
+      final telefono = usuario.telefono?.trim();
+      if (telefono != null && telefono.isNotEmpty) {
+        data['telefonoWhatsApp'] = telefono;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(usuario.id)
+          .set(data, SetOptions(merge: true));
+    }
 
     _saveInitialValues();
     if (!mounted) return;

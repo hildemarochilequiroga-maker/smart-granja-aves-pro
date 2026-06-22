@@ -54,8 +54,10 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // Usar el stream correcto: por loteId > por granjaId > granja seleccionada
-    final granjaActiva = ref.watch(granjaSeleccionadaProvider);
-    final granjaIdEfectivo = widget.granjaId ?? granjaActiva?.id;
+    final granjaIdSeleccionada = ref.watch(
+      granjaSeleccionadaProvider.select((g) => g?.id),
+    );
+    final granjaIdEfectivo = widget.granjaId ?? granjaIdSeleccionada;
     final costosAsync = widget.loteId != null
         ? ref.watch(streamCostosPorLoteProvider(widget.loteId!))
         : granjaIdEfectivo != null
@@ -165,6 +167,7 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                       final isLast = index == filteredCostos.length - 1;
 
                       return Padding(
+                        key: ValueKey('costo_${costo.id}'),
                         padding: EdgeInsets.only(
                           top: isFirst ? 8 : 0,
                           bottom: isLast ? 100 : 12,

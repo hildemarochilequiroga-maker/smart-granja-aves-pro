@@ -499,6 +499,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return result.fold((_) => false, (activa) => activa);
   }
 
+  /// Elimina la cuenta del usuario actual
+  Future<void> eliminarCuenta({required String password}) async {
+    state = AuthLoading(mensaje: ErrorMessages.get('AUTH_LOADING_DELETE'));
+
+    final result = await _repository.eliminarCuenta(password: password);
+
+    result.fold(
+      (failure) => state = AuthError(mensaje: failure.message),
+      (_) => state = const AuthUnauthenticated(),
+    );
+  }
+
   /// Limpia el estado de error
   void limpiarError() {
     if (state is AuthError) {

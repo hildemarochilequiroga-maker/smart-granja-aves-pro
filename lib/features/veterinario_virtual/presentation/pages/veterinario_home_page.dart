@@ -2,23 +2,26 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../galpones/application/providers/galpon_providers.dart';
+import '../../../granjas/application/providers/granja_providers.dart';
 import '../../../lotes/domain/entities/lote.dart';
 import '../../application/services/contexto_builder.dart';
 import '../../domain/entities/tipo_consulta.dart';
 import '../widgets/opcion_consulta_card.dart';
 
-class VeterinarioHomePage extends StatelessWidget {
+class VeterinarioHomePage extends ConsumerWidget {
   const VeterinarioHomePage({this.lote, super.key});
 
   final Lote? lote;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = S.of(context);
     final theme = Theme.of(context);
 
@@ -91,7 +94,7 @@ class VeterinarioHomePage extends StatelessWidget {
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             childAspectRatio: 0.88,
-            children: _buildOpciones(context, l),
+            children: _buildOpciones(context, ref, l),
           ),
 
           const SizedBox(height: 16),
@@ -117,7 +120,7 @@ class VeterinarioHomePage extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildOpciones(BuildContext context, S l) {
+  List<Widget> _buildOpciones(BuildContext context, WidgetRef ref, S l) {
     final opciones = [
       (
         tipo: TipoConsulta.diagnosticoSintomas,
@@ -177,14 +180,32 @@ class VeterinarioHomePage extends StatelessWidget {
             titulo: op.titulo,
             descripcion: op.desc,
             color: op.color,
-            onTap: () => _abrirChat(context, op.tipo),
+            onTap: () => _abrirChat(context, ref, op.tipo),
           ),
         )
         .toList();
   }
 
-  void _abrirChat(BuildContext context, TipoConsulta tipo) {
-    final contexto = ContextoGranja(lote: lote);
+  void _abrirChat(BuildContext context, WidgetRef ref, TipoConsulta tipo) {
+    final granja = ref.read(granjaSeleccionadaProvider);
+    final galpon = ref.read(galponSeleccionadoProvider);
+
+    // Calculate density if data available
+    double? densidad;
+    if (galpon != null && galpon.areaM2 != null && galpon.areaM2! > 0) {
+      final aves =
+          lote?.cantidadActual ?? lote?.cantidadInicial ?? galpon.avesActuales;
+      if (aves > 0) {
+        densidad = aves / galpon.areaM2!;
+      }
+    }
+
+    final contexto = ContextoGranja(
+      granja: granja,
+      galpon: galpon,
+      lote: lote,
+      densidadAvesM2: densidad,
+    );
 
     context.push(
       AppRoutes.veterinarioChat,

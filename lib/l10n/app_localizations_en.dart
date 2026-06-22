@@ -1357,6 +1357,10 @@ class SEn extends S {
   String get batchClosedSuccess => 'Batch closed successfully';
 
   @override
+  String get batchClosedCannotRegister =>
+      'Cannot register records on a batch that is not active';
+
+  @override
   String get batchEntryAgeDays => 'Entry Age (days)';
 
   @override
@@ -2477,6 +2481,11 @@ class SEn extends S {
 
   @override
   String get salesRegisteredSuccess => 'Sale registered successfully!';
+
+  @override
+  String salesExceedsAvailableBirds(int requested, int available) {
+    return 'Requested quantity ($requested) exceeds available birds ($available)';
+  }
 
   @override
   String get salesInventoryUpdateError =>
@@ -5096,6 +5105,18 @@ class SEn extends S {
 
   @override
   String get productionFutureDate => 'Production date cannot be in the future';
+
+  @override
+  String get productionDuplicateDate =>
+      'A production record already exists for this date';
+
+  @override
+  String get weightDuplicateDate =>
+      'A weight record already exists for this date';
+
+  @override
+  String get consumptionDuplicateDate =>
+      'A consumption record already exists for this date';
 
   @override
   String get productionBeforeEntryDate =>
@@ -15777,4 +15798,93 @@ class SEn extends S {
   @override
   String get legalTerms6Body =>
       'We reserve the right to modify these terms at any time. We will notify you of significant changes through the application. Continued use after changes constitutes your acceptance of the new terms.';
+
+  @override
+  String get guiaDiariaTitle => 'Daily Guide';
+
+  @override
+  String guiaDiariaDia(int dia) {
+    return 'Day $dia';
+  }
+
+  @override
+  String guiaDiariaProgreso(int completadas, int total) {
+    return '$completadas of $total tasks';
+  }
+
+  @override
+  String get guiaDiariaTodasCompletadas => 'All tasks completed!';
+
+  @override
+  String get guiaDiariaMarcarTodas => 'Mark all';
+
+  @override
+  String get guiaDiariaHoy => 'Today';
+
+  @override
+  String get guiaDiariaSinTareas => 'No tasks scheduled for this day';
+
+  @override
+  String get guiaDiariaBotonLabel => 'Interactive daily guide';
+
+  @override
+  String get guiaDiariaBotonSubtitle => 'Daily tasks with progress tracking';
+
+  @override
+  String get guiaDiariaNavDia => 'Go to day';
+
+  @override
+  String get guiaDiariaCatAlimentacion => 'Feeding';
+
+  @override
+  String get guiaDiariaCatAgua => 'Water';
+
+  @override
+  String get guiaDiariaCatLuz => 'Light';
+
+  @override
+  String get guiaDiariaCatTemperatura => 'Temperature';
+
+  @override
+  String get guiaDiariaCatHumedad => 'Humidity';
+
+  @override
+  String get guiaDiariaCatPesaje => 'Weighing';
+
+  @override
+  String get guiaDiariaCatVacunacion => 'Vaccination';
+
+  @override
+  String get guiaDiariaCatManejoGeneral => 'General management';
+
+  @override
+  String get guiaDiariaVolverHoy => 'Back to today';
+
+  @override
+  String guiaDiariaProximaVacuna(int dia) {
+    return 'Next vaccine: day $dia';
+  }
+
+  @override
+  String guiaDiariaProximoPesaje(int dia) {
+    return 'Next weighing: day $dia';
+  }
+
+  @override
+  String get guiaDiariaCatPostura => 'Egg Production';
+
+  @override
+  String get guiaDiariaCatBioseguridad => 'Biosecurity';
+
+  @override
+  String get guiaDiariaCatEquipos => 'Equipment';
+
+  @override
+  String get guiaDiariaRealizado => 'Done';
+
+  @override
+  String get guiaDiariaPorAve => 'per bird';
+
+  @override
+  String get guiaDiariaTotal => 'flock total';
 }

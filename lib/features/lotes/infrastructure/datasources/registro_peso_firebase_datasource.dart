@@ -26,6 +26,27 @@ class RegistroPesoFirebaseDatasource {
     return registro.copyWith(id: docRef.id);
   }
 
+  /// Crea un registro de peso y actualiza campos del lote
+  /// (pesoPromedioActual, etc.) en una transacción atómica.
+  Future<RegistroPeso> crearConActualizacionLote({
+    required RegistroPeso registro,
+    required Map<String, dynamic> camposLote,
+  }) async {
+    final model = RegistroPesoModel.fromEntity(registro);
+    final registroRef = _collection(registro.loteId).doc();
+    final loteRef = _firestore.collection('lotes').doc(registro.loteId);
+
+    final updates = Map<String, dynamic>.from(camposLote);
+    updates['ultimaActualizacion'] = FieldValue.serverTimestamp();
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(registroRef, model.toFirestore());
+      transaction.update(loteRef, updates);
+    });
+
+    return registro.copyWith(id: registroRef.id);
+  }
+
   /// Actualiza un registro existente.
   Future<RegistroPeso> actualizar(RegistroPeso registro) async {
     final model = RegistroPesoModel.fromEntity(
@@ -72,7 +93,10 @@ class RegistroPesoFirebaseDatasource {
   ) async {
     final snapshot = await _collection(loteId)
         .where('fecha', isGreaterThanOrEqualTo: Timestamp.fromDate(inicio))
-        .where('fecha', isLessThanOrEqualTo: Timestamp.fromDate(fin))
+        .where(
+          'fecha',
+          isLessThan: Timestamp.fromDate(fin.add(const Duration(days: 1))),
+        )
         .orderBy('fecha', descending: true)
         .get();
 

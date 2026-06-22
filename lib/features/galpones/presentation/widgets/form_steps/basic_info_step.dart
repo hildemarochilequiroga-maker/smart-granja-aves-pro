@@ -289,6 +289,8 @@ class _BasicInfoStepState extends ConsumerState<BasicInfoStep> {
                 color: theme.colorScheme.onSurface,
               ),
               isExpanded: true,
+              itemHeight: null,
+              menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
               selectedItemBuilder: (BuildContext context) {
                 return TipoGalpon.values.map((tipo) {
                   return Align(
@@ -303,27 +305,30 @@ class _BasicInfoStepState extends ConsumerState<BasicInfoStep> {
               items: TipoGalpon.values.map((tipo) {
                 return DropdownMenuItem(
                   value: tipo,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        tipo.localizedDisplayName(S.of(context)),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          tipo.localizedDisplayName(S.of(context)),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
-                      Text(
-                        tipo.localizedDescripcion(S.of(context)),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurfaceVariant,
+                        Text(
+                          tipo.localizedDescripcion(S.of(context)),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               }).toList(),
@@ -420,6 +425,8 @@ class _BasicInfoStepState extends ConsumerState<BasicInfoStep> {
                 color: theme.colorScheme.onSurface,
               ),
               isExpanded: true,
+              itemHeight: null,
+              menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
               selectedItemBuilder: (BuildContext context) {
                 return EstadoGalpon.values.map((estado) {
                   return Row(

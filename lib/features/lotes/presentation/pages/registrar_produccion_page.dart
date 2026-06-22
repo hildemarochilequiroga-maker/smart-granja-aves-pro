@@ -9,9 +9,11 @@ import 'dart:io';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/storage/image_upload_service.dart';
 import '../../../auth/application/providers/auth_provider.dart';
@@ -19,7 +21,7 @@ import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../domain/entities/lote.dart';
 import '../../domain/entities/registro_produccion.dart';
 import '../../application/providers/registro_providers.dart';
-import '../../application/providers/lote_providers.dart';
+import '../../application/services/registro_quick_cache_service.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
 import '../widgets/produccion_form_steps/informacion_produccion_step.dart';
 import '../widgets/produccion_form_steps/clasificacion_huevos_step.dart';
@@ -136,6 +138,7 @@ class _RegistrarProduccionPageState
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _debounceSaveTimer?.cancel();
     _huevosRecolectadosController.removeListener(_onFieldChanged);
     _huevosBuenosController.removeListener(_onFieldChanged);
     _huevosRotosController.removeListener(_onFieldChanged);
@@ -161,6 +164,8 @@ class _RegistrarProduccionPageState
 
   // ==================== AUTO-SAVE ====================
 
+  Timer? _debounceSaveTimer;
+
   void _startAutoSave() {
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (_hasUnsavedChanges && !_isSaving) {
@@ -170,9 +175,13 @@ class _RegistrarProduccionPageState
   }
 
   void _onFieldChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    _hasUnsavedChanges = true;
+    _debounceSaveTimer?.cancel();
+    _debounceSaveTimer = Timer(const Duration(seconds: 2), () {
+      if (_hasUnsavedChanges && !_isSaving) {
+        _saveDraft();
+      }
+    });
   }
 
   void _attachChangeListeners() {
@@ -188,8 +197,8 @@ class _RegistrarProduccionPageState
   }
 
   Future<void> _saveDraft() async {
-    if (!mounted) return;
-    setState(() => _isSaving = true);
+    if (!mounted || _isSaving) return;
+    _isSaving = true;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -208,16 +217,12 @@ class _RegistrarProduccionPageState
       });
       await prefs.setString('produccion_draft_${widget.lote.id}', draft);
 
-      if (!mounted) return;
-      setState(() {
-        _hasUnsavedChanges = false;
-        _isSaving = false;
-        _lastSaveTime = DateTime.now();
-      });
+      _hasUnsavedChanges = false;
+      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
-      if (!mounted) return;
-      setState(() => _isSaving = false);
+    } finally {
+      _isSaving = false;
     }
   }
 
@@ -461,12 +466,14 @@ class _RegistrarProduccionPageState
       setState(() {
         _autoValidate = true;
       });
+      unawaited(AppHaptics.error());
       return;
     }
 
     // Unfocus para ocultar teclado
     if (!mounted) return;
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep++;
@@ -484,6 +491,7 @@ class _RegistrarProduccionPageState
   void _previousStep() {
     // Unfocus para ocultar teclado
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep--;
@@ -543,6 +551,12 @@ class _RegistrarProduccionPageState
       return;
     }
     if (!mounted) return;
+
+    // Validar que el lote esté activo
+    if (!widget.lote.estaActivo) {
+      _showError(S.of(context).batchClosedCannotRegister);
+      return;
+    }
 
     // Validar usuario
     final usuario = ref.read(currentUserProvider);
@@ -663,11 +677,21 @@ class _RegistrarProduccionPageState
       debugPrint('Huevos recolectados: ${registro.huevosRecolectados}');
       debugPrint('Huevos buenos: ${registro.huevosBuenos}');
 
+      // Verificar que no exista registro duplicado para esta fecha
+      final existeDuplicado = await ref
+          .read(registroProduccionDatasourceProvider)
+          .existeRegistroParaFecha(widget.lote.id, _fechaSeleccionada);
+      if (existeDuplicado) {
+        if (!mounted) return;
+        setState(() {
+          _isSaving = false;
+          _isUploadingPhotos = false;
+        });
+        _showError(S.of(context).productionDuplicateDate);
+        return;
+      }
+
       // Crear registro usando datasource
-      await ref.read(registroProduccionDatasourceProvider).crear(registro);
-
-      debugPrint('✅ Registro de producción guardado exitosamente');
-
       // Actualizar acumulado de huevos en el lote
       final nuevoTotalHuevos =
           (widget.lote.huevosProducidos ?? 0) + registro.huevosRecolectados;
@@ -682,17 +706,38 @@ class _RegistrarProduccionPageState
       }
 
       debugPrint(
-        '🔄 Actualizando huevos producidos del lote: $nuevoTotalHuevos',
+        '🔄 Crear registro + actualizar lote en transacción atómica '
+        '(huevos: $nuevoTotalHuevos)',
       );
       await ref
-          .read(loteFirebaseDatasourceProvider)
-          .actualizarCampos(widget.lote.id, actualizaciones);
+          .read(registroProduccionDatasourceProvider)
+          .crearConActualizacionLote(
+            registro: registro,
+            camposLote: actualizaciones,
+          );
 
-      debugPrint('✅ Lote actualizado exitosamente');
+      debugPrint('✅ Registro y lote actualizados exitosamente');
 
       // Limpiar borrador al completar exitosamente
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('produccion_draft_${widget.lote.id}');
+
+      // Persistir últimos valores en cache rápido (smart pre-fill futuro)
+      try {
+        final cache = await ref.read(registroQuickCacheAsyncProvider.future);
+        await cache.save(widget.lote.id, RegistroQuickType.produccion, {
+          'huevosRecolectados': registro.huevosRecolectados,
+          'huevosBuenos': registro.huevosBuenos,
+          'huevosRotos': registro.huevosRotos,
+          'huevosSucios': registro.huevosSucios,
+          'huevosPequenos': registro.huevosPequenos,
+          'huevosMedianos': registro.huevosMedianos,
+          'huevosGrandes': registro.huevosGrandes,
+          'huevosExtraGrandes': registro.huevosExtraGrandes,
+        });
+      } on Exception catch (e) {
+        debugPrint('No se pudo guardar cache rápido producción: $e');
+      }
 
       if (!mounted) return;
       setState(() {
@@ -700,8 +745,8 @@ class _RegistrarProduccionPageState
         _isSaving = false;
       });
 
-      // Celebración con animación
-      AppSnackBar.success(
+      // Overlay animado de éxito + haptic — reemplaza snackbar+delay
+      await SaveSuccessOverlay.show(
         context,
         message: S.of(context).productionRegistered,
         detail: S
@@ -712,10 +757,7 @@ class _RegistrarProduccionPageState
             ),
       );
 
-      if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) Navigator.of(context).pop(true);
-      }
+      if (mounted) Navigator.of(context).pop(true);
     } on FirebaseException catch (e) {
       debugPrint(
         '❌ Error Firebase en registro producción: ${e.code} - ${e.message}',
@@ -743,6 +785,7 @@ class _RegistrarProduccionPageState
       }
 
       AppSnackBar.error(context, message: mensaje, detail: detalle);
+      unawaited(AppHaptics.error());
     } on Exception catch (e) {
       debugPrint('❌ Error Exception en registro producción: $e');
       if (!mounted) return;
@@ -751,6 +794,7 @@ class _RegistrarProduccionPageState
         _isUploadingPhotos = false;
       });
       _showError(e.toString().replaceFirst('Exception: ', ''));
+      unawaited(AppHaptics.error());
     }
   }
 

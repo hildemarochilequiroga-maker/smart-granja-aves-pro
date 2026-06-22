@@ -169,42 +169,37 @@ class ConnectivityNotifier extends StateNotifier<AppConnectivityState> {
         '🌐 Conectividad: ${hasConnection ? "ONLINE" : "OFFLINE"} '
         '(${state.connectionDescription})',
       );
+
+      // Al reconectar, verificar si hay escrituras pendientes
+      if (hasConnection) {
+        _checkPendingWrites();
+      }
     }
   }
 
   void _monitorPendingWrites() {
-    // Escuchar un documento dummy para detectar escrituras pendientes
-    // Firestore maneja esto automáticamente, pero podemos observar metadata
+    // Solo verificar escrituras pendientes cuando cambia la conectividad
+    // en lugar de mantener un snapshot listener permanente.
+    // El banner de pending writes se actualiza al reconectar.
+    _checkPendingWrites();
+  }
+
+  Future<void> _checkPendingWrites() async {
     try {
-      _firestoreSnapshotsSubscription = FirebaseFirestore.instance
+      final snapshot = await FirebaseFirestore.instance
           .collection('_app_status')
           .doc('connectivity_check')
-          .snapshots(includeMetadataChanges: true)
-          .listen(
-            (snapshot) {
-              final hasPendingWrites = snapshot.metadata.hasPendingWrites;
-              if (state.hasPendingWrites != hasPendingWrites) {
-                state = state.copyWith(
-                  hasPendingWrites: hasPendingWrites,
-                  lastSyncTime: !hasPendingWrites
-                      ? DateTime.now()
-                      : state.lastSyncTime,
-                );
+          .get(const GetOptions(source: Source.cache));
 
-                if (hasPendingWrites) {
-                  debugPrint('📝 Hay escrituras pendientes de sincronizar');
-                } else {
-                  debugPrint('✅ Todas las escrituras sincronizadas');
-                }
-              }
-            },
-            onError: (e) {
-              // Ignorar errores - el documento puede no existir
-              debugPrint('Nota: Documento de status no disponible');
-            },
-          );
+      final hasPendingWrites = snapshot.metadata.hasPendingWrites;
+      if (state.hasPendingWrites != hasPendingWrites) {
+        state = state.copyWith(
+          hasPendingWrites: hasPendingWrites,
+          lastSyncTime: !hasPendingWrites ? DateTime.now() : state.lastSyncTime,
+        );
+      }
     } on Exception catch (e) {
-      debugPrint('Error configurando monitor de escrituras: $e');
+      debugPrint('Nota: Documento de status no disponible: $e');
     }
   }
 
@@ -212,6 +207,7 @@ class ConnectivityNotifier extends StateNotifier<AppConnectivityState> {
   Future<void> refresh() async {
     state = state.copyWith(status: ConnectivityStatus.checking);
     await _checkConnectivity();
+    await _checkPendingWrites();
   }
 
   /// Habilita el modo offline forzado (para testing)

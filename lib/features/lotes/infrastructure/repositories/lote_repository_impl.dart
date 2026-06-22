@@ -41,14 +41,7 @@ class LoteRepositoryImpl implements LoteRepository {
         return Left(ValidationFailure(message: error));
       }
 
-      // Verificar conexión
-      if (!await networkInfo.isConnected) {
-        return Left(
-          NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')),
-        );
-      }
-
-      // Crear en Firebase
+      // Crear en Firebase (Firestore encola offline automáticamente)
       final loteCreado = await firebaseDatasource.crear(lote);
 
       // Guardar en cache local
@@ -75,14 +68,7 @@ class LoteRepositoryImpl implements LoteRepository {
         return Left(ValidationFailure(message: error));
       }
 
-      // Verificar conexión
-      if (!await networkInfo.isConnected) {
-        return Left(
-          NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')),
-        );
-      }
-
-      // Actualizar en Firebase
+      // Actualizar en Firebase (Firestore encola offline automáticamente)
       final loteActualizado = await firebaseDatasource.actualizar(lote);
 
       // Actualizar cache local
@@ -103,14 +89,7 @@ class LoteRepositoryImpl implements LoteRepository {
   @override
   Future<Either<Failure, Unit>> eliminar(String id) async {
     try {
-      // Verificar conexión
-      if (!await networkInfo.isConnected) {
-        return Left(
-          NetworkFailure(message: ErrorMessages.get('ERR_NO_CONNECTION')),
-        );
-      }
-
-      // Eliminar de Firebase
+      // Eliminar de Firebase (Firestore encola offline automáticamente)
       await firebaseDatasource.eliminar(id);
 
       // Eliminar de cache local

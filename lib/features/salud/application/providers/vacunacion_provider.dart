@@ -145,7 +145,9 @@ class VacunacionNotifier extends StateNotifier<VacunacionState> {
       },
       (vacunacion) async {
         if (vacunacion == null) {
-          state = VacunacionState.failure(ErrorMessages.get('ERR_VACCINATION_NOT_FOUND'));
+          state = VacunacionState.failure(
+            ErrorMessages.get('ERR_VACCINATION_NOT_FOUND'),
+          );
           return;
         }
         final updated = vacunacion.copyWith(
@@ -216,15 +218,15 @@ final vacunacionAplicadasProvider =
     });
 
 // Stream provider
-final vacunacionStreamProvider =
-    StreamProvider.family<List<Vacunacion>, String>((ref, loteId) {
+final vacunacionStreamProvider = StreamProvider.autoDispose
+    .family<List<Vacunacion>, String>((ref, loteId) {
       final repository = ref.watch(vacunacionRepositoryProvider);
       return repository.observarPorLote(loteId);
     });
 
 // Stream provider para vacunaciones por granja
-final vacunacionPorGranjaStreamProvider =
-    StreamProvider.family<List<Vacunacion>, String>((ref, granjaId) {
+final vacunacionPorGranjaStreamProvider = StreamProvider.autoDispose
+    .family<List<Vacunacion>, String>((ref, granjaId) {
       final repository = ref.watch(vacunacionRepositoryProvider);
       return repository.observarPorGranja(granjaId);
     });

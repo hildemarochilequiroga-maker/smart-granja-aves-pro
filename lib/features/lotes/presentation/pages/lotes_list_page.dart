@@ -52,9 +52,11 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
   String _searchQuery = '';
   EstadoLote? _estadoFilter;
   TipoAve? _tipoFilter;
+  Timer? _searchDebounce;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -111,7 +113,13 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
                 estadoFilter: _estadoFilter,
                 tipoFilter: _tipoFilter,
                 onSearchChanged: (value) {
-                  setState(() => _searchQuery = value);
+                  _searchDebounce?.cancel();
+                  _searchDebounce = Timer(
+                    const Duration(milliseconds: 300),
+                    () {
+                      if (mounted) setState(() => _searchQuery = value);
+                    },
+                  );
                 },
                 onClearSearch: () {
                   _searchController.clear();
@@ -221,34 +229,31 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
     );
   }
 
-  /// Filtra los lotes según criterios activos.
+  /// Filtra los lotes según criterios activos (un solo recorrido).
   List<Lote> _filterLotes(List<Lote> lotes) {
-    var filtered = lotes;
+    final hasSearch = _searchQuery.isNotEmpty;
+    final hasEstado = _estadoFilter != null;
+    final hasTipo = _tipoFilter != null;
 
-    // Filtro de búsqueda
-    if (_searchQuery.isNotEmpty) {
-      final searchLower = _searchQuery.toLowerCase();
-      filtered = filtered.where((lote) {
+    if (!hasSearch && !hasEstado && !hasTipo) return lotes;
+
+    final searchLower = hasSearch ? _searchQuery.toLowerCase() : '';
+
+    return lotes.where((lote) {
+      if (hasEstado && lote.estado != _estadoFilter) return false;
+      if (hasTipo && lote.tipoAve != _tipoFilter) return false;
+      if (hasSearch) {
         final codigo = lote.codigo.toLowerCase();
         final nombre = lote.nombre?.toLowerCase() ?? '';
         final proveedor = lote.proveedor?.toLowerCase() ?? '';
-        return codigo.contains(searchLower) ||
-            nombre.contains(searchLower) ||
-            proveedor.contains(searchLower);
-      }).toList();
-    }
-
-    // Filtro por estado
-    if (_estadoFilter != null) {
-      filtered = filtered.where((l) => l.estado == _estadoFilter).toList();
-    }
-
-    // Filtro por tipo de ave
-    if (_tipoFilter != null) {
-      filtered = filtered.where((l) => l.tipoAve == _tipoFilter).toList();
-    }
-
-    return filtered;
+        if (!codigo.contains(searchLower) &&
+            !nombre.contains(searchLower) &&
+            !proveedor.contains(searchLower)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
   }
 
   void _clearFilters() {

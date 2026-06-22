@@ -328,11 +328,16 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
   Widget _buildGalponDropdown(List<dynamic> galponesActivos) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final selectedGalponId =
+        galponesActivos.any((galpon) => galpon.id == widget.selectedGalponId)
+        ? widget.selectedGalponId
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<String>(
-          initialValue: widget.selectedGalponId,
+          initialValue: selectedGalponId,
           autovalidateMode: widget.autoValidate
               ? AutovalidateMode.always
               : AutovalidateMode.disabled,
@@ -378,6 +383,8 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
             ),
           ),
           isExpanded: true,
+          itemHeight: null,
+          menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
           selectedItemBuilder: (BuildContext context) {
             return galponesActivos.map((galpon) {
               return Text(
@@ -390,29 +397,32 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
           items: galponesActivos.map((galpon) {
             return DropdownMenuItem<String>(
               value: galpon.id,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    galpon.nombre,
-                    style: theme.textTheme.titleSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    S
-                        .of(context)
-                        .ubicacionShedDropdown(
-                          galpon.codigo,
-                          galpon.capacidadMaxima.toString(),
-                        ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      galpon.nombre,
+                      style: theme.textTheme.titleSmall,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
-                ],
+                    Text(
+                      S
+                          .of(context)
+                          .ubicacionShedDropdown(
+                            galpon.codigo,
+                            galpon.capacidadMaxima.toString(),
+                          ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
               ),
             );
           }).toList(),
@@ -427,11 +437,11 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
         AppSpacing.gapLg,
 
         // Info de capacidad
-        if (widget.selectedGalponId != null) ...[
+        if (selectedGalponId != null) ...[
           Builder(
             builder: (context) {
               final galpon = galponesActivos.firstWhere(
-                (g) => g.id == widget.selectedGalponId,
+                (g) => g.id == selectedGalponId,
               );
 
               return Container(

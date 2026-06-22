@@ -10,9 +10,11 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/application/providers/auth_provider.dart';
@@ -114,7 +116,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
 
     // Configurar auto-guardado cada 30 segundos
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (_hasUnsavedChanges) {
+      if (_hasUnsavedChanges && !_isSaving) {
         _saveDraft();
       }
     });
@@ -142,6 +144,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _debounceSaveTimer?.cancel();
     _conceptoController.dispose();
     _montoController.dispose();
     _proveedorController.dispose();
@@ -151,10 +154,16 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
     super.dispose();
   }
 
+  Timer? _debounceSaveTimer;
+
   void _onFormChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    _hasUnsavedChanges = true;
+    _debounceSaveTimer?.cancel();
+    _debounceSaveTimer = Timer(const Duration(seconds: 2), () {
+      if (_hasUnsavedChanges && !_isSaving) {
+        _saveDraft();
+      }
+    });
   }
 
   /// Callback cuando se selecciona un item del inventario
@@ -248,7 +257,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
 
   Future<void> _saveDraft() async {
     if (_isSaving) return;
-    setState(() => _isSaving = true);
+    _isSaving = true;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -265,16 +274,12 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       };
       await prefs.setString(_draftKey, jsonEncode(draft));
       debugPrint('Borrador guardado automáticamente');
-      if (mounted) {
-        setState(() {
-          _lastSaveTime = DateTime.now();
-          _hasUnsavedChanges = false;
-        });
-      }
+      _lastSaveTime = DateTime.now();
+      _hasUnsavedChanges = false;
     } on Exception catch (e) {
       debugPrint('Error al guardar borrador: $e');
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      _isSaving = false;
     }
   }
 
@@ -299,7 +304,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
 
   void _goToStep(int step) {
     if (step >= 0 && step < _steps.length) {
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
       _pageController.animateToPage(
         step,
         duration: const Duration(milliseconds: 300),
@@ -316,6 +321,8 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       } else {
         _submitForm();
       }
+    } else {
+      unawaited(AppHaptics.error());
     }
   }
 
@@ -328,9 +335,6 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
   bool _validateCurrentStep() {
     // Activar validación automática solo para el step actual
     setState(() => _autoValidatePerStep[_currentStep] = true);
-
-    // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
 
     switch (_currentStep) {
       case 0:
@@ -440,12 +444,15 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
   }
 
   void _showValidationError(String message) {
-    HapticFeedback.heavyImpact();
+    unawaited(AppHaptics.error());
     AppSnackBar.error(context, message: message);
   }
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Cancelar auto-guardado para evitar conflictos
+    _autoSaveTimer?.cancel();
 
     setState(() => _isSubmitting = true);
     unawaited(HapticFeedback.mediumImpact());
@@ -501,11 +508,11 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
         }
 
         if (mounted) {
-          AppSnackBar.success(
+          await SaveSuccessOverlay.show(
             context,
             message: S.of(context).costoUpdatedSuccess,
           );
-          context.pop(true);
+          if (mounted) context.pop(true);
         }
       } else {
         // Crear nuevo costo
@@ -538,29 +545,34 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
               : _observacionesController.text.trim(),
         );
 
-        await ref.read(costoCrudProvider.notifier).registrarCosto(nuevoCosto);
+        final costoGuardado = await ref
+            .read(costoCrudProvider.notifier)
+            .registrarCosto(nuevoCosto);
 
         final costoCreateState = ref.read(costoCrudProvider);
         if (costoCreateState.errorMessage != null) {
           throw Exception(costoCreateState.errorMessage);
         }
 
-        // Integración con inventario - registrar entrada si aplica
-        await _registrarEntradaInventario(nuevoCosto, usuario.id);
+        // Integración con inventario - registrar entrada si aplica (usar costo con ID real)
+        await _registrarEntradaInventario(
+          costoGuardado ?? nuevoCosto,
+          usuario.id,
+        );
 
         // Limpiar borrador después de guardar exitosamente
         await _clearDraft();
 
         if (mounted) {
-          unawaited(HapticFeedback.heavyImpact());
-          AppSnackBar.success(
+          await SaveSuccessOverlay.show(
             context,
             message: S.of(context).costoRegisteredSuccess,
           );
-          context.pop(true);
+          if (mounted) context.pop(true);
         }
       }
     } on Exception catch (e) {
+      unawaited(AppHaptics.error());
       if (mounted) {
         AppSnackBar.error(
           context,

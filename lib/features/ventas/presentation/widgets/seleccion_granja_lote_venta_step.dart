@@ -104,6 +104,10 @@ class SeleccionGranjaLoteVentaStep extends ConsumerWidget {
     final theme = Theme.of(context);
 
     final colorScheme = theme.colorScheme;
+    final safeSelectedGranjaId =
+        granjas.any((granja) => granja.id == selectedGranjaId)
+        ? selectedGranjaId
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +130,9 @@ class SeleccionGranjaLoteVentaStep extends ConsumerWidget {
             ),
           ),
           child: DropdownButtonFormField<String>(
-            initialValue: selectedGranjaId,
+            initialValue: safeSelectedGranjaId,
+            isExpanded: true,
+            menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.base,
@@ -212,7 +218,12 @@ class SeleccionGranjaLoteVentaStep extends ConsumerWidget {
                 ),
               ),
               child: DropdownButtonFormField<String>(
-                initialValue: selectedLoteId,
+                initialValue:
+                    lotesActivos.any((lote) => lote.id == selectedLoteId)
+                    ? selectedLoteId
+                    : null,
+                isExpanded: true,
+                menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
                 decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.base,

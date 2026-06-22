@@ -159,6 +159,11 @@ class SeleccionGranjaLoteStep extends ConsumerWidget {
     List<Granja> granjas,
     S l,
   ) {
+    final safeSelectedGranjaId =
+        granjas.any((granja) => granja.id == selectedGranjaId)
+        ? selectedGranjaId
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,7 +187,9 @@ class SeleccionGranjaLoteStep extends ConsumerWidget {
             ),
           ),
           child: DropdownButtonFormField<String>(
-            initialValue: selectedGranjaId,
+            initialValue: safeSelectedGranjaId,
+            isExpanded: true,
+            menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -280,7 +287,12 @@ class SeleccionGranjaLoteStep extends ConsumerWidget {
                 ),
               ),
               child: DropdownButtonFormField<String>(
-                initialValue: selectedLoteId,
+                initialValue:
+                    lotesActivos.any((lote) => lote.id == selectedLoteId)
+                    ? selectedLoteId
+                    : null,
+                isExpanded: true,
+                menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
                 decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -301,7 +313,12 @@ class SeleccionGranjaLoteStep extends ConsumerWidget {
                   return DropdownMenuItem<String>(
                     value: lote.id,
                     child: Text(
-                        S.of(context).batchDropdownItemName(lote.nombre ?? l.batchBatch, '${lote.cantidadActual}'),
+                      S
+                          .of(context)
+                          .batchDropdownItemName(
+                            lote.nombre ?? l.batchBatch,
+                            '${lote.cantidadActual}',
+                          ),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),

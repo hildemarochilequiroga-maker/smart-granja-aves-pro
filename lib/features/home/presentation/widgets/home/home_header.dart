@@ -18,7 +18,10 @@ class HomeHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final usuario = ref.watch(currentUserProvider);
+    // Solo observar el nombre del usuario, no todo el objeto
+    final nombreUsuario = ref.watch(
+      currentUserProvider.select((u) => u?.nombreCompleto),
+    );
     final granjasAsync = ref.watch(granjasStreamProvider);
     final granjaSeleccionada = ref.watch(granjaSeleccionadaProvider);
 
@@ -41,7 +44,7 @@ class HomeHeader extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _getSaludo(context, usuario?.nombreCompleto),
+                _getSaludo(context, nombreUsuario),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -439,6 +442,23 @@ class HomeHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
+          // Planificador Avícola — antes de crear granja
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push(AppRoutes.planificador),
+              icon: const Icon(Icons.auto_awesome, size: 20),
+              label: const Text('Planificador Avícola'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.success,
+                side: const BorderSide(color: AppColors.success),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(

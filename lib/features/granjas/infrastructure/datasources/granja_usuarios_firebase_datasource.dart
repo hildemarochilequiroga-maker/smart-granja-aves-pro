@@ -116,7 +116,11 @@ class GranjaUsuariosFirebaseDatasource {
     }
   }
 
-  /// Asigna un usuario a una granja con un rol
+  /// Asigna un usuario a una granja con un rol.
+  ///
+  /// Atomicidad: usa un `WriteBatch` para escribir el documento de
+  /// `granja_usuarios` y actualizar `usuariosAccesoIds` en `granjas`
+  /// en una sola operación.
   Future<GranjaUsuarioModel> asignarUsuarioAGranja({
     required String granjaId,
     required String usuarioId,
@@ -141,21 +145,129 @@ class GranjaUsuariosFirebaseDatasource {
         activo: true,
         notas: notas,
         nombreCompleto: nombreCompleto,
-        email: email,
+        email: email?.trim().toLowerCase(),
       );
 
-      debugPrint('   ├─ Guardando documento: $docId');
-      await _granjasUsariosCollection.doc(docId).set(model.toFirestore());
-      debugPrint('   ├─ Documento guardado correctamente');
+      final data = model.toFirestore();
+      // serverTimestamp autoritativo en lugar del timestamp del cliente.
+      data['fechaAsignacion'] = FieldValue.serverTimestamp();
 
-      // Actualizar usuariosAccesoIds en granja
-      await _agregarUsuarioAGranjaAcceso(granjaId, usuarioId);
+      debugPrint('   ├─ Guardando documento (batch): $docId');
+      final batch = _firestore.batch();
+      batch.set(_granjasUsariosCollection.doc(docId), data);
+      batch.update(_granjasCollection.doc(granjaId), {
+        'usuariosAccesoIds': FieldValue.arrayUnion([usuarioId]),
+      });
+      await batch.commit();
       debugPrint('✅ [GranjaUsuariosDatasource] Usuario asignado exitosamente');
 
       return model;
     } on Exception catch (e) {
       debugPrint(
         '❌ [GranjaUsuariosDatasource] Error asignarUsuarioAGranja: $e',
+      );
+      throw UnknownException(
+        message: ErrorMessages.get('ERR_ASSIGN_USER'),
+        details: e.toString(),
+      );
+    }
+  }
+
+  /// Acepta una invitación de manera atómica:
+  /// 1) crea el documento de `granja_usuarios`
+  /// 2) actualiza `granjas.usuariosAccesoIds`
+  /// 3) marca la invitación como usada
+  ///
+  /// Las tres escrituras suceden en una sola transacción. Si alguna
+  /// falla (incluyendo aceptación concurrente del mismo código), todo
+  /// se aborta. Garantiza que dos clientes no puedan canjear la misma
+  /// invitación a la vez.
+  Future<GranjaUsuarioModel> aceptarInvitacionAtomico({
+    required String invitacionId,
+    required String granjaId,
+    required String usuarioId,
+    required RolGranja rol,
+    String? nombreCompleto,
+    String? email,
+  }) async {
+    debugPrint(
+      '✅ [GranjaUsuariosDatasource] aceptarInvitacionAtomico iniciado',
+    );
+    debugPrint('   ├─ invitacionId: $invitacionId');
+    debugPrint('   ├─ granjaId: $granjaId');
+    debugPrint('   └─ usuarioId: ${usuarioId.substring(0, 8)}...');
+    try {
+      final docId = '${granjaId}_$usuarioId';
+      final invitacionRef = _invitacionesCollection.doc(invitacionId);
+      final usuarioRef = _granjasUsariosCollection.doc(docId);
+      final granjaRef = _granjasCollection.doc(granjaId);
+
+      final model = GranjaUsuarioModel(
+        id: docId,
+        granjaId: granjaId,
+        usuarioId: usuarioId,
+        rol: rol,
+        fechaAsignacion: DateTime.now(),
+        activo: true,
+        nombreCompleto: nombreCompleto,
+        email: email?.trim().toLowerCase(),
+      );
+      final usuarioData = model.toFirestore();
+      usuarioData['fechaAsignacion'] = FieldValue.serverTimestamp();
+
+      await _firestore.runTransaction((transaction) async {
+        // Releer la invitación dentro de la transacción para detectar
+        // race conditions: si otro cliente la marcó usada, abortamos.
+        final invitacionSnap = await transaction.get(invitacionRef);
+        if (!invitacionSnap.exists) {
+          throw UnknownException(
+            message: ErrorMessages.get('ERR_INVITATION_NOT_FOUND'),
+          );
+        }
+        final invData = invitacionSnap.data()!;
+        final usado = invData['usado'] as bool? ?? false;
+        if (usado) {
+          throw UnknownException(
+            message: ErrorMessages.get('ERR_INVITATION_INVALID'),
+          );
+        }
+        final exp = invData['fechaExpiracion'];
+        if (exp is Timestamp && exp.toDate().isBefore(DateTime.now())) {
+          throw UnknownException(
+            message: ErrorMessages.get('ERR_INVITATION_INVALID'),
+          );
+        }
+
+        // Releer el doc de usuario para evitar sobrescribir membresías
+        // existentes (defensa en profundidad junto al chequeo previo).
+        final usuarioSnap = await transaction.get(usuarioRef);
+        if (usuarioSnap.exists &&
+            (usuarioSnap.data()?['activo'] as bool? ?? false)) {
+          throw UnknownException(
+            message: ErrorMessages.get('ERR_ALREADY_MEMBER'),
+          );
+        }
+
+        transaction.set(usuarioRef, usuarioData);
+        transaction.update(granjaRef, {
+          'usuariosAccesoIds': FieldValue.arrayUnion([usuarioId]),
+        });
+        transaction.update(invitacionRef, {
+          'usado': true,
+          'usadoPorId': usuarioId,
+          'usadoEn': FieldValue.serverTimestamp(),
+        });
+      });
+
+      debugPrint(
+        '✅ [GranjaUsuariosDatasource] Invitación aceptada atómicamente',
+      );
+      return model;
+    } on UnknownException {
+      rethrow;
+    } on Exception catch (e) {
+      debugPrint(
+        '❌ [GranjaUsuariosDatasource] Error aceptarInvitacionAtomico: $e',
       );
       throw UnknownException(
         message: ErrorMessages.get('ERR_ASSIGN_USER'),
@@ -191,6 +303,20 @@ class GranjaUsuariosFirebaseDatasource {
       final model = GranjaUsuarioModel.fromFirestore(doc);
       debugPrint('   ├─ Rol anterior: ${model.rol.name}');
 
+      // No permitir cambiar el rol del propietario (owner) ni asignar
+      // owner a otro usuario. La propiedad de la granja se gestiona
+      // por separado mediante `propietarioId` en el documento de granja.
+      if (model.rol == RolGranja.owner) {
+        throw UnknownException(
+          message: ErrorMessages.get('ERR_CANNOT_CHANGE_OWNER_ROLE'),
+        );
+      }
+      if (nuevoRol == RolGranja.owner) {
+        throw UnknownException(
+          message: ErrorMessages.get('ERR_CANNOT_ASSIGN_OWNER_ROLE'),
+        );
+      }
+
       await _granjasUsariosCollection.doc(docId).update({'rol': nuevoRol.name});
       debugPrint(
         '✅ [GranjaUsuariosDatasource] Rol actualizado: ${model.rol.name} → ${nuevoRol.name}',
@@ -200,6 +326,8 @@ class GranjaUsuariosFirebaseDatasource {
         model.copyWith(rol: nuevoRol),
       );
       return actualizado;
+    } on UnknownException {
+      rethrow;
     } on Exception catch (e) {
       debugPrint('❌ [GranjaUsuariosDatasource] Error cambiarRolUsuario: $e');
       throw UnknownException(
@@ -366,7 +494,15 @@ class GranjaUsuariosFirebaseDatasource {
   // INVITACIONES
   // ===========================================================================
 
-  /// Crea una nueva invitación
+  /// Crea una nueva invitación.
+  ///
+  /// - Normaliza `emailDestino` (lowercase + trim).
+  /// - Previene invitaciones activas duplicadas para el mismo
+  ///   `granjaId + emailDestino`.
+  /// - Usa el código de invitación como `docId` para que las lecturas
+  ///   de aceptación usen `get` directo (las reglas de seguridad
+  ///   pueden restringir `list` sin romper el flujo).
+  /// - Marca `fechaCreacion` con `serverTimestamp` (autoritativo).
   Future<InvitacionGranjaModel> crearInvitacion({
     required String granjaId,
     required String granjaNombre,
@@ -375,14 +511,37 @@ class GranjaUsuariosFirebaseDatasource {
     required String creadoPorNombre,
     String? emailDestino,
   }) async {
+    final emailNormalizado = emailDestino?.trim().toLowerCase();
     debugPrint('📨 [GranjaUsuariosDatasource] crearInvitacion iniciado');
     debugPrint('   ├─ granjaId: $granjaId');
     debugPrint('   ├─ granjaNombre: $granjaNombre');
     debugPrint('   ├─ rol: ${rol.name}');
     debugPrint('   ├─ creadoPorId: ${creadoPorId.substring(0, 8)}...');
     debugPrint('   ├─ creadoPorNombre: $creadoPorNombre');
-    debugPrint('   └─ emailDestino: ${emailDestino ?? "sin email"}');
+    debugPrint('   └─ emailDestino: ${emailNormalizado ?? "sin email"}');
     try {
+      // Prevenir duplicados activos para el mismo granja+email.
+      if (emailNormalizado != null && emailNormalizado.isNotEmpty) {
+        final existentes = await _invitacionesCollection
+            .where('granjaId', isEqualTo: granjaId)
+            .where('emailDestino', isEqualTo: emailNormalizado)
+            .where('usado', isEqualTo: false)
+            .get();
+        final ahora = DateTime.now();
+        final activas = existentes.docs.where((d) {
+          final exp = d.data()['fechaExpiracion'];
+          if (exp is Timestamp) return exp.toDate().isAfter(ahora);
+          return false;
+        }).toList();
+        if (activas.isNotEmpty) {
+          throw UnknownException(
+            message: ErrorMessages.get('ERR_DUPLICATE_INVITATION'),
+            details:
+                'Ya existe una invitación activa para $emailNormalizado en esta granja.',
+          );
+        }
+      }
+
       final codigo = _generarCodigoInvitacion();
       final ahora = DateTime.now();
       final expiracion = ahora.add(const Duration(days: 30));
@@ -390,8 +549,10 @@ class GranjaUsuariosFirebaseDatasource {
       debugPrint('   ├─ Código generado: $codigo');
       debugPrint('   ├─ Expira: $expiracion');
 
+      // Usar el código como docId para permitir lookup por `.doc(codigo).get()`.
+      // Así las reglas pueden restringir `list` sin bloquear la aceptación.
       final model = InvitacionGranjaModel(
-        id: const Uuid().v4(),
+        id: codigo,
         codigo: codigo,
         granjaId: granjaId,
         granjaNombre: granjaNombre,
@@ -400,13 +561,19 @@ class GranjaUsuariosFirebaseDatasource {
         rol: rol,
         fechaCreacion: ahora,
         fechaExpiracion: expiracion,
-        emailDestino: emailDestino,
+        emailDestino: emailNormalizado,
       );
 
-      await _invitacionesCollection.doc(model.id).set(model.toFirestore());
-      debugPrint('✅ [GranjaUsuariosDatasource] Invitación creada: ${model.id}');
+      // Sustituir `fechaCreacion` por serverTimestamp para evitar
+      // problemas de skew de reloj en clientes.
+      final data = model.toFirestore();
+      data['fechaCreacion'] = FieldValue.serverTimestamp();
+      await _invitacionesCollection.doc(codigo).set(data);
+      debugPrint('✅ [GranjaUsuariosDatasource] Invitación creada: $codigo');
 
       return model;
+    } on UnknownException {
+      rethrow;
     } on Exception catch (e) {
       debugPrint('❌ [GranjaUsuariosDatasource] Error crearInvitacion: $e');
       throw UnknownException(
@@ -416,24 +583,39 @@ class GranjaUsuariosFirebaseDatasource {
     }
   }
 
-  /// Obtiene una invitación por código
+  /// Obtiene una invitación por código.
+  ///
+  /// Usa `doc(codigo).get()` (el codigo es el docId), evitando una
+  /// query contra la colección. Esto permite que las reglas restrinjan
+  /// `list` a propietarios/colaboradores autorizados sin romper
+  /// el flujo de aceptación.
   Future<InvitacionGranjaModel?> obtenerInvitacionPorCodigo({
     required String codigo,
   }) async {
     debugPrint('🔍 [GranjaUsuariosDatasource] obtenerInvitacionPorCodigo');
     debugPrint('   └─ código: $codigo');
     try {
-      final query = await _invitacionesCollection
-          .where('codigo', isEqualTo: codigo)
-          .limit(1)
-          .get();
-
-      if (query.docs.isEmpty) {
-        debugPrint('⚠️ [GranjaUsuariosDatasource] Invitación no encontrada');
-        return null;
+      final doc = await _invitacionesCollection.doc(codigo).get();
+      if (!doc.exists) {
+        // Fallback: invitaciones legacy creadas con UUID como docId.
+        final legacyQuery = await _invitacionesCollection
+            .where('codigo', isEqualTo: codigo)
+            .limit(1)
+            .get();
+        if (legacyQuery.docs.isEmpty) {
+          debugPrint('⚠️ [GranjaUsuariosDatasource] Invitación no encontrada');
+          return null;
+        }
+        final invitacion = InvitacionGranjaModel.fromFirestore(
+          legacyQuery.docs.first,
+        );
+        debugPrint(
+          '✅ [GranjaUsuariosDatasource] Invitación (legacy) encontrada: ${invitacion.id}',
+        );
+        return invitacion;
       }
 
-      final invitacion = InvitacionGranjaModel.fromFirestore(query.docs.first);
+      final invitacion = InvitacionGranjaModel.fromFirestore(doc);
       debugPrint('✅ [GranjaUsuariosDatasource] Invitación encontrada:');
       debugPrint('   ├─ id: ${invitacion.id}');
       debugPrint('   ├─ granjaNombre: ${invitacion.granjaNombre}');
@@ -481,10 +663,9 @@ class GranjaUsuariosFirebaseDatasource {
     bool soloValidas = true,
   }) async {
     try {
-      final query = _invitacionesCollection.where(
-        'granjaId',
-        isEqualTo: granjaId,
-      );
+      final query = _invitacionesCollection
+          .where('granjaId', isEqualTo: granjaId)
+          .limit(100);
 
       final snapshot = await query.get();
       var invitaciones = snapshot.docs
@@ -519,7 +700,12 @@ class GranjaUsuariosFirebaseDatasource {
     return 'GRANJA-$part1-$part2';
   }
 
-  /// Agrega usuario a la lista de acceso de granja
+  /// Agrega usuario a la lista de acceso de granja.
+  ///
+  /// Mantenido por compatibilidad. Actualmente sin uso interno (ya se
+  /// hace de forma atómica desde [asignarUsuarioAGranja] /
+  /// [aceptarInvitacionAtomico]).
+  // ignore: unused_element
   Future<void> _agregarUsuarioAGranjaAcceso(
     String granjaId,
     String usuarioId,

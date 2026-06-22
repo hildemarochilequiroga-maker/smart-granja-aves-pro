@@ -1,4 +1,4 @@
-# 📚 Documentación - Smart Granja Aves Pro
+    # 📚 Documentación - Smart Granja Aves Pro
 
 Documentación técnica y guías de implementación del proyecto.
 

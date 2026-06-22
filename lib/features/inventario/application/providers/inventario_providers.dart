@@ -28,15 +28,15 @@ final inventarioRepositoryProvider = Provider<InventarioRepository>((ref) {
 // ==================== ITEMS PROVIDERS ====================
 
 /// Stream de todos los items de una granja.
-final inventarioItemsStreamProvider =
-    StreamProvider.family<List<ItemInventario>, String>((ref, granjaId) {
+final inventarioItemsStreamProvider = StreamProvider.autoDispose
+    .family<List<ItemInventario>, String>((ref, granjaId) {
       final repository = ref.watch(inventarioRepositoryProvider);
       return repository.observarItems(granjaId);
     });
 
 /// Stream de items con alertas.
-final inventarioAlertasStreamProvider =
-    StreamProvider.family<List<ItemInventario>, String>((ref, granjaId) {
+final inventarioAlertasStreamProvider = StreamProvider.autoDispose
+    .family<List<ItemInventario>, String>((ref, granjaId) {
       final repository = ref.watch(inventarioRepositoryProvider);
       return repository.observarItemsConAlertas(granjaId);
     });
@@ -71,8 +71,8 @@ final inventarioBusquedaProvider = FutureProvider.autoDispose
 // ==================== MOVIMIENTOS PROVIDERS ====================
 
 /// Stream de movimientos de un item.
-final inventarioMovimientosStreamProvider =
-    StreamProvider.family<List<MovimientoInventario>, String>((ref, itemId) {
+final inventarioMovimientosStreamProvider = StreamProvider.autoDispose
+    .family<List<MovimientoInventario>, String>((ref, itemId) {
       final repository = ref.watch(inventarioRepositoryProvider);
       return repository.observarMovimientos(itemId);
     });
@@ -95,8 +95,8 @@ final inventarioMovimientosGranjaProvider = FutureProvider.autoDispose
 // ==================== RESUMEN PROVIDER ====================
 
 /// Stream del resumen de inventario.
-final inventarioResumenStreamProvider =
-    StreamProvider.family<ResumenInventario, String>((ref, granjaId) {
+final inventarioResumenStreamProvider = StreamProvider.autoDispose
+    .family<ResumenInventario, String>((ref, granjaId) {
       final repository = ref.watch(inventarioRepositoryProvider);
       return repository.observarResumen(granjaId);
     });

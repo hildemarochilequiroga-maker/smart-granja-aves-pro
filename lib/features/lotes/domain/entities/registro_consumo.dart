@@ -128,7 +128,7 @@ class RegistroConsumo extends Equatable {
 
   /// Consumo promedio por ave por día (kg/ave/día).
   double get consumoPorAveDia {
-    if (edadDias == 0 || cantidadAvesActual <= 0) return consumoPorAve;
+    if (edadDias <= 0 || cantidadAvesActual <= 0) return 0.0;
     return consumoAcumulado / (cantidadAvesActual * edadDias);
   }
 

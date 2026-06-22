@@ -232,6 +232,8 @@ class _LoteBasicInfoStepState extends ConsumerState<LoteBasicInfoStep> {
             ),
           ),
           isExpanded: true,
+          itemHeight: null,
+          menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
           selectedItemBuilder: (BuildContext context) {
             return TipoAve.values.map((tipo) {
               return Align(
@@ -249,26 +251,29 @@ class _LoteBasicInfoStepState extends ConsumerState<LoteBasicInfoStep> {
           items: TipoAve.values.map((tipo) {
             return DropdownMenuItem(
               value: tipo,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    tipo.localizedDisplayName(S.of(context)),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      tipo.localizedDisplayName(S.of(context)),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _getTipoDescripcion(tipo),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    Text(
+                      _getTipoDescripcion(tipo),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }).toList(),

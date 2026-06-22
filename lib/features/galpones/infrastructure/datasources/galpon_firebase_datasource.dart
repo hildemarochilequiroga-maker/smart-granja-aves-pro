@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/errors/error_messages.dart';
 import '../../../../core/errors/exceptions.dart';
@@ -31,7 +32,9 @@ class GalponFirebaseDatasource {
       await docRef.set(galponConId.toFirestore());
       return galponConId;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_CREATE_SHED'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_CREATE_SHED'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -44,7 +47,9 @@ class GalponFirebaseDatasource {
       if (!doc.exists) return null;
       return GalponModel.fromFirestore(doc);
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_SHED'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_SHED'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -62,7 +67,9 @@ class GalponFirebaseDatasource {
           .map((doc) => GalponModel.fromFirestore(doc))
           .toList();
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_SHEDS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_SHEDS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -80,22 +87,110 @@ class GalponFirebaseDatasource {
       if (!updated.exists) return galpon;
       return GalponModel.fromFirestore(updated);
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_UPDATE_SHED'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_UPDATE_SHED'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
   }
 
-  /// Elimina un galpón.
+  /// Elimina un galpón y todos sus datos relacionados.
+  ///
+  /// Incluye: lotes con sus subcollections, costos, ventas y eventos.
   Future<bool> eliminar(String id) async {
     try {
+      // 1. Obtener todos los lotes de este galpón
+      final lotesSnapshot = await _firestore
+          .collection('lotes')
+          .where('galponId', isEqualTo: id)
+          .get();
+
+      // 2. Para cada lote, eliminar subcollections y datos relacionados
+      for (final loteDoc in lotesSnapshot.docs) {
+        await _eliminarDatosLote(loteDoc.id);
+      }
+
+      // 3. Eliminar los documentos de lotes
+      await _eliminarDocumentos(lotesSnapshot.docs);
+
+      // 4. Eliminar eventos del galpón
+      await _limpiarColeccion('galpon_eventos', 'galponId', id);
+
+      // 5. Eliminar el galpón
       await _galponesCollection.doc(id).delete();
+
+      debugPrint('✅ Galpón $id eliminado con todos sus datos relacionados');
       return true;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_DELETE_SHED'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_DELETE_SHED'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
+  }
+
+  /// Elimina subcollections y datos relacionados de un lote.
+  Future<void> _eliminarDatosLote(String loteId) async {
+    final lotesCol = _firestore.collection('lotes');
+    for (final sub in ['pesos', 'produccion', 'mortalidad', 'consumos']) {
+      await _eliminarSubcoleccionDeLote(lotesCol, loteId, sub);
+    }
+    await _limpiarColeccion('costos_gastos', 'loteId', loteId);
+    await _limpiarColeccion('ventas_productos', 'loteId', loteId);
+  }
+
+  /// Elimina todos los documentos de una subcollection de un lote.
+  Future<void> _eliminarSubcoleccionDeLote(
+    CollectionReference<Map<String, dynamic>> lotesCol,
+    String loteId,
+    String nombre,
+  ) async {
+    try {
+      final snapshot = await lotesCol.doc(loteId).collection(nombre).get();
+      if (snapshot.docs.isEmpty) return;
+      await _eliminarDocumentos(snapshot.docs);
+    } on Exception catch (e) {
+      debugPrint('  ⚠️ Error eliminando $nombre del lote $loteId: $e');
+    }
+  }
+
+  /// Elimina documentos de una colección filtrados por un campo.
+  Future<void> _limpiarColeccion(
+    String coleccion,
+    String campo,
+    String valor,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection(coleccion)
+          .where(campo, isEqualTo: valor)
+          .get();
+      if (snapshot.docs.isEmpty) return;
+      await _eliminarDocumentos(snapshot.docs);
+    } on Exception catch (e) {
+      debugPrint('  ⚠️ Error limpiando $coleccion: $e');
+    }
+  }
+
+  /// Elimina una lista de documentos usando WriteBatch.
+  Future<void> _eliminarDocumentos(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) async {
+    if (docs.isEmpty) return;
+    var batch = _firestore.batch();
+    var ops = 0;
+    for (final doc in docs) {
+      batch.delete(doc.reference);
+      ops++;
+      if (ops >= 500) {
+        await batch.commit();
+        batch = _firestore.batch();
+        ops = 0;
+      }
+    }
+    if (ops > 0) await batch.commit();
   }
 
   // ==================== CONSULTAS ====================
@@ -147,7 +242,9 @@ class GalponFirebaseDatasource {
           .map((doc) => GalponModel.fromFirestore(doc))
           .toList();
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_SHEDS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_SHEDS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -168,7 +265,9 @@ class GalponFirebaseDatasource {
           )
           .toList();
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_SEARCH_SHEDS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_SEARCH_SHEDS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -207,7 +306,9 @@ class GalponFirebaseDatasource {
       await docRef.set(eventoConId.toFirestore());
       return eventoConId;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_REGISTER_EVENT'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_REGISTER_EVENT'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -232,7 +333,9 @@ class GalponFirebaseDatasource {
           .map((doc) => GalponEventoModel.fromFirestore(doc))
           .toList();
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_EVENTS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_EVENTS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -267,7 +370,9 @@ class GalponFirebaseDatasource {
           .get();
       return snapshot.count ?? 0;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_COUNT_SHEDS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_COUNT_SHEDS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -282,7 +387,9 @@ class GalponFirebaseDatasource {
           .get();
       return snapshot.count ?? 0;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_COUNT_SHEDS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_COUNT_SHEDS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }

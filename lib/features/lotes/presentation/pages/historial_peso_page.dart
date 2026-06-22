@@ -179,7 +179,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
                   Text(
                     etiquetaFiltroActual,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
+                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                     textAlign: TextAlign.center,
@@ -197,15 +197,12 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
                     topRight: Radius.circular(12),
                     bottomRight: Radius.circular(12),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Icon(
                       Icons.close_rounded,
                       size: 20,
-                      color: theme.colorScheme.onPrimary,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -422,34 +419,28 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
   }
 
   Widget _buildGraficosCard(ThemeData theme) {
-    return Material(
-      color: AppColors.info,
-      borderRadius: AppRadius.allMd,
-      child: InkWell(
-        onTap: _navegarAGraficos,
-        borderRadius: AppRadius.allMd,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(borderRadius: AppRadius.allMd),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.bar_chart_rounded,
-                color: theme.colorScheme.onPrimary,
-                size: 24,
+    return GestureDetector(
+      onTap: _navegarAGraficos,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.info,
+          borderRadius: AppRadius.allMd,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              S.of(context).batchViewCharts,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              AppSpacing.hGapSm,
-              Text(
-                S.of(context).batchViewCharts,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onPrimary,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -856,7 +847,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
                         onPressed: () => Navigator.pop(context),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.warning,
-                          foregroundColor: theme.colorScheme.onPrimary,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: AppRadius.allMd,

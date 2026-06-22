@@ -5,13 +5,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -447,7 +448,7 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
 
   void _goToStep(int step) {
     if (step < _currentStep) {
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
       FocusScope.of(context).unfocus();
       setState(() {
         _currentStep = step;
@@ -465,7 +466,7 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
     FocusScope.of(context).unfocus();
 
     if (_currentStep > 0) {
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
       setState(() => _currentStep--);
       _pageController.animateToPage(
         _currentStep,
@@ -479,7 +480,7 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
     if (_currentStep < _steps.length - 1) {
       // Validar paso actual antes de avanzar
       if (_validateCurrentStep()) {
-        HapticFeedback.lightImpact();
+        unawaited(AppHaptics.selection());
         // Cerrar teclado antes de cambiar de paso
         FocusScope.of(context).unfocus();
 
@@ -492,6 +493,7 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
           curve: Curves.easeInOutCubic,
         );
       } else {
+        unawaited(AppHaptics.error());
         // Activar validación automática solo para el step actual
         setState(() => _autoValidatePerStep[_currentStep] = true);
       }
@@ -504,9 +506,6 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
   bool _validateCurrentStep() {
     // Activar validación automática solo para el step actual
     setState(() => _autoValidatePerStep[_currentStep] = true);
-
-    // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
 
     switch (_currentStep) {
       case 0: // Información Básica: código, tipo de ave, fecha
@@ -593,29 +592,22 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
 
             if (!mounted) return;
 
-            // Feedback háptico de éxito
-            unawaited(HapticFeedback.mediumImpact());
-
-            // Mostrar mensaje de éxito
-            AppSnackBar.success(
+            await SaveSuccessOverlay.show(
               context,
               message: S.of(context).batchCreateSuccess,
               detail: S.of(context).batchCreateSuccessDetail(loteCreado.codigo),
             );
 
-            // Navegar de vuelta con delay para mostrar celebración
-            Future.delayed(const Duration(milliseconds: 800), () {
-              if (mounted) {
-                context.pop(loteCreado);
-              }
-            });
+            if (mounted) {
+              context.pop(loteCreado);
+            }
           },
         ),
       );
     } on Exception {
       if (mounted) {
         setState(() => _isLoading = false);
-        unawaited(HapticFeedback.heavyImpact());
+        unawaited(AppHaptics.error());
         AppSnackBar.error(
           context,
           message: S.of(context).batchUnexpectedError,

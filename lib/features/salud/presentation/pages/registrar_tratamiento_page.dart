@@ -7,16 +7,17 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../inventario/inventario.dart';
@@ -128,19 +129,25 @@ class _RegistrarTratamientoPageState
     _observacionesController.addListener(_onFormChanged);
   }
 
+  Timer? _debounceSaveTimer;
+
   void _startAutoSave() {
     // Configurar auto-guardado cada 30 segundos
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (_hasUnsavedChanges) {
+      if (_hasUnsavedChanges && !_isSaving) {
         _saveDraft();
       }
     });
   }
 
   void _onFormChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    _hasUnsavedChanges = true;
+    _debounceSaveTimer?.cancel();
+    _debounceSaveTimer = Timer(const Duration(seconds: 2), () {
+      if (_hasUnsavedChanges && !_isSaving) {
+        _saveDraft();
+      }
+    });
   }
 
   Future<void> _checkForDraft() async {
@@ -199,7 +206,7 @@ class _RegistrarTratamientoPageState
 
   Future<void> _saveDraft() async {
     if (_isSaving) return;
-    setState(() => _isSaving = true);
+    _isSaving = true;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -219,16 +226,12 @@ class _RegistrarTratamientoPageState
       };
       await prefs.setString(_draftKey, jsonEncode(draft));
       debugPrint('Borrador de tratamiento guardado automáticamente');
-      if (mounted) {
-        setState(() {
-          _lastSaveTime = DateTime.now();
-          _hasUnsavedChanges = false;
-        });
-      }
+      _lastSaveTime = DateTime.now();
+      _hasUnsavedChanges = false;
     } on Exception catch (e) {
       debugPrint('Error al guardar borrador: $e');
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      _isSaving = false;
     }
   }
 
@@ -277,6 +280,7 @@ class _RegistrarTratamientoPageState
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _debounceSaveTimer?.cancel();
 
     // Remover listeners antes de dispose
     _diagnosticoController.removeListener(_onFormChanged);
@@ -302,9 +306,12 @@ class _RegistrarTratamientoPageState
   }
 
   void _nextStep() {
-    if (!_validateCurrentStep()) return;
+    if (!_validateCurrentStep()) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     if (_currentStep < _steps.length - 1) {
@@ -320,7 +327,7 @@ class _RegistrarTratamientoPageState
   }
 
   void _previousStep() {
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     if (_currentStep > 0) {
@@ -350,7 +357,7 @@ class _RegistrarTratamientoPageState
     setState(() => _autoValidatePerStep[_currentStep] = true);
 
     // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
 
     // Forzar validación del formulario para mostrar errores inline
     _formKey.currentState?.validate();
@@ -508,13 +515,14 @@ class _RegistrarTratamientoPageState
       _hasUnsavedChanges = false;
 
       if (mounted) {
-        AppSnackBar.success(
+        await SaveSuccessOverlay.show(
           context,
           message: S.of(context).treatRegisteredSuccess,
         );
-        Navigator.of(context).pop(true);
+        if (mounted) Navigator.of(context).pop(true);
       }
     } on Exception catch (e) {
+      unawaited(AppHaptics.error());
       if (mounted) {
         AppSnackBar.error(
           context,
@@ -742,7 +750,7 @@ class _RegistrarTratamientoPageState
                   onPressed: _isLoading
                       ? null
                       : () {
-                          HapticFeedback.lightImpact();
+                          unawaited(AppHaptics.selection());
                           if (_validateCurrentStep()) {
                             _nextStep();
                           }

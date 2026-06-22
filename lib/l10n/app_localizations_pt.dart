@@ -1365,6 +1365,10 @@ class SPt extends S {
   String get batchClosedSuccess => 'Lote fechado com sucesso';
 
   @override
+  String get batchClosedCannotRegister =>
+      'Não é possível registrar em um lote que não está ativo';
+
+  @override
   String get batchEntryAgeDays => 'Idade de Entrada (dias)';
 
   @override
@@ -2490,6 +2494,11 @@ class SPt extends S {
 
   @override
   String get salesRegisteredSuccess => 'Venda registrada com sucesso!';
+
+  @override
+  String salesExceedsAvailableBirds(int requested, int available) {
+    return 'A quantidade solicitada ($requested) excede as aves disponíveis ($available)';
+  }
 
   @override
   String get salesInventoryUpdateError =>
@@ -5123,6 +5132,18 @@ class SPt extends S {
 
   @override
   String get productionFutureDate => 'La data de produção no puede ser futura';
+
+  @override
+  String get productionDuplicateDate =>
+      'Já existe um registro de produção para esta data';
+
+  @override
+  String get weightDuplicateDate =>
+      'Já existe um registro de peso para esta data';
+
+  @override
+  String get consumptionDuplicateDate =>
+      'Já existe um registro de consumo para esta data';
 
   @override
   String get productionBeforeEntryDate =>
@@ -15864,4 +15885,94 @@ class SPt extends S {
   @override
   String get legalTerms6Body =>
       'Reservamo-nos o direito de modificar estes termos a qualquer momento. Notificaremos sobre alterações significativas através do aplicativo. O uso continuado após as alterações constitui sua aceitação dos novos termos.';
+
+  @override
+  String get guiaDiariaTitle => 'Guia do Dia';
+
+  @override
+  String guiaDiariaDia(int dia) {
+    return 'Dia $dia';
+  }
+
+  @override
+  String guiaDiariaProgreso(int completadas, int total) {
+    return '$completadas de $total tarefas';
+  }
+
+  @override
+  String get guiaDiariaTodasCompletadas => 'Todas as tarefas concluídas!';
+
+  @override
+  String get guiaDiariaMarcarTodas => 'Marcar todas';
+
+  @override
+  String get guiaDiariaHoy => 'Hoje';
+
+  @override
+  String get guiaDiariaSinTareas => 'Nenhuma tarefa programada para este dia';
+
+  @override
+  String get guiaDiariaBotonLabel => 'Guia diário interativo';
+
+  @override
+  String get guiaDiariaBotonSubtitle =>
+      'Tarefas do dia com controle de progresso';
+
+  @override
+  String get guiaDiariaNavDia => 'Ir para o dia';
+
+  @override
+  String get guiaDiariaCatAlimentacion => 'Alimentação';
+
+  @override
+  String get guiaDiariaCatAgua => 'Água';
+
+  @override
+  String get guiaDiariaCatLuz => 'Luz';
+
+  @override
+  String get guiaDiariaCatTemperatura => 'Temperatura';
+
+  @override
+  String get guiaDiariaCatHumedad => 'Umidade';
+
+  @override
+  String get guiaDiariaCatPesaje => 'Pesagem';
+
+  @override
+  String get guiaDiariaCatVacunacion => 'Vacinação';
+
+  @override
+  String get guiaDiariaCatManejoGeneral => 'Manejo geral';
+
+  @override
+  String get guiaDiariaVolverHoy => 'Voltar para hoje';
+
+  @override
+  String guiaDiariaProximaVacuna(int dia) {
+    return 'Próxima vacina: dia $dia';
+  }
+
+  @override
+  String guiaDiariaProximoPesaje(int dia) {
+    return 'Próxima pesagem: dia $dia';
+  }
+
+  @override
+  String get guiaDiariaCatPostura => 'Postura / Ovos';
+
+  @override
+  String get guiaDiariaCatBioseguridad => 'Biossegurança';
+
+  @override
+  String get guiaDiariaCatEquipos => 'Equipamentos';
+
+  @override
+  String get guiaDiariaRealizado => 'Concluído';
+
+  @override
+  String get guiaDiariaPorAve => 'por ave';
+
+  @override
+  String get guiaDiariaTotal => 'total do lote';
 }

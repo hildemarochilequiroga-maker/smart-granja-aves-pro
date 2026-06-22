@@ -78,7 +78,10 @@ class RegistroMortalidadFirebaseDatasource {
   ) async {
     final snapshot = await _collection(loteId)
         .where('fecha', isGreaterThanOrEqualTo: Timestamp.fromDate(inicio))
-        .where('fecha', isLessThanOrEqualTo: Timestamp.fromDate(fin))
+        .where(
+          'fecha',
+          isLessThan: Timestamp.fromDate(fin.add(const Duration(days: 1))),
+        )
         .orderBy('fecha', descending: true)
         .get();
 

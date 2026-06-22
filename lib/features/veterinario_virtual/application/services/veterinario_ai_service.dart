@@ -11,7 +11,7 @@ import 'contexto_builder.dart';
 /// Modelo de Gemini a utilizar.
 ///
 /// gemini-2.5-flash: mejor razonamiento y calidad de respuesta,
-/// ideal para análisis veterinario complejo.
+/// ideal para análisis veterinario complejo con capacidad multimodal.
 const _kModelName = 'gemini-2.5-flash';
 
 /// Servicio que maneja la comunicación con Gemini.
@@ -42,9 +42,9 @@ class VeterinarioAiService {
       model: _kModelName,
       systemInstruction: Content.system(systemInstruction),
       generationConfig: GenerationConfig(
-        temperature: 0.4,
-        topP: 0.92,
-        maxOutputTokens: 4096,
+        temperature: 0.3,
+        topP: 0.90,
+        maxOutputTokens: 8192,
       ),
       safetySettings: [
         SafetySetting(

@@ -111,7 +111,9 @@ class NecropsiasNotifier extends StateNotifier<NecropsiasState> {
     } on Exception catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: ErrorMessages.format('ERR_LOADING_BATCH_NECROPSIES', {'e': '$e'}),
+        error: ErrorMessages.format('ERR_LOADING_BATCH_NECROPSIES', {
+          'e': '$e',
+        }),
       );
     }
   }
@@ -321,13 +323,11 @@ final necropsiasNotifierProvider =
     });
 
 /// Provider de necropsias filtradas por lote.
-final necropsiasLoteProvider = Provider.family<List<Necropsia>, String>((
-  ref,
-  loteId,
-) {
-  final state = ref.watch(necropsiasNotifierProvider);
-  return state.necropsias.where((n) => n.loteId == loteId).toList();
-});
+final necropsiasLoteProvider = Provider.autoDispose
+    .family<List<Necropsia>, String>((ref, loteId) {
+      final state = ref.watch(necropsiasNotifierProvider);
+      return state.necropsias.where((n) => n.loteId == loteId).toList();
+    });
 
 /// Provider de necropsia seleccionada.
 final necropsiaSeleccionadaProvider = Provider<Necropsia?>((ref) {

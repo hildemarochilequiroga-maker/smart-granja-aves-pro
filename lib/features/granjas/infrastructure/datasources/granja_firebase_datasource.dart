@@ -54,7 +54,9 @@ class GranjaFirebaseDatasource {
 
       return granjaConId;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_CREATE_FARM'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_CREATE_FARM'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -67,7 +69,9 @@ class GranjaFirebaseDatasource {
       if (!doc.exists) return null;
       return GranjaModel.fromFirestore(doc);
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_FARM'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_FARM'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -76,32 +80,72 @@ class GranjaFirebaseDatasource {
   /// Obtiene todas las granjas de un usuario (propias + colaborativas)
   Future<List<GranjaModel>> obtenerPorUsuario(String usuarioId) async {
     try {
-      // Obtener granjas propias
-      final snapshotPropias = await _granjasCollection
-          .where('propietarioId', isEqualTo: usuarioId)
-          .get();
+      // 1. Lanzar las 3 queries en paralelo: granjas propias, colaborativas
+      //    y registros de propietario existentes en granja_usuarios.
+      final results = await Future.wait([
+        _granjasCollection.where('propietarioId', isEqualTo: usuarioId).get(),
+        _granjasCollection
+            .where('usuariosAccesoIds', arrayContains: usuarioId)
+            .get(),
+        _firestore
+            .collection('granja_usuarios')
+            .where('usuarioId', isEqualTo: usuarioId)
+            .where('rol', isEqualTo: 'owner')
+            .get(),
+      ]);
 
-      // Obtener granjas colaborativas
-      final snapshotColaborativas = await _granjasCollection
-          .where('usuariosAccesoIds', arrayContains: usuarioId)
-          .get();
+      final snapshotPropias = results[0];
+      final snapshotColaborativas = results[1];
+      final snapshotOwners = results[2];
 
-      // Combinar evitando duplicados
+      // 2. Set con los granjaId que YA tienen registro de propietario
+      final granjaIdsConOwner = <String>{
+        for (final doc in snapshotOwners.docs)
+          (doc.data()['granjaId'] as String?) ?? '',
+      }..remove('');
+
+      // 3. Combinar evitando duplicados
       final granjasMap = <String, GranjaModel>{};
+
+      // Procesar granjas propias y registrar en batch las migraciones faltantes
+      WriteBatch? migracionBatch;
+      var pendientes = 0;
 
       for (final doc in snapshotPropias.docs) {
         final granja = GranjaModel.fromFirestore(doc);
         granjasMap[granja.id] = granja;
 
-        // Asegurar que el propietario esté registrado en granja_usuarios
-        await _asegurarPropietarioRegistrado(granja);
+        // Migración automática: solo si NO existe el registro de propietario
+        if (!granjaIdsConOwner.contains(granja.id)) {
+          migracionBatch ??= _firestore.batch();
+          final docId = '${granja.id}_${granja.propietarioId}';
+          final docRef = _firestore.collection('granja_usuarios').doc(docId);
+          migracionBatch.set(docRef, {
+            'granjaId': granja.id,
+            'usuarioId': granja.propietarioId,
+            'rol': 'owner',
+            'fechaAsignacion': FieldValue.serverTimestamp(),
+            'activo': true,
+            'notas': 'Propietario migrado automáticamente',
+            'nombreCompleto': granja.propietarioNombre,
+            'email': granja.correo,
+          });
+          pendientes++;
+          if (pendientes >= 400) {
+            await migracionBatch.commit();
+            migracionBatch = null;
+            pendientes = 0;
+          }
+        }
+      }
+
+      if (migracionBatch != null && pendientes > 0) {
+        await migracionBatch.commit();
       }
 
       for (final doc in snapshotColaborativas.docs) {
         final granja = GranjaModel.fromFirestore(doc);
-        if (!granjasMap.containsKey(granja.id)) {
-          granjasMap[granja.id] = granja;
-        }
+        granjasMap.putIfAbsent(granja.id, () => granja);
       }
 
       // Ordenar por fecha de creación descendente
@@ -109,14 +153,18 @@ class GranjaFirebaseDatasource {
       granjasList.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
       return granjasList;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_FARMS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_FARMS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
   }
 
-  /// Asegura que el propietario de una granja esté registrado en granja_usuarios
-  /// Esto es una migración automática para granjas creadas antes del sistema multi-usuario
+  /// (Deprecado por la versión batched en `obtenerPorUsuario`.)
+  /// Asegura que el propietario de una granja esté registrado en granja_usuarios.
+  /// Se mantiene para compatibilidad con otros callers.
+  // ignore: unused_element
   Future<void> _asegurarPropietarioRegistrado(GranjaModel granja) async {
     try {
       final docId = '${granja.id}_${granja.propietarioId}';
@@ -153,32 +201,122 @@ class GranjaFirebaseDatasource {
       await _granjasCollection.doc(granja.id).update(granja.toFirestore());
       return granja;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_UPDATE_FARM'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_UPDATE_FARM'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
   }
 
-  /// Elimina una granja y todos sus datos relacionados
-  /// Incluye: granja_usuarios, invitaciones_granja
+  /// Elimina una granja y todos sus datos relacionados.
+  ///
+  /// Cascade completo: granja_usuarios, invitaciones, galpones, lotes
+  /// (con subcollections pesos/produccion/mortalidad/consumos),
+  /// costos_gastos, ventas_productos, galpon_eventos y
+  /// subcollections de salud.
   Future<bool> eliminar(String id) async {
     try {
-      // 1. Eliminar todos los registros de granja_usuarios para esta granja
+      // 1. Eliminar granja_usuarios e invitaciones
       await _limpiarColeccionPorGranja('granja_usuarios', id);
-
-      // 2. Eliminar todas las invitaciones de esta granja
       await _limpiarColeccionPorGranja('invitaciones_granja', id);
 
-      // 3. Eliminar la granja
+      // 2. Obtener todos los lotes de esta granja y eliminar sus datos
+      final lotesSnapshot = await _firestore
+          .collection('lotes')
+          .where('granjaId', isEqualTo: id)
+          .get();
+
+      for (final loteDoc in lotesSnapshot.docs) {
+        await _eliminarDatosLote(loteDoc.id);
+      }
+      await _eliminarDocumentos(lotesSnapshot.docs);
+
+      // 3. Eliminar galpones y sus eventos
+      await _limpiarColeccionPorGranja('galpones', id);
+      await _limpiarColeccionPorGranja('galpon_eventos', id);
+
+      // 4. Eliminar costos y ventas de la granja
+      await _limpiarColeccionPorGranja('costos_gastos', id);
+      await _limpiarColeccionPorGranja('ventas_productos', id);
+      await _limpiarColeccionPorGranja('ventas_pedidos', id);
+
+      // 5. Eliminar subcollections de salud de la granja
+      for (final sub in [
+        'alertas_sanitarias',
+        'eventos_salud',
+        'inspecciones_bioseguridad',
+        'necropsias',
+        'programas_vacunacion',
+        'usos_antimicrobianos',
+      ]) {
+        await _eliminarSubcoleccionGranja(id, sub);
+      }
+
+      // 6. Eliminar la granja
       await _granjasCollection.doc(id).delete();
 
       debugPrint('✅ Granja $id eliminada con todos sus datos relacionados');
       return true;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_DELETE_FARM'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_DELETE_FARM'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
+  }
+
+  /// Elimina subcollections y datos relacionados de un lote.
+  Future<void> _eliminarDatosLote(String loteId) async {
+    final lotesCol = _firestore.collection('lotes');
+    for (final sub in ['pesos', 'produccion', 'mortalidad', 'consumos']) {
+      try {
+        final snapshot = await lotesCol.doc(loteId).collection(sub).get();
+        if (snapshot.docs.isNotEmpty) {
+          await _eliminarDocumentos(snapshot.docs);
+        }
+      } on Exception catch (e) {
+        debugPrint('  ⚠️ Error eliminando $sub del lote $loteId: $e');
+      }
+    }
+  }
+
+  /// Elimina una subcollection directa de la granja.
+  Future<void> _eliminarSubcoleccionGranja(
+    String granjaId,
+    String nombre,
+  ) async {
+    try {
+      final snapshot = await _granjasCollection
+          .doc(granjaId)
+          .collection(nombre)
+          .get();
+      if (snapshot.docs.isEmpty) return;
+      await _eliminarDocumentos(snapshot.docs);
+      debugPrint('  ✅ Eliminados ${snapshot.docs.length} docs de $nombre');
+    } on Exception catch (e) {
+      debugPrint('  ⚠️ Error eliminando subcollection $nombre: $e');
+    }
+  }
+
+  /// Elimina una lista de documentos usando WriteBatch.
+  Future<void> _eliminarDocumentos(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) async {
+    if (docs.isEmpty) return;
+    var batch = _firestore.batch();
+    var ops = 0;
+    for (final doc in docs) {
+      batch.delete(doc.reference);
+      ops++;
+      if (ops >= 500) {
+        await batch.commit();
+        batch = _firestore.batch();
+        ops = 0;
+      }
+    }
+    if (ops > 0) await batch.commit();
   }
 
   /// Limpia todos los documentos de una colección que pertenecen a una granja
@@ -264,7 +402,9 @@ class GranjaFirebaseDatasource {
       granjasList.sort((a, b) => a.nombre.compareTo(b.nombre));
       return granjasList;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_FARMS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_FARMS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -286,7 +426,9 @@ class GranjaFirebaseDatasource {
           .map((doc) => GranjaModel.fromFirestore(doc))
           .toList();
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_FARMS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_FARMS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -331,7 +473,9 @@ class GranjaFirebaseDatasource {
           .get();
       return snapshot.docs.isNotEmpty;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_VERIFY_RUC'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_VERIFY_RUC'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -347,7 +491,9 @@ class GranjaFirebaseDatasource {
       if (snapshot.docs.isEmpty) return null;
       return GranjaModel.fromFirestore(snapshot.docs.first);
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_GET_FARM'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_GET_FARM'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -511,7 +657,9 @@ class GranjaFirebaseDatasource {
           .get();
       return snapshot.count ?? 0;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_COUNT_FARMS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_COUNT_FARMS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }
@@ -527,7 +675,9 @@ class GranjaFirebaseDatasource {
           .get();
       return snapshot.count ?? 0;
     } on FirebaseException catch (e) {
-      throw ServerException(message: e.message ?? ErrorMessages.get('ERR_COUNT_FARMS'));
+      throw ServerException(
+        message: e.message ?? ErrorMessages.get('ERR_COUNT_FARMS'),
+      );
     } on Exception catch (e) {
       throw UnknownException(details: e.toString());
     }

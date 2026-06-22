@@ -10,15 +10,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../granjas/domain/value_objects/umbrales_ambientales.dart';
@@ -483,7 +484,7 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
 
   void _goToStep(int step) {
     if (step < _currentStep) {
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
       FocusScope.of(context).unfocus();
       setState(() {
         _currentStep = step;
@@ -501,7 +502,7 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
     FocusScope.of(context).unfocus();
 
     if (_currentStep > 0) {
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
       setState(() => _currentStep--);
       _pageController.animateToPage(
         _currentStep,
@@ -515,7 +516,7 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
     if (_currentStep < _steps.length - 1) {
       // Validar paso actual antes de avanzar
       if (_validateCurrentStep()) {
-        HapticFeedback.lightImpact();
+        unawaited(AppHaptics.selection());
         // Cerrar teclado antes de cambiar de paso
         FocusScope.of(context).unfocus();
 
@@ -526,6 +527,7 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
           curve: Curves.easeInOutCubic,
         );
       } else {
+        unawaited(AppHaptics.error());
         // Activar validación automática solo para el step actual
         setState(() => _autoValidatePerStep[_currentStep] = true);
       }
@@ -538,9 +540,6 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
   bool _validateCurrentStep() {
     // Activar validación automática solo para el step actual
     setState(() => _autoValidatePerStep[_currentStep] = true);
-
-    // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
 
     switch (_currentStep) {
       case 0: // Información Básica
@@ -703,7 +702,7 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
         result.fold(
           (failure) async {
             setState(() => _isLoading = false);
-            unawaited(HapticFeedback.heavyImpact());
+            unawaited(AppHaptics.error());
             AppSnackBar.error(
               context,
               message: failure.message,
@@ -718,18 +717,14 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
 
             if (!mounted) return;
 
-            unawaited(HapticFeedback.mediumImpact());
-            AppSnackBar.success(
+            await SaveSuccessOverlay.show(
               context,
               message: S.of(context).shedCreatedSuccess(galpon.nombre),
             );
 
-            // Navegar de vuelta
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                context.pop();
-              }
-            });
+            if (mounted) {
+              context.pop();
+            }
           },
         ),
       );

@@ -12,12 +12,17 @@ import {
   onDocumentCreated,
 } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { defineSecret } from "firebase-functions/params";
 
 // Inicializar Firebase Admin
 admin.initializeApp();
 
 const db = admin.firestore();
 const messaging = admin.messaging();
+
+const whatsappAccessToken = defineSecret("WHATSAPP_ACCESS_TOKEN");
+const whatsappPhoneNumberId = defineSecret("WHATSAPP_PHONE_NUMBER_ID");
+const whatsappTemplateMortalidad = defineSecret("WHATSAPP_TEMPLATE_MORTALIDAD");
 
 // =============================================================================
 // INTERFACES
@@ -41,6 +46,49 @@ interface ColaboradorData {
   usuarioId: string;
   rol: string;
   activo: boolean;
+}
+
+interface UsuarioData {
+  nombre?: string;
+  apellido?: string;
+  nombreCompleto?: string;
+  telefono?: string;
+  telefonoWhatsApp?: string;
+  activo?: boolean;
+  whatsappOptIn?: boolean;
+  notificacionesWhatsApp?: boolean;
+  metadata?: Record<string, unknown>;
+  notificaciones?: Record<string, unknown>;
+}
+
+interface WhatsAppTemplateParameter {
+  type: "text";
+  text: string;
+}
+
+interface WhatsAppTemplateComponent {
+  type: "body";
+  parameters: WhatsAppTemplateParameter[];
+}
+
+interface WhatsAppTemplateMessage {
+  messaging_product: "whatsapp";
+  to: string;
+  type: "template";
+  template: {
+    name: string;
+    language: {
+      code: string;
+    };
+    components: WhatsAppTemplateComponent[];
+  };
+}
+
+interface WhatsAppSendResult {
+  ok: boolean;
+  status: number;
+  response: unknown;
+  messageId?: string;
 }
 
 // =============================================================================
@@ -245,89 +293,367 @@ export const verificarVencimientos = onSchedule(
 // =============================================================================
 
 export const onMortalidadRegistrada = onDocumentCreated(
-  "granjas/{granjaId}/lotes/{loteId}/mortalidad/{mortalidadId}",
+  {
+    document: "lotes/{loteId}/mortalidad/{mortalidadId}",
+    secrets: [
+      whatsappAccessToken,
+      whatsappPhoneNumberId,
+      whatsappTemplateMortalidad,
+    ],
+  },
   async (event) => {
     if (await isAlreadyProcessed(event.id)) {
       logger.info(`Evento duplicado ignorado: ${event.id}`);
       return;
     }
 
-    const { granjaId, loteId } = event.params;
+    const { loteId, mortalidadId } = event.params;
     const mortalidad = event.data?.data();
 
     if (!mortalidad) return;
 
-    const cantidadMuertos = mortalidad.cantidadMuertos ?? 0;
+    const granjaId = toText(mortalidad.granjaId);
+    if (!granjaId) {
+      logger.warn(`Registro de mortalidad sin granjaId: ${loteId}/${mortalidadId}`);
+      return;
+    }
 
-    // Obtener datos del lote
-    const loteDoc = await db
-      .collection("granjas")
-      .doc(granjaId)
-      .collection("lotes")
-      .doc(loteId)
-      .get();
+    const loteDoc = await db.collection("lotes").doc(loteId).get();
+    if (!loteDoc.exists) {
+      logger.warn(`Lote no encontrado para mortalidad: ${loteId}`);
+      return;
+    }
 
-    if (!loteDoc.exists) return;
+    const lote = loteDoc.data() ?? {};
+    const cantidadMuertos = toNumber(
+      mortalidad.cantidad,
+      toNumber(mortalidad.cantidadMuertos)
+    );
+    const cantidadInicial = toNumber(lote.cantidadInicial);
+    const mortalidadAcumulada = toNumber(
+      lote.mortalidadAcumulada,
+      cantidadMuertos
+    );
+    const porcentaje = cantidadInicial > 0
+      ? (mortalidadAcumulada / cantidadInicial) * 100
+      : 0;
 
-    const lote = loteDoc.data()!;
-    // Use || instead of ?? to also catch 0, preventing division by zero
-    const cantidadTotal = lote.cantidadActual || lote.cantidadInicial || 1;
-    const porcentaje = (cantidadMuertos / cantidadTotal) * 100;
+    logger.info(`Mortalidad registrada: acumulado ${porcentaje.toFixed(1)}%`);
 
-    // Solo alertar si mortalidad > 2%
-    if (porcentaje <= 2) return;
-
-    logger.warn(`🚨 Mortalidad alta detectada: ${porcentaje.toFixed(1)}%`);
-
-    const loteNombre = lote.nombre ?? "Lote";
+    const loteNombre = toText(lote.nombre) || toText(lote.codigo) || "Lote";
 
     // Parallel reads — granjaDoc and colaboradores are independent
     const [granjaDoc, colaboradores] = await Promise.all([
       db.collection("granjas").doc(granjaId).get(),
-      db.collection("granjas")
-        .doc(granjaId)
-        .collection("colaboradores")
+      db.collection("granja_usuarios")
+        .where("granjaId", "==", granjaId)
         .where("rol", "in", ["owner", "admin", "manager"])
         .where("activo", "==", true)
         .get(),
     ]);
     const granjaName = granjaDoc.data()?.nombre ?? "Granja";
+    const causa = toText(mortalidad.causa, "No especificada");
+    const fecha = formatFirestoreDate(mortalidad.fecha);
+    const registradoPor = toText(mortalidad.nombreUsuario, "Usuario");
 
-    const notificaciones: Promise<void>[] = [];
+    logger.info(
+      `Mortalidad registrada: ${cantidadMuertos} aves en ${loteNombre} (${granjaName})`
+    );
+
+    if (colaboradores.empty) {
+      logger.warn(`No hay responsables activos para granja ${granjaId}`);
+      return;
+    }
+
+    const envios: Promise<void>[] = [];
 
     for (const colabDoc of colaboradores.docs) {
       const colab = colabDoc.data() as ColaboradorData;
+      if (!colab.usuarioId) continue;
 
-      const notificacion: NotificacionData = {
-        usuarioId: colab.usuarioId,
-        tipo: "mortalidad_alta",
-        titulo: `🚨 Mortalidad alta en ${loteNombre}`,
-        mensaje: `${porcentaje.toFixed(1)}% de mortalidad (${cantidadMuertos} aves) en ${granjaName}`,
-        fechaCreacion: admin.firestore.Timestamp.now(),
-        granjaId: granjaId,
-        granjaName: granjaName,
-        data: {
-          loteId: loteId,
-          porcentaje: porcentaje.toFixed(1),
-        },
-        leida: false,
-        prioridad: porcentaje > 5 ? "urgente" : "alta",
-        accionUrl: `/granjas/${granjaId}/lotes/${loteId}`,
-      };
-
-      notificaciones.push(
-        crearNotificacionYEnviarPush(colab.usuarioId, notificacion)
+      envios.push(
+        enviarWhatsAppMortalidad({
+          usuarioId: colab.usuarioId,
+          eventId: event.id,
+          granjaId,
+          granjaName,
+          loteId,
+          loteNombre,
+          mortalidadId,
+          cantidadMuertos,
+          causa,
+          porcentaje,
+          registradoPor,
+          fecha,
+        })
       );
     }
 
-    const results = await Promise.allSettled(notificaciones);
+    const results = await Promise.allSettled(envios);
     const fallidos = results.filter(r => r.status === "rejected").length;
     if (fallidos > 0) {
-      logger.warn(`⚠️ ${fallidos}/${results.length} notificaciones de mortalidad fallaron`);
+      logger.warn(`${fallidos}/${results.length} salidas WhatsApp de mortalidad fallaron`);
     }
-    logger.info(`✅ Notificaciones de mortalidad enviadas: ${colaboradores.size}`);
+    logger.info(`Salidas WhatsApp de mortalidad procesadas: ${results.length}`);
   }
 );
+
+// =============================================================================
+// HELPERS: Salida WhatsApp de mortalidad
+// =============================================================================
+
+async function enviarWhatsAppMortalidad(params: {
+  usuarioId: string;
+  eventId: string;
+  granjaId: string;
+  granjaName: string;
+  loteId: string;
+  loteNombre: string;
+  mortalidadId: string;
+  cantidadMuertos: number;
+  causa: string;
+  porcentaje: number;
+  registradoPor: string;
+  fecha: string;
+}): Promise<void> {
+  const usuarioDoc = await db.collection("usuarios").doc(params.usuarioId).get();
+  const usuario = usuarioDoc.data() as UsuarioData | undefined;
+  const salidaId = `${params.eventId}_${params.usuarioId}`;
+  const baseSalida = {
+    canal: "whatsapp",
+    tipo: "mortalidad_registrada",
+    usuarioId: params.usuarioId,
+    granjaId: params.granjaId,
+    loteId: params.loteId,
+    mortalidadId: params.mortalidadId,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (!usuario) {
+    await guardarSalidaWhatsApp(salidaId, {
+      ...baseSalida,
+      status: "skipped",
+      reason: "usuario_no_encontrado",
+    });
+    return;
+  }
+
+  if (!tieneWhatsAppHabilitado(usuario)) {
+    await guardarSalidaWhatsApp(salidaId, {
+      ...baseSalida,
+      status: "skipped",
+      reason: "whatsapp_no_habilitado",
+    });
+    return;
+  }
+
+  const telefono = normalizarTelefonoWhatsApp(
+    toText(usuario.telefonoWhatsApp) || toText(usuario.telefono)
+  );
+
+  if (!telefono) {
+    await guardarSalidaWhatsApp(salidaId, {
+      ...baseSalida,
+      status: "skipped",
+      reason: "telefono_whatsapp_invalido",
+    });
+    return;
+  }
+
+  const nombreUsuario = nombreParaWhatsApp(usuario);
+  const parameters = [
+    nombreUsuario,
+    params.granjaName,
+    params.loteNombre,
+    params.cantidadMuertos.toString(),
+    params.causa,
+    `${params.porcentaje.toFixed(1)}%`,
+    params.registradoPor,
+    params.fecha,
+  ];
+
+  await guardarSalidaWhatsApp(salidaId, {
+    ...baseSalida,
+    status: "pending",
+    to: telefono,
+    template: whatsappTemplateMortalidad.value(),
+    parameters,
+  });
+
+  try {
+    const result = await enviarPlantillaWhatsApp(telefono, parameters);
+    await guardarSalidaWhatsApp(salidaId, {
+      ...baseSalida,
+      status: result.ok ? "sent" : "failed",
+      to: telefono,
+      template: whatsappTemplateMortalidad.value(),
+      messageId: result.messageId ?? null,
+      graphStatus: result.status,
+      graphResponse: result.response,
+      sentAt: result.ok ? admin.firestore.FieldValue.serverTimestamp() : null,
+    });
+  } catch (error) {
+    await guardarSalidaWhatsApp(salidaId, {
+      ...baseSalida,
+      status: "failed",
+      to: telefono,
+      template: whatsappTemplateMortalidad.value(),
+      error: error instanceof Error ? error.message : String(error),
+    });
+    logger.error(`Error enviando WhatsApp de mortalidad a ${params.usuarioId}`, error);
+  }
+}
+
+async function guardarSalidaWhatsApp(
+  salidaId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  await db.collection("whatsapp_mensajes").doc(salidaId).set(data, {
+    merge: true,
+  });
+}
+
+async function enviarPlantillaWhatsApp(
+  to: string,
+  texts: string[]
+): Promise<WhatsAppSendResult> {
+  const accessToken = whatsappAccessToken.value().trim();
+  const phoneNumberId = whatsappPhoneNumberId.value().trim();
+  const templateName = whatsappTemplateMortalidad.value().trim();
+
+  if (!accessToken || !phoneNumberId || !templateName) {
+    throw new Error("Secrets de WhatsApp incompletos");
+  }
+
+  const payload: WhatsAppTemplateMessage = {
+    messaging_product: "whatsapp",
+    to,
+    type: "template",
+    template: {
+      name: templateName,
+      language: {
+        code: process.env.WHATSAPP_TEMPLATE_LANGUAGE ?? "es",
+      },
+      components: [
+        {
+          type: "body",
+          parameters: texts.map((text) => ({
+            type: "text",
+            text,
+          })),
+        },
+      ],
+    },
+  };
+
+  const graphVersion = process.env.WHATSAPP_GRAPH_VERSION ?? "v20.0";
+  const response = await fetch(
+    `https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+  const raw = await response.text();
+  const parsed = parseJson(raw);
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    response: parsed ?? raw,
+    messageId: obtenerWhatsAppMessageId(parsed),
+  };
+}
+
+function tieneWhatsAppHabilitado(usuario: UsuarioData): boolean {
+  const metadataOptIn = usuario.metadata?.whatsappOptIn === true;
+  const preferenciasOptIn = usuario.notificaciones?.whatsapp === true;
+  return usuario.whatsappOptIn === true ||
+    usuario.notificacionesWhatsApp === true ||
+    metadataOptIn ||
+    preferenciasOptIn;
+}
+
+function normalizarTelefonoWhatsApp(value: string): string | null {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return null;
+  const normalized = digits.startsWith("00") ? digits.substring(2) : digits;
+
+  if (normalized.length === 9 && normalized.startsWith("9")) {
+    return `51${normalized}`;
+  }
+
+  if (normalized.length >= 10 && normalized.length <= 15) {
+    return normalized;
+  }
+
+  return null;
+}
+
+function nombreParaWhatsApp(usuario: UsuarioData): string {
+  const nombreCompleto = toText(usuario.nombreCompleto);
+  if (nombreCompleto) return nombreCompleto;
+
+  const nombre = [toText(usuario.nombre), toText(usuario.apellido)]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return nombre || "usuario";
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function toText(value: unknown, fallback = ""): string {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return value.toString();
+  return fallback;
+}
+
+function formatFirestoreDate(value: unknown): string {
+  if (value instanceof admin.firestore.Timestamp) {
+    return value.toDate().toLocaleDateString("es-PE");
+  }
+
+  if (value instanceof Date) {
+    return value.toLocaleDateString("es-PE");
+  }
+
+  return new Date().toLocaleDateString("es-PE");
+}
+
+function parseJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function obtenerWhatsAppMessageId(response: unknown): string | undefined {
+  if (!response || typeof response !== "object") return undefined;
+
+  const messages = (response as { messages?: unknown }).messages;
+  if (!Array.isArray(messages) || messages.length === 0) return undefined;
+
+  const first = messages[0];
+  if (!first || typeof first !== "object") return undefined;
+
+  const id = (first as { id?: unknown }).id;
+  return typeof id === "string" ? id : undefined;
+}
 
 // =============================================================================
 // TRIGGER: Nueva invitación creada

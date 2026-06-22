@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Cuenta - Smart Granja Aves Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background: #f8f9fa;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid #e8e8e8;
+        }
+        .header h1 { font-size: 26px; color: #1a1a2e; margin-bottom: 8px; }
+        .header .app-name { font-size: 16px; color: #4CAF50; font-weight: 600; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .card h2 { font-size: 18px; margin-bottom: 16px; color: #1a1a2e; }
+        .card p { font-size: 15px; color: #444; margin-bottom: 12px; }
+        .steps { counter-reset: step; list-style: none; padding: 0; }
+        .steps li {
+            counter-increment: step;
+            padding: 12px 0 12px 48px;
+            position: relative;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+            color: #444;
+        }
+        .steps li:last-child { border-bottom: none; }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 32px;
+            height: 32px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .data-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .data-table th, .data-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .data-table th { color: #666; font-weight: 600; background: #fafafa; }
+        .tag-delete { color: #e53935; font-weight: 600; }
+        .tag-retain { color: #f57c00; font-weight: 600; }
+        .contact-box {
+            background: #E8F5E9;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .contact-box a {
+            color: #2E7D32;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 13px;
+            color: #888;
+        }
+        a { color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="app-name">Smart Granja Aves Pro</div>
+            <h1>Solicitud de Eliminación de Cuenta</h1>
+        </div>
+
+        <div class="card">
+            <h2>Cómo eliminar tu cuenta</h2>
+            <p>Puedes solicitar la eliminación completa de tu cuenta y todos los datos asociados siguiendo estos pasos:</p>
+            <ol class="steps">
+                <li>Abre la aplicación <strong>Smart Granja Aves Pro</strong> en tu dispositivo.</li>
+                <li>Ve a la pestaña <strong>Perfil</strong> (icono de persona en la barra inferior).</li>
+                <li>Desplázate hacia abajo y toca el botón <strong>"Cerrar sesión"</strong>.</li>
+                <li>Para eliminación completa, envía un correo electrónico a la dirección indicada abajo con el asunto <strong>"Eliminar mi cuenta"</strong> e incluye el correo electrónico asociado a tu cuenta.</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h2>Datos que se eliminan</h2>
+            <p>Cuando solicitas la eliminación de tu cuenta, los siguientes datos se procesan así:</p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tipo de dato</th>
+                        <th>Acción</th>
+                        <th>Plazo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Datos personales (nombre, email)</td>
+                        <td class="tag-delete">Eliminados</td>
+                        <td>30 días</td>
+                    </tr>
+                    <tr>
+                        <td>Datos de granjas y galpones</td>
+                        <td class="tag-delete">Eliminados</td>
+                        <td>30 días</td>
+                    </tr>
+                    <tr>
+                        <td>Registros productivos (peso, mortalidad, consumo)</td>
+                        <td class="tag-delete">Eliminados</td>
+                        <td>30 días</td>
+                    </tr>
+                    <tr>
+                        <td>Imágenes subidas</td>
+                        <td class="tag-delete">Eliminadas</td>
+                        <td>30 días</td>
+                    </tr>
+                    <tr>
+                        <td>Historial de consultas veterinarias IA</td>
+                        <td class="tag-delete">Eliminado</td>
+                        <td>30 días</td>
+                    </tr>
+                    <tr>
+                        <td>Datos de análisis anónimos</td>
+                        <td class="tag-retain">Conservados (anónimos)</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Registros de errores (Crashlytics)</td>
+                        <td class="tag-retain">Conservados 90 días</td>
+                        <td>90 días</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Contacto para eliminación</h2>
+            <p>Envía tu solicitud de eliminación de cuenta al siguiente correo electrónico:</p>
+            <div class="contact-box">
+                <a href="mailto:soporte@smartgranjaaves.com?subject=Eliminar%20mi%20cuenta">soporte@smartgranjaaves.com</a>
+                <p style="margin-top: 8px; font-size: 13px; color: #666;">Asunto: "Eliminar mi cuenta"</p>
+            </div>
+            <p style="margin-top: 16px; font-size: 13px; color: #888;">Procesaremos tu solicitud en un plazo máximo de 30 días y recibirás una confirmación por correo electrónico.</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Smart Granja Aves Pro — Hilde</p>
+            <p style="margin-top: 8px;">
+                <a href="privacy-policy.html">Política de Privacidad</a> · 
+                <a href="terms.html">Términos y Condiciones</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

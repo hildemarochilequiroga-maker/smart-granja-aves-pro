@@ -33,6 +33,7 @@ class LoteModel {
     this.fechaCierreReal,
     this.motivoCierre,
     this.costoAveInicial,
+    this.ingresosTotales,
     this.observaciones,
     this.fechaCreacion,
     this.ultimaActualizacion,
@@ -64,6 +65,7 @@ class LoteModel {
   final DateTime? fechaCierreReal;
   final String? motivoCierre;
   final double? costoAveInicial;
+  final double? ingresosTotales;
   final String? observaciones;
   final DateTime? fechaCreacion;
   final DateTime? ultimaActualizacion;
@@ -115,6 +117,9 @@ class LoteModel {
       costoAveInicial: data['costoAveInicial'] != null
           ? (data['costoAveInicial'] as num).toDouble()
           : null,
+      ingresosTotales: data['ingresosTotales'] != null
+          ? (data['ingresosTotales'] as num).toDouble()
+          : null,
       observaciones: data['observaciones'] as String?,
       fechaCreacion: _parseDateTime(data['fechaCreacion']),
       ultimaActualizacion: _parseDateTime(data['ultimaActualizacion']),
@@ -150,6 +155,7 @@ class LoteModel {
       fechaCierreReal: lote.fechaCierreReal,
       motivoCierre: lote.motivoCierre,
       costoAveInicial: lote.costoAveInicial,
+      ingresosTotales: lote.ingresosTotales,
       observaciones: lote.observaciones,
       fechaCreacion: lote.fechaCreacion,
       ultimaActualizacion: lote.ultimaActualizacion,

@@ -55,7 +55,7 @@ class NotificacionesRepository {
   Stream<int> streamConteoNoLeidas(String usuarioId) {
     return _notificacionesRef(usuarioId)
         .where('leida', isEqualTo: false)
-        .limit(999)
+        .limit(100)
         .snapshots()
         .map((snapshot) => snapshot.size);
   }

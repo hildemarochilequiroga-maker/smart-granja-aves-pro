@@ -13,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
 
 import 'app/app_initializer.dart';
+import 'core/constants/app_constants.dart';
 import 'core/network/connectivity_provider.dart';
 import 'core/pages/error_page.dart';
 import 'core/routes/app_router.dart';
@@ -131,12 +132,15 @@ class SmartGranjaAvesApp extends ConsumerStatefulWidget {
   ConsumerState<SmartGranjaAvesApp> createState() => _SmartGranjaAvesAppState();
 }
 
-class _SmartGranjaAvesAppState extends ConsumerState<SmartGranjaAvesApp> {
+class _SmartGranjaAvesAppState extends ConsumerState<SmartGranjaAvesApp>
+    with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _notificationTapSubscription;
+  DateTime? _backgroundTimestamp;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Diferir servicios pesados hasta después del primer frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notificationTapSubscription = NotificationService
@@ -152,6 +156,9 @@ class _SmartGranjaAvesAppState extends ConsumerState<SmartGranjaAvesApp> {
       // Inicializar el monitoreo de conectividad
       ref.read(connectivityProvider);
 
+      // Cargar preferencia de moneda (lectura única, no watch)
+      ref.read(currencyProvider);
+
       // Inicializar sincronización de imágenes pendientes
       ref.read(imageSyncServiceProvider);
     });
@@ -163,25 +170,44 @@ class _SmartGranjaAvesAppState extends ConsumerState<SmartGranjaAvesApp> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _backgroundTimestamp = DateTime.now();
+    } else if (state == AppLifecycleState.resumed &&
+        _backgroundTimestamp != null) {
+      final elapsed = DateTime.now()
+          .difference(_backgroundTimestamp!)
+          .inSeconds;
+      _backgroundTimestamp = null;
+      if (elapsed >= AppConstants.sessionTimeout) {
+        ref.read(authProvider.notifier).cerrarSesion();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _notificationTapSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Observar el auth para que el widget se reconstruya cuando cambie
-    ref.watch(authProvider);
+    // Solo observar el router (que ya depende del auth internamente)
     final router = ref.watch(routerProvider);
 
-    // Observar estado de conectividad
-    final connectivityState = ref.watch(connectivityProvider);
-
-    // Observar idioma seleccionado
+    // Solo observar los campos que realmente afectan el UI del MaterialApp
     final locale = ref.watch(localeProvider);
 
-    // Observar moneda seleccionada (carga la preferencia guardada)
-    ref.watch(currencyProvider);
+    // Observar solo los campos de conectividad que afectan el banner
+    final showBanner = ref.watch(
+      connectivityProvider.select((s) => s.isOffline || s.hasPendingWrites),
+    );
+
+    // currencyProvider se lee bajo demanda donde se necesita, no aquí
+    // authProvider ya es observado por routerProvider internamente
 
     return MaterialApp.router(
       title: 'Smart Granja Aves Pro',
@@ -217,9 +243,7 @@ class _SmartGranjaAvesAppState extends ConsumerState<SmartGranjaAvesApp> {
           child: Column(
             children: [
               // Banner de conectividad global
-              if (connectivityState.isOffline ||
-                  connectivityState.hasPendingWrites)
-                const ConnectivityBanner(),
+              if (showBanner) const ConnectivityBanner(),
               // Contenido principal
               Expanded(child: child ?? const SizedBox.shrink()),
             ],

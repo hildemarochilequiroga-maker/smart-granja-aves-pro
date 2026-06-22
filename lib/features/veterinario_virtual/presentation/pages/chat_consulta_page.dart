@@ -1,8 +1,7 @@
 /// Página de chat para consultas con el veterinario virtual IA.
 library;
 
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +13,16 @@ import '../../application/providers/veterinario_providers.dart';
 import '../../application/services/contexto_builder.dart';
 import '../../domain/entities/entities.dart';
 import '../widgets/mensaje_burbuja_widget.dart';
+
+/// Top-level function for compute() - compresses image bytes in isolate.
+Future<Uint8List> _compressImage(Uint8List bytes) async {
+  return FlutterImageCompress.compressWithList(
+    bytes,
+    minWidth: 800,
+    minHeight: 800,
+    quality: 75,
+  );
+}
 
 class ChatConsultaPage extends ConsumerStatefulWidget {
   const ChatConsultaPage({
@@ -501,13 +510,8 @@ class _ChatConsultaPageState extends ConsumerState<ChatConsultaPage> {
 
     final bytes = await picked.readAsBytes();
 
-    // Comprimir imagen
-    final compressed = await FlutterImageCompress.compressWithList(
-      bytes,
-      minWidth: 800,
-      minHeight: 800,
-      quality: 75,
-    );
+    // Comprimir imagen en isolate para no bloquear UI
+    final compressed = await compute(_compressImage, bytes);
 
     final mimeType = picked.name.toLowerCase().endsWith('.png')
         ? 'image/png'

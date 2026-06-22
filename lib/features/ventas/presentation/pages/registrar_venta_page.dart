@@ -10,6 +10,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,9 +21,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
@@ -31,6 +34,7 @@ import '../../../inventario/application/services/inventario_integracion_service.
 import '../../../lotes/application/providers/lote_providers.dart';
 import '../../../lotes/domain/enums/estado_lote.dart';
 import '../../application/providers/ventas_provider.dart';
+import '../../infrastructure/datasources/venta_remote_datasource_impl.dart';
 import '../../domain/entities/venta_producto.dart';
 import '../../domain/enums/tipo_producto_venta.dart';
 import '../../domain/enums/clasificacion_huevo.dart';
@@ -178,11 +182,9 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
   }
 
   void _onFormChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    _hasUnsavedChanges = true;
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 30), _saveDraft);
+    _autoSaveTimer = Timer(const Duration(seconds: 2), _saveDraft);
   }
 
   Future<void> _checkForDraft() async {
@@ -306,9 +308,8 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
   }
 
   Future<void> _saveDraft() async {
-    if (!mounted) return;
-
-    setState(() => _isSaving = true);
+    if (!mounted || _isSaving) return;
+    _isSaving = true;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -351,15 +352,12 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
       };
 
       await prefs.setString(_draftKey, jsonEncode(data));
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-          _lastSaveTime = DateTime.now();
-        });
-      }
+      _hasUnsavedChanges = false;
+      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
-      if (mounted) setState(() => _isSaving = false);
+    } finally {
+      _isSaving = false;
     }
   }
 
@@ -495,7 +493,7 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
 
   void _goToStep(int step) {
     if (step >= 0 && step < _buildSteps(S.of(context)).length) {
-      HapticFeedback.lightImpact();
+      unawaited(AppHaptics.selection());
       _pageController.animateToPage(
         step,
         duration: const Duration(milliseconds: 300),
@@ -512,6 +510,8 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
       } else {
         _submitForm();
       }
+    } else {
+      unawaited(AppHaptics.error());
     }
   }
 
@@ -524,9 +524,6 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
   bool _validateCurrentStep() {
     // Activar validación automática solo para el step actual
     setState(() => _autoValidatePerStep[_currentStep] = true);
-
-    // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
 
     switch (_currentStep) {
       case 0: // Tipo de producto
@@ -583,7 +580,7 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
       case TipoProductoVenta.huevos:
         final totalHuevos = _huevosControllers.values.fold<int>(
           0,
-          (sum, c) => sum + (int.tryParse(c.text) ?? 0),
+          (total, controller) => total + (int.tryParse(controller.text) ?? 0),
         );
         if (totalHuevos == 0) return false;
         // Verificar que cada clasificación con huevos tenga precio
@@ -713,6 +710,26 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
         }
       }
 
+      // Validar cantidad de aves contra disponibilidad del lote
+      if (_tipoProducto == TipoProductoVenta.avesVivas ||
+          _tipoProducto == TipoProductoVenta.avesFaenadas ||
+          _tipoProducto == TipoProductoVenta.avesDescarte) {
+        final cantidadAves = int.tryParse(_cantidadAvesController.text) ?? 0;
+        if (cantidadAves > 0) {
+          final lote = await ref.read(
+            loteByIdProvider(_selectedLoteId!).future,
+          );
+          if (!mounted) return;
+          if (lote != null && cantidadAves > lote.avesActuales) {
+            throw Exception(
+              S
+                  .of(context)
+                  .salesExceedsAvailableBirds(cantidadAves, lote.avesActuales),
+            );
+          }
+        }
+      }
+
       final venta = _buildVentaProducto(usuario.id);
 
       if (widget.ventaExistente != null) {
@@ -720,17 +737,42 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
             .read(ventaProductoCrudProvider.notifier)
             .actualizarVenta(venta);
       } else {
-        await ref
-            .read(ventaProductoCrudProvider.notifier)
-            .registrarVenta(venta);
+        // Para ventas de aves: crear venta + incrementar
+        // `ventasAcumuladas` del lote en una sola transacción atómica.
+        final esVentaAves =
+            venta.tipoProducto == TipoProductoVenta.avesVivas ||
+            venta.tipoProducto == TipoProductoVenta.avesFaenadas ||
+            venta.tipoProducto == TipoProductoVenta.avesDescarte;
+        final cantidadAvesVendidas = venta.cantidadAves ?? 0;
 
-        // Verificar si la operación falló
-        final ventaState = ref.read(ventaProductoCrudProvider);
-        if (ventaState.errorMessage != null) {
-          throw Exception(ventaState.errorMessage);
+        if (esVentaAves && cantidadAvesVendidas > 0) {
+          // Path atómico: venta + decremento de aves del lote en una
+          // misma transacción. Las queries de listado se actualizan
+          // automáticamente vía streams.
+          await ref
+              .read(ventaRemoteDatasourceProvider)
+              .createVentaProductoConActualizacionLote(
+                venta: venta,
+                camposLote: {
+                  'ventasAcumuladas': FieldValue.increment(
+                    cantidadAvesVendidas,
+                  ),
+                },
+              );
+        } else {
+          await ref
+              .read(ventaProductoCrudProvider.notifier)
+              .registrarVenta(venta);
+
+          // Verificar si la operación falló
+          final ventaState = ref.read(ventaProductoCrudProvider);
+          if (ventaState.errorMessage != null) {
+            throw Exception(ventaState.errorMessage);
+          }
         }
 
         // Integración con inventario - registrar salida por venta
+        // (no aplica para aves; el método retorna early en ese caso)
         await _registrarSalidaInventario(venta, usuario.id);
       }
 
@@ -744,16 +786,16 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
       await _clearDraft();
 
       if (mounted) {
-        unawaited(HapticFeedback.heavyImpact());
-        AppSnackBar.success(
+        await SaveSuccessOverlay.show(
           context,
           message: widget.ventaExistente != null
               ? S.of(context).salesUpdatedSuccess
               : S.of(context).salesRegisteredSuccess,
         );
-        context.pop(true);
+        if (mounted) context.pop(true);
       }
     } on Exception catch (e) {
+      unawaited(AppHaptics.error());
       if (mounted) {
         AppSnackBar.error(
           context,
@@ -1212,7 +1254,12 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedLoteId,
+                    initialValue:
+                        lotesActivos.any((lote) => lote.id == _selectedLoteId)
+                        ? _selectedLoteId
+                        : null,
+                    isExpanded: true,
+                    menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
                     decoration: InputDecoration(
                       hintText: S.of(context).salesSelectBatchHint,
                       filled: true,

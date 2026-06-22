@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/lote.dart';
 import '../../domain/enums/estado_lote.dart';
@@ -21,13 +22,27 @@ class LoteFirebaseDatasource {
   // OPERACIONES CRUD
   // ============================================================
 
-  /// Crea un nuevo lote.
+  /// Crea un nuevo lote y, atómicamente, actualiza
+  /// `galpones/{galponId}.loteActualId` para mantener la integridad
+  /// referencial galpón ↔ lote en una única transacción.
   Future<Lote> crear(Lote lote) async {
     final model = LoteModel.fromEntity(lote);
-    final docRef = await _lotesCollection.add(model.toFirestore());
+    final loteRef = _lotesCollection.doc();
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(loteRef, model.toFirestore());
+
+      if (lote.galponId.isNotEmpty) {
+        final galponRef = _firestore.collection('galpones').doc(lote.galponId);
+        transaction.update(galponRef, {
+          'loteActualId': loteRef.id,
+          'ultimaActualizacion': FieldValue.serverTimestamp(),
+        });
+      }
+    });
 
     return lote.copyWith(
-      id: docRef.id,
+      id: loteRef.id,
       fechaCreacion: DateTime.now(),
       ultimaActualizacion: DateTime.now(),
     );
@@ -41,9 +56,79 @@ class LoteFirebaseDatasource {
     return lote.copyWith(ultimaActualizacion: DateTime.now());
   }
 
-  /// Elimina un lote.
+  /// Elimina un lote y todos sus datos relacionados.
+  ///
+  /// Incluye: subcollections (pesos, produccion, mortalidad, consumos),
+  /// costos_gastos y ventas_productos referenciados.
   Future<void> eliminar(String id) async {
+    // 1. Eliminar subcollections del lote
+    await _eliminarSubcoleccion(id, 'pesos');
+    await _eliminarSubcoleccion(id, 'produccion');
+    await _eliminarSubcoleccion(id, 'mortalidad');
+    await _eliminarSubcoleccion(id, 'consumos');
+
+    // 2. Eliminar costos y ventas que referencian este lote
+    await _limpiarColeccionPorLote('costos_gastos', id);
+    await _limpiarColeccionPorLote('ventas_productos', id);
+
+    // 3. Eliminar el lote
     await _lotesCollection.doc(id).delete();
+
+    debugPrint('✅ Lote $id eliminado con todos sus datos relacionados');
+  }
+
+  /// Elimina todos los documentos de una subcollection de un lote.
+  Future<void> _eliminarSubcoleccion(String loteId, String nombre) async {
+    try {
+      final snapshot = await _lotesCollection
+          .doc(loteId)
+          .collection(nombre)
+          .get();
+      if (snapshot.docs.isEmpty) return;
+
+      final batch = _firestore.batch();
+      var ops = 0;
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+        ops++;
+        if (ops >= 500) {
+          await batch.commit();
+          ops = 0;
+        }
+      }
+      if (ops > 0) await batch.commit();
+
+      debugPrint('  ✅ Eliminados ${snapshot.docs.length} docs de $nombre');
+    } on Exception catch (e) {
+      debugPrint('  ⚠️ Error eliminando subcollection $nombre: $e');
+    }
+  }
+
+  /// Elimina documentos de una colección top-level que referencian un lote.
+  Future<void> _limpiarColeccionPorLote(String coleccion, String loteId) async {
+    try {
+      final snapshot = await _firestore
+          .collection(coleccion)
+          .where('loteId', isEqualTo: loteId)
+          .get();
+      if (snapshot.docs.isEmpty) return;
+
+      final batch = _firestore.batch();
+      var ops = 0;
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+        ops++;
+        if (ops >= 500) {
+          await batch.commit();
+          ops = 0;
+        }
+      }
+      if (ops > 0) await batch.commit();
+
+      debugPrint('  ✅ Eliminados ${snapshot.docs.length} docs de $coleccion');
+    } on Exception catch (e) {
+      debugPrint('  ⚠️ Error limpiando $coleccion: $e');
+    }
   }
 
   /// Obtiene un lote por ID.

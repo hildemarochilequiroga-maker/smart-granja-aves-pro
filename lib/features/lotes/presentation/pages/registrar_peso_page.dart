@@ -13,17 +13,19 @@ import '../../domain/entities/lote.dart';
 import '../../domain/entities/registro_peso.dart';
 import '../../domain/enums/metodo_pesaje.dart';
 import '../../application/providers/registro_providers.dart';
-import '../../application/providers/lote_providers.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/storage/image_upload_service.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../application/services/registro_quick_cache_service.dart';
 import '../widgets/peso_form_steps/informacion_pesaje_step.dart';
 import '../widgets/peso_form_steps/rangos_peso_step.dart';
 import '../widgets/peso_form_steps/observaciones_fotos_step.dart';
@@ -113,6 +115,7 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _debounceSaveTimer?.cancel();
     _pesoPromedioController.removeListener(_onFieldChanged);
     _cantidadAvesController.removeListener(_onFieldChanged);
     _pesoMinimoController.removeListener(_onFieldChanged);
@@ -129,6 +132,8 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
 
   // ==================== AUTO-SAVE ====================
 
+  Timer? _debounceSaveTimer;
+
   void _startAutoSave() {
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (_hasUnsavedChanges && !_isSaving) {
@@ -138,9 +143,17 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
   }
 
   void _onFieldChanged() {
-    if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
+    // Marcar como cambiado sin rebuild — el UI no necesita saberlo
+    // hasta que se guarde o el usuario salga
+    _hasUnsavedChanges = true;
+
+    // Debounce: guardar borrador 2s después del último cambio
+    _debounceSaveTimer?.cancel();
+    _debounceSaveTimer = Timer(const Duration(seconds: 2), () {
+      if (_hasUnsavedChanges && !_isSaving) {
+        _saveDraft();
+      }
+    });
   }
 
   void _attachChangeListeners() {
@@ -152,8 +165,8 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
   }
 
   Future<void> _saveDraft() async {
-    if (!mounted) return;
-    setState(() => _isSaving = true);
+    if (!mounted || _isSaving) return;
+    _isSaving = true;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -171,15 +184,12 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
       await prefs.setString('peso_draft_${widget.lote.id}', jsonEncode(draft));
 
       if (!mounted) return;
-      setState(() {
-        _hasUnsavedChanges = false;
-        _isSaving = false;
-        _lastSaveTime = DateTime.now();
-      });
+      _hasUnsavedChanges = false;
+      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
-      if (!mounted) return;
-      setState(() => _isSaving = false);
+    } finally {
+      _isSaving = false;
     }
   }
 
@@ -188,7 +198,11 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
       final prefs = await SharedPreferences.getInstance();
       final draftJson = prefs.getString('peso_draft_${widget.lote.id}');
 
-      if (draftJson == null) return;
+      if (draftJson == null) {
+        // Sin borrador → aplicar smart pre-fill desde el cache rápido
+        unawaited(_applyQuickCachePrefill());
+        return;
+      }
 
       final draft = jsonDecode(draftJson) as Map<String, dynamic>;
       final timestamp = DateTime.parse(draft['timestamp'] as String);
@@ -256,6 +270,35 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('peso_draft_${widget.lote.id}');
       } catch (_) {}
+    }
+  }
+
+  /// Pre-llena campos estables (cantidad aves, método) desde el cache
+  /// rápido cuando no hay borrador, para acelerar el ingreso diario.
+  Future<void> _applyQuickCachePrefill() async {
+    try {
+      final cache = await ref.read(registroQuickCacheAsyncProvider.future);
+      if (!mounted) return;
+      final cached = cache.read(widget.lote.id, RegistroQuickType.peso);
+      if (cached == null) return;
+
+      final cantidadCache = cached['cantidadAves'];
+      final metodoCache = cached['metodo'];
+
+      setState(() {
+        if (cantidadCache != null && _cantidadAvesController.text.isEmpty) {
+          _cantidadAvesController.text = cantidadCache.toString();
+        }
+        if (metodoCache is String) {
+          _metodoSeleccionado = MetodoPesaje.values.firstWhere(
+            (m) => m.name == metodoCache,
+            orElse: () => _metodoSeleccionado,
+          );
+        }
+        _hasUnsavedChanges = false;
+      });
+    } on Exception catch (e) {
+      debugPrint('Sin cache rápido para peso: $e');
     }
   }
 
@@ -596,11 +639,15 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
   }
 
   void _nextStep() async {
-    if (!await _validateCurrentStep()) return;
+    if (!await _validateCurrentStep()) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
     // Unfocus para ocultar teclado
     if (!mounted) return;
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep++;
@@ -624,6 +671,7 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
 
     // Unfocus para ocultar teclado
     FocusScope.of(context).unfocus();
+    unawaited(AppHaptics.selection());
 
     setState(() {
       _currentStep--;
@@ -911,6 +959,12 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
     if (!await _validateCurrentStep()) return;
     if (!mounted) return;
 
+    // Validar que el lote esté activo
+    if (!widget.lote.estaActivo) {
+      _showError(S.of(context).batchClosedCannotRegister);
+      return;
+    }
+
     // Validar usuario
     final usuario = ref.read(currentUserProvider);
     if (usuario == null ||
@@ -1038,20 +1092,29 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
       debugPrint('Peso promedio: ${registro.pesoPromedio}g');
       debugPrint('Cantidad aves: ${registro.cantidadAvesPesadas}');
 
-      await ref.read(registroPesoDatasourceProvider).crear(registro);
+      // Verificar que no exista registro duplicado para esta fecha
+      final existeDuplicado = await ref
+          .read(registroPesoDatasourceProvider)
+          .existeRegistroParaFecha(widget.lote.id, _fechaSeleccionada);
+      if (existeDuplicado) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        _showError(S.of(context).weightDuplicateDate);
+        return;
+      }
 
-      debugPrint('? Registro de peso guardado exitosamente');
-
-      // Actualizar el peso promedio actual en el lote
+      // Crear registro y actualizar lote en transacción atómica
       debugPrint(
-        '?? Actualizando peso promedio del lote: ${registro.pesoPromedioKg} kg',
+        '?? Crear peso + actualizar lote (peso: ${registro.pesoPromedioKg} kg)',
       );
-      await ref.read(loteFirebaseDatasourceProvider).actualizarCampos(
-        widget.lote.id,
-        {'pesoPromedioActual': registro.pesoPromedioKg},
-      );
+      await ref
+          .read(registroPesoDatasourceProvider)
+          .crearConActualizacionLote(
+            registro: registro,
+            camposLote: {'pesoPromedioActual': registro.pesoPromedioKg},
+          );
 
-      debugPrint('? Lote actualizado exitosamente');
+      debugPrint('? Registro y lote actualizados exitosamente');
 
       if (!mounted) return;
 
@@ -1059,11 +1122,23 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('peso_draft_${widget.lote.id}');
 
+      // Persistir en cache rápido para futuros prefills
+      try {
+        final cache = await ref.read(registroQuickCacheAsyncProvider.future);
+        await cache.save(widget.lote.id, RegistroQuickType.peso, {
+          'cantidadAves': registro.cantidadAvesPesadas,
+          'metodo': _metodoSeleccionado.name,
+          'pesoPromedioKg': registro.pesoPromedioKg,
+        });
+      } on Exception catch (e) {
+        debugPrint('No se pudo guardar cache rápido peso: $e');
+      }
+
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      // Celebración con animación
-      AppSnackBar.success(
+      // Overlay animado de éxito + haptic (reemplaza snackbar)
+      await SaveSuccessOverlay.show(
         context,
         message: S.of(context).weightRegistered,
         detail: S

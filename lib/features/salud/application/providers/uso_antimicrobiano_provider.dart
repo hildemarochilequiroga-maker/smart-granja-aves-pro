@@ -102,7 +102,9 @@ class UsoAntimicrobianosNotifier
     } on Exception catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: ErrorMessages.format('ERR_LOADING_ANTIMICROBIAL_USES', {'e': '$e'}),
+        error: ErrorMessages.format('ERR_LOADING_ANTIMICROBIAL_USES', {
+          'e': '$e',
+        }),
       );
     }
   }
@@ -119,7 +121,9 @@ class UsoAntimicrobianosNotifier
     } on Exception catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: ErrorMessages.format('ERR_LOADING_WITHDRAWAL_BATCHES', {'e': '$e'}),
+        error: ErrorMessages.format('ERR_LOADING_WITHDRAWAL_BATCHES', {
+          'e': '$e',
+        }),
       );
     }
   }
@@ -205,7 +209,9 @@ class UsoAntimicrobianosNotifier
     } on Exception catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: ErrorMessages.format('ERR_REGISTERING_ANTIMICROBIAL_USE', {'e': '$e'}),
+        error: ErrorMessages.format('ERR_REGISTERING_ANTIMICROBIAL_USE', {
+          'e': '$e',
+        }),
       );
     }
   }
@@ -344,13 +350,11 @@ final usoAntimicrobianosNotifierProvider =
     });
 
 /// Provider de usos filtrados por lote.
-final usosLoteProvider = Provider.family<List<UsoAntimicrobiano>, String>((
-  ref,
-  loteId,
-) {
-  final state = ref.watch(usoAntimicrobianosNotifierProvider);
-  return state.usos.where((u) => u.loteId == loteId).toList();
-});
+final usosLoteProvider = Provider.autoDispose
+    .family<List<UsoAntimicrobiano>, String>((ref, loteId) {
+      final state = ref.watch(usoAntimicrobianosNotifierProvider);
+      return state.usos.where((u) => u.loteId == loteId).toList();
+    });
 
 /// Provider de lotes en período de retiro.
 final lotesEnRetiroProvider = Provider<List<UsoAntimicrobiano>>((ref) {
@@ -358,19 +362,20 @@ final lotesEnRetiroProvider = Provider<List<UsoAntimicrobiano>>((ref) {
 });
 
 /// Provider para verificar si un lote está en retiro.
-final loteEnRetiroProvider = Provider.family<bool, String>((ref, loteId) {
+final loteEnRetiroProvider = Provider.autoDispose.family<bool, String>((
+  ref,
+  loteId,
+) {
   final notifier = ref.watch(usoAntimicrobianosNotifierProvider.notifier);
   return notifier.verificarRetiroActivo(loteId);
 });
 
 /// Provider de fecha de liberación de un lote.
-final fechaLiberacionLoteProvider = Provider.family<DateTime?, String>((
-  ref,
-  loteId,
-) {
-  final notifier = ref.watch(usoAntimicrobianosNotifierProvider.notifier);
-  return notifier.obtenerFechaLiberacion(loteId);
-});
+final fechaLiberacionLoteProvider = Provider.autoDispose
+    .family<DateTime?, String>((ref, loteId) {
+      final notifier = ref.watch(usoAntimicrobianosNotifierProvider.notifier);
+      return notifier.obtenerFechaLiberacion(loteId);
+    });
 
 /// Provider del reporte actual.
 final reporteAntimicrobianosProvider = Provider<ReporteAntimicrobianos?>((ref) {

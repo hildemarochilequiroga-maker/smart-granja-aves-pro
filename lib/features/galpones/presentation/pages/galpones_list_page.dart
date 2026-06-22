@@ -8,6 +8,8 @@
 /// - FAB para crear nuevo galpón
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -44,9 +46,11 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
   final _searchFocusNode = FocusNode();
   String _searchQuery = '';
   EstadoGalpon? _estadoFilter;
+  Timer? _searchDebounce;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -98,7 +102,13 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
                 searchQuery: _searchQuery,
                 estadoFilter: _estadoFilter,
                 onSearchChanged: (value) {
-                  setState(() => _searchQuery = value);
+                  _searchDebounce?.cancel();
+                  _searchDebounce = Timer(
+                    const Duration(milliseconds: 300),
+                    () {
+                      setState(() => _searchQuery = value);
+                    },
+                  );
                 },
                 onClearSearch: () {
                   _searchController.clear();
@@ -154,6 +164,7 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
                       final isLast = index == filteredGalpones.length - 1;
 
                       return Padding(
+                        key: ValueKey('galpon_${galpon.id}'),
                         padding: EdgeInsets.only(
                           top: isFirst ? cardSpacing : 0,
                           bottom: isLast ? 80 : cardSpacing,
@@ -442,5 +453,3 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
         estadoFilter != oldDelegate.estadoFilter;
   }
 }
-
-

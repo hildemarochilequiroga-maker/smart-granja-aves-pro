@@ -40,64 +40,74 @@ final granjaRepositoryProvider = Provider<GranjaRepository>((ref) {
 // PROVIDERS DE USE CASES
 // =============================================================================
 
-final crearGranjaUseCaseProvider = Provider<CrearGranjaUseCase>((ref) {
+final crearGranjaUseCaseProvider = Provider.autoDispose<CrearGranjaUseCase>((
+  ref,
+) {
   return CrearGranjaUseCase(repository: ref.watch(granjaRepositoryProvider));
 });
 
-final actualizarGranjaUseCaseProvider = Provider<ActualizarGranjaUseCase>((
-  ref,
-) {
-  return ActualizarGranjaUseCase(
-    repository: ref.watch(granjaRepositoryProvider),
-  );
-});
+final actualizarGranjaUseCaseProvider =
+    Provider.autoDispose<ActualizarGranjaUseCase>((ref) {
+      return ActualizarGranjaUseCase(
+        repository: ref.watch(granjaRepositoryProvider),
+      );
+    });
 
-final eliminarGranjaUseCaseProvider = Provider<EliminarGranjaUseCase>((ref) {
-  return EliminarGranjaUseCase(
-    repository: ref.watch(granjaRepositoryProvider),
-    galponRepository: ref.watch(galponRepositoryProvider),
-    loteRepository: ref.watch(loteRepositoryProvider),
-  );
-});
+final eliminarGranjaUseCaseProvider =
+    Provider.autoDispose<EliminarGranjaUseCase>((ref) {
+      return EliminarGranjaUseCase(
+        repository: ref.watch(granjaRepositoryProvider),
+        galponRepository: ref.watch(galponRepositoryProvider),
+        loteRepository: ref.watch(loteRepositoryProvider),
+      );
+    });
 
-final obtenerGranjaPorIdUseCaseProvider = Provider<ObtenerGranjaPorIdUseCase>((
-  ref,
-) {
-  return ObtenerGranjaPorIdUseCase(
-    repository: ref.watch(granjaRepositoryProvider),
-  );
-});
+final obtenerGranjaPorIdUseCaseProvider =
+    Provider.autoDispose<ObtenerGranjaPorIdUseCase>((ref) {
+      return ObtenerGranjaPorIdUseCase(
+        repository: ref.watch(granjaRepositoryProvider),
+      );
+    });
 
 final obtenerGranjasDelUsuarioUseCaseProvider =
-    Provider<ObtenerGranjasDelUsuarioUseCase>((ref) {
+    Provider.autoDispose<ObtenerGranjasDelUsuarioUseCase>((ref) {
       return ObtenerGranjasDelUsuarioUseCase(
         repository: ref.watch(granjaRepositoryProvider),
       );
     });
 
-final activarGranjaUseCaseProvider = Provider<ActivarGranjaUseCase>((ref) {
-  return ActivarGranjaUseCase(repository: ref.watch(granjaRepositoryProvider));
-});
+final activarGranjaUseCaseProvider = Provider.autoDispose<ActivarGranjaUseCase>(
+  (ref) {
+    return ActivarGranjaUseCase(
+      repository: ref.watch(granjaRepositoryProvider),
+    );
+  },
+);
 
-final suspenderGranjaUseCaseProvider = Provider<SuspenderGranjaUseCase>((ref) {
-  return SuspenderGranjaUseCase(
-    repository: ref.watch(granjaRepositoryProvider),
-  );
-});
+final suspenderGranjaUseCaseProvider =
+    Provider.autoDispose<SuspenderGranjaUseCase>((ref) {
+      return SuspenderGranjaUseCase(
+        repository: ref.watch(granjaRepositoryProvider),
+      );
+    });
 
 final ponerEnMantenimientoUseCaseProvider =
-    Provider<PonerEnMantenimientoGranjaUseCase>((ref) {
+    Provider.autoDispose<PonerEnMantenimientoGranjaUseCase>((ref) {
       return PonerEnMantenimientoGranjaUseCase(
         repository: ref.watch(granjaRepositoryProvider),
       );
     });
 
-final buscarGranjasUseCaseProvider = Provider<BuscarGranjasUseCase>((ref) {
-  return BuscarGranjasUseCase(repository: ref.watch(granjaRepositoryProvider));
-});
+final buscarGranjasUseCaseProvider = Provider.autoDispose<BuscarGranjasUseCase>(
+  (ref) {
+    return BuscarGranjasUseCase(
+      repository: ref.watch(granjaRepositoryProvider),
+    );
+  },
+);
 
 final obtenerDashboardGranjaUseCaseProvider =
-    Provider<ObtenerDashboardGranjaUseCase>((ref) {
+    Provider.autoDispose<ObtenerDashboardGranjaUseCase>((ref) {
       return ObtenerDashboardGranjaUseCase(
         granjaRepository: ref.watch(granjaRepositoryProvider),
         loteRepository: ref.watch(loteRepositoryProvider),
@@ -187,51 +197,54 @@ final granjaByIdProvider = StreamProvider.autoDispose.family<Granja?, String>((
 // =============================================================================
 
 /// Provider que cuenta las granjas del usuario
-final conteoGranjasProvider = Provider<AsyncValue<int>>((ref) {
+final conteoGranjasProvider = Provider.autoDispose<AsyncValue<int>>((ref) {
   final granjasAsync = ref.watch(granjasStreamProvider);
   return granjasAsync.whenData((granjas) => granjas.length);
 });
 
 /// Provider que cuenta las granjas activas
-final conteoGranjasActivasProvider = Provider<AsyncValue<int>>((ref) {
+final conteoGranjasActivasProvider = Provider.autoDispose<AsyncValue<int>>((
+  ref,
+) {
   final granjasAsync = ref.watch(granjasActivasStreamProvider);
   return granjasAsync.whenData((granjas) => granjas.length);
 });
 
 /// Provider de estadísticas de granjas
-final estadisticasGranjasProvider = Provider<AsyncValue<GranjaStatsState>>((
-  ref,
-) {
-  final granjasAsync = ref.watch(granjasStreamProvider);
+final estadisticasGranjasProvider =
+    Provider.autoDispose<AsyncValue<GranjaStatsState>>((ref) {
+      final granjasAsync = ref.watch(granjasStreamProvider);
 
-  return granjasAsync.whenData((granjas) {
-    if (granjas.isEmpty) {
-      return GranjaStatsState.initial();
-    }
+      return granjasAsync.whenData((granjas) {
+        if (granjas.isEmpty) {
+          return GranjaStatsState.initial();
+        }
 
-    final activas = granjas.where((g) => g.estaActiva).length;
-    final inactivas = granjas.where((g) => g.estaSuspendida).length;
-    final enMantenimiento = granjas.where((g) => g.estaEnMantenimiento).length;
+        final activas = granjas.where((g) => g.estaActiva).length;
+        final inactivas = granjas.where((g) => g.estaSuspendida).length;
+        final enMantenimiento = granjas
+            .where((g) => g.estaEnMantenimiento)
+            .length;
 
-    final capacidadTotal = granjas.fold<int>(
-      0,
-      (sum, g) => sum + (g.capacidadTotalAves ?? 0),
-    );
-    final areaTotal = granjas.fold<double>(
-      0.0,
-      (sum, g) => sum + (g.areaTotalM2 ?? 0.0),
-    );
+        final capacidadTotal = granjas.fold<int>(
+          0,
+          (sum, g) => sum + (g.capacidadTotalAves ?? 0),
+        );
+        final areaTotal = granjas.fold<double>(
+          0.0,
+          (sum, g) => sum + (g.areaTotalM2 ?? 0.0),
+        );
 
-    return GranjaStatsState(
-      totalGranjas: granjas.length,
-      granjasActivas: activas,
-      granjasInactivas: inactivas,
-      granjasEnMantenimiento: enMantenimiento,
-      capacidadTotalAves: capacidadTotal,
-      areaTotalM2: areaTotal,
-    );
-  });
-});
+        return GranjaStatsState(
+          totalGranjas: granjas.length,
+          granjasActivas: activas,
+          granjasInactivas: inactivas,
+          granjasEnMantenimiento: enMantenimiento,
+          capacidadTotalAves: capacidadTotal,
+          areaTotalM2: areaTotal,
+        );
+      });
+    });
 
 /// Provider de la granja seleccionada actualmente
 final granjaSeleccionadaProvider = StateProvider.autoDispose<Granja?>(
@@ -239,7 +252,7 @@ final granjaSeleccionadaProvider = StateProvider.autoDispose<Granja?>(
 );
 
 /// Provider que indica si el usuario tiene al menos una granja
-final tieneGranjasProvider = Provider<AsyncValue<bool>>((ref) {
+final tieneGranjasProvider = Provider.autoDispose<AsyncValue<bool>>((ref) {
   final granjasAsync = ref.watch(granjasStreamProvider);
   return granjasAsync.whenData((granjas) => granjas.isNotEmpty);
 });

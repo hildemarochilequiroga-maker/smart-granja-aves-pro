@@ -11,6 +11,15 @@ abstract class VentaRemoteDatasource {
 
   // VentaProducto methods
   Future<VentaProducto> createVentaProducto(VentaProducto venta);
+
+  /// Crea una venta de producto y actualiza atómicamente los campos
+  /// indicados en el documento de lote (p.ej. `ventasAcumuladas` con
+  /// `FieldValue.increment`). Garantiza que ambos cambios suceden
+  /// dentro de la misma transacción.
+  Future<VentaProducto> createVentaProductoConActualizacionLote({
+    required VentaProducto venta,
+    required Map<String, dynamic> camposLote,
+  });
   Future<VentaProducto?> fetchVentaProductoPorId(String id);
   Future<List<VentaProducto>> fetchVentasProductoPorLote(String loteId);
   Future<List<VentaProducto>> fetchVentasProductoPorGranja(String granjaId);

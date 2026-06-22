@@ -273,6 +273,7 @@ class _ColaboradoresList extends StatelessWidget {
         final isCurrentUser = colaborador.usuarioId == currentUserId;
 
         return _ColaboradorCard(
+          key: ValueKey('colab_${colaborador.usuarioId}'),
           colaborador: colaborador,
           granjaId: granjaId,
           isCurrentUser: isCurrentUser,
@@ -286,6 +287,7 @@ class _ColaboradoresList extends StatelessWidget {
 /// Card de un colaborador.
 class _ColaboradorCard extends ConsumerStatefulWidget {
   const _ColaboradorCard({
+    super.key,
     required this.colaborador,
     required this.granjaId,
     required this.isCurrentUser,

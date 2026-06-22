@@ -142,6 +142,7 @@ class HistorialMortalidadPageState
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => Padding(
+                      key: ValueKey('mort_${lista[index].id}'),
                       padding: EdgeInsets.only(
                         bottom: index < lista.length - 1 ? 12 : 0,
                       ),

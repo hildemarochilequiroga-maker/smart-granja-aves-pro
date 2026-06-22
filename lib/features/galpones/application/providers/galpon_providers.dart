@@ -41,71 +41,82 @@ final galponRepositoryProvider = Provider<GalponRepository>((ref) {
 // PROVIDERS DE USE CASES
 // =============================================================================
 
-final crearGalponUseCaseProvider = Provider<CrearGalponUseCase>((ref) {
+final crearGalponUseCaseProvider = Provider.autoDispose<CrearGalponUseCase>((
+  ref,
+) {
   return CrearGalponUseCase(repository: ref.watch(galponRepositoryProvider));
 });
 
-final actualizarGalponUseCaseProvider = Provider<ActualizarGalponUseCase>((
+final actualizarGalponUseCaseProvider =
+    Provider.autoDispose<ActualizarGalponUseCase>((ref) {
+      return ActualizarGalponUseCase(
+        repository: ref.watch(galponRepositoryProvider),
+      );
+    });
+
+final eliminarGalponUseCaseProvider =
+    Provider.autoDispose<EliminarGalponUseCase>((ref) {
+      return EliminarGalponUseCase(
+        repository: ref.watch(galponRepositoryProvider),
+      );
+    });
+
+final obtenerPorGranjaUseCaseProvider =
+    Provider.autoDispose<ObtenerPorGranjaUseCase>((ref) {
+      return ObtenerPorGranjaUseCase(
+        repository: ref.watch(galponRepositoryProvider),
+      );
+    });
+
+final obtenerDisponiblesUseCaseProvider =
+    Provider.autoDispose<ObtenerDisponiblesUseCase>((ref) {
+      return ObtenerDisponiblesUseCase(
+        repository: ref.watch(galponRepositoryProvider),
+      );
+    });
+
+final cambiarEstadoUseCaseProvider = Provider.autoDispose<CambiarEstadoUseCase>(
+  (ref) {
+    return CambiarEstadoUseCase(
+      repository: ref.watch(galponRepositoryProvider),
+    );
+  },
+);
+
+final asignarLoteUseCaseProvider = Provider.autoDispose<AsignarLoteUseCase>((
   ref,
 ) {
-  return ActualizarGalponUseCase(
-    repository: ref.watch(galponRepositoryProvider),
-  );
-});
-
-final eliminarGalponUseCaseProvider = Provider<EliminarGalponUseCase>((ref) {
-  return EliminarGalponUseCase(repository: ref.watch(galponRepositoryProvider));
-});
-
-final obtenerPorGranjaUseCaseProvider = Provider<ObtenerPorGranjaUseCase>((
-  ref,
-) {
-  return ObtenerPorGranjaUseCase(
-    repository: ref.watch(galponRepositoryProvider),
-  );
-});
-
-final obtenerDisponiblesUseCaseProvider = Provider<ObtenerDisponiblesUseCase>((
-  ref,
-) {
-  return ObtenerDisponiblesUseCase(
-    repository: ref.watch(galponRepositoryProvider),
-  );
-});
-
-final cambiarEstadoUseCaseProvider = Provider<CambiarEstadoUseCase>((ref) {
-  return CambiarEstadoUseCase(repository: ref.watch(galponRepositoryProvider));
-});
-
-final asignarLoteUseCaseProvider = Provider<AsignarLoteUseCase>((ref) {
   return AsignarLoteUseCase(repository: ref.watch(galponRepositoryProvider));
 });
 
-final liberarGalponUseCaseProvider = Provider<LiberarGalponUseCase>((ref) {
-  return LiberarGalponUseCase(repository: ref.watch(galponRepositoryProvider));
-});
+final liberarGalponUseCaseProvider = Provider.autoDispose<LiberarGalponUseCase>(
+  (ref) {
+    return LiberarGalponUseCase(
+      repository: ref.watch(galponRepositoryProvider),
+    );
+  },
+);
 
 final programarMantenimientoUseCaseProvider =
-    Provider<ProgramarMantenimientoUseCase>((ref) {
+    Provider.autoDispose<ProgramarMantenimientoUseCase>((ref) {
       return ProgramarMantenimientoUseCase(
         repository: ref.watch(galponRepositoryProvider),
       );
     });
 
 final registrarDesinfeccionUseCaseProvider =
-    Provider<RegistrarDesinfeccionUseCase>((ref) {
+    Provider.autoDispose<RegistrarDesinfeccionUseCase>((ref) {
       return RegistrarDesinfeccionUseCase(
         repository: ref.watch(galponRepositoryProvider),
       );
     });
 
-final obtenerEstadisticasUseCaseProvider = Provider<ObtenerEstadisticasUseCase>(
-  (ref) {
-    return ObtenerEstadisticasUseCase(
-      repository: ref.watch(galponRepositoryProvider),
-    );
-  },
-);
+final obtenerEstadisticasUseCaseProvider =
+    Provider.autoDispose<ObtenerEstadisticasUseCase>((ref) {
+      return ObtenerEstadisticasUseCase(
+        repository: ref.watch(galponRepositoryProvider),
+      );
+    });
 
 // =============================================================================
 // PROVIDERS DE NOTIFIERS
@@ -190,17 +201,15 @@ final galponByIdProvider = StreamProvider.autoDispose.family<Galpon?, String>((
 // =============================================================================
 
 /// Provider que cuenta los galpones de una granja.
-final conteoGalponesProvider = Provider.family<AsyncValue<int>, String>((
-  ref,
-  granjaId,
-) {
-  final galponesAsync = ref.watch(galponesStreamProvider(granjaId));
-  return galponesAsync.whenData((galpones) => galpones.length);
-});
+final conteoGalponesProvider = Provider.autoDispose
+    .family<AsyncValue<int>, String>((ref, granjaId) {
+      final galponesAsync = ref.watch(galponesStreamProvider(granjaId));
+      return galponesAsync.whenData((galpones) => galpones.length);
+    });
 
 /// Provider que cuenta los galpones disponibles.
-final conteoGalponesDisponiblesProvider =
-    Provider.family<AsyncValue<int>, String>((ref, granjaId) {
+final conteoGalponesDisponiblesProvider = Provider.autoDispose
+    .family<AsyncValue<int>, String>((ref, granjaId) {
       final galponesAsync = ref.watch(galponesStreamProvider(granjaId));
       return galponesAsync.whenData(
         (galpones) => galpones.where((g) => g.estaDisponible).length,
@@ -209,8 +218,8 @@ final conteoGalponesDisponiblesProvider =
 
 /// Provider de estadísticas de galpones.
 /// Usa datos de lotes activos para calcular aves actuales y ocupación correctamente.
-final estadisticasGalponesProvider =
-    Provider.family<AsyncValue<GalponStatsState>, String>((ref, granjaId) {
+final estadisticasGalponesProvider = Provider.autoDispose
+    .family<AsyncValue<GalponStatsState>, String>((ref, granjaId) {
       final galponesAsync = ref.watch(galponesStreamProvider(granjaId));
       final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
 

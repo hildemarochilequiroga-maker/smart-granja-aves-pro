@@ -37,6 +37,7 @@ class Lote extends Equatable {
     this.fechaCierreReal,
     this.motivoCierre,
     this.costoAveInicial,
+    this.ingresosTotales,
     this.observaciones,
     this.fechaCreacion,
     this.ultimaActualizacion,
@@ -118,6 +119,9 @@ class Lote extends Equatable {
   /// Costo por ave al inicio.
   final double? costoAveInicial;
 
+  /// Ingresos totales obtenidos al cierre del lote (venta de aves).
+  final double? ingresosTotales;
+
   /// Observaciones generales.
   final String? observaciones;
 
@@ -157,6 +161,7 @@ class Lote extends Equatable {
     fechaCierreReal,
     motivoCierre,
     costoAveInicial,
+    ingresosTotales,
     observaciones,
     fechaCreacion,
     ultimaActualizacion,
@@ -190,6 +195,7 @@ class Lote extends Equatable {
     DateTime? fechaCierreReal,
     String? motivoCierre,
     double? costoAveInicial,
+    double? ingresosTotales,
     String? observaciones,
     DateTime? fechaCreacion,
     DateTime? ultimaActualizacion,
@@ -221,6 +227,7 @@ class Lote extends Equatable {
       fechaCierreReal: fechaCierreReal ?? this.fechaCierreReal,
       motivoCierre: motivoCierre ?? this.motivoCierre,
       costoAveInicial: costoAveInicial ?? this.costoAveInicial,
+      ingresosTotales: ingresosTotales ?? this.ingresosTotales,
       observaciones: observaciones ?? this.observaciones,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       ultimaActualizacion: ultimaActualizacion ?? this.ultimaActualizacion,

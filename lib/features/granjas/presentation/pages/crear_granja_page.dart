@@ -6,15 +6,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
@@ -489,9 +490,12 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
   }
 
   void _nextStep() {
-    if (!_validateCurrentStep()) return;
+    if (!_validateCurrentStep()) {
+      unawaited(AppHaptics.error());
+      return;
+    }
 
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -505,7 +509,7 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
   }
 
   void _previousStep() {
-    HapticFeedback.lightImpact();
+    unawaited(AppHaptics.selection());
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -521,9 +525,6 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
   bool _validateCurrentStep() {
     // Activar validación automática solo para el step actual
     setState(() => _autoValidatePerStep[_currentStep] = true);
-
-    // Dar feedback háptico al intentar avanzar
-    HapticFeedback.lightImpact();
 
     switch (_currentStep) {
       case 0: // Información Básica
@@ -654,7 +655,7 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
         result.fold(
           (failure) async {
             setState(() => _isLoading = false);
-            unawaited(HapticFeedback.heavyImpact());
+            unawaited(AppHaptics.error());
             AppSnackBar.error(
               context,
               message: failure.message,
@@ -663,33 +664,27 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
             );
           },
           (granja) async {
-            // Feedback háptico de éxito
-            unawaited(HapticFeedback.mediumImpact());
-
             // Limpiar el draft después de crear exitosamente
             final prefs = await SharedPreferences.getInstance();
             await prefs.remove('granja_draft');
 
             if (!mounted) return;
 
-            AppSnackBar.success(
+            await SaveSuccessOverlay.show(
               context,
               message: S.of(context).farmCreatedSuccess(granja.nombre),
             );
 
-            // Navegar a la lista de granjas
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                context.go(AppRoutes.granjas);
-              }
-            });
+            if (mounted) {
+              context.go(AppRoutes.granjas);
+            }
           },
         ),
       );
     } on Exception {
       setState(() => _isLoading = false);
       if (mounted) {
-        unawaited(HapticFeedback.heavyImpact());
+        unawaited(AppHaptics.error());
         AppSnackBar.error(
           context,
           message: S.of(context).commonUnexpectedError,

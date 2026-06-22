@@ -77,7 +77,7 @@ class VacunaInfoStep extends StatelessWidget {
           if (mostrarSelectorLote &&
               lotes != null &&
               onLoteChanged != null) ...[
-            _buildLoteSelector(theme, l),
+            _buildLoteSelector(context, theme, l),
             AppSpacing.gapBase,
           ],
 
@@ -135,7 +135,11 @@ class VacunaInfoStep extends StatelessWidget {
     );
   }
 
-  Widget _buildLoteSelector(ThemeData theme, S l) {
+  Widget _buildLoteSelector(BuildContext context, ThemeData theme, S l) {
+    final safeSelectedLote = lotes!.contains(loteSeleccionado)
+        ? loteSeleccionado
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,7 +152,9 @@ class VacunaInfoStep extends StatelessWidget {
         ),
         AppSpacing.gapSm,
         DropdownButtonFormField<Lote>(
-          initialValue: loteSeleccionado,
+          initialValue: safeSelectedLote,
+          isExpanded: true,
+          menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
           decoration: InputDecoration(
             filled: true,
             fillColor: theme.colorScheme.surface,

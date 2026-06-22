@@ -23,7 +23,7 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": "build/web",
+    "public": "landing-ventas",
     "ignore": [
       "firebase.json",
       "**/.*",
