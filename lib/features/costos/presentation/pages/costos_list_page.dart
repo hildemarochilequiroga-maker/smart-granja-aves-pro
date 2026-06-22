@@ -24,6 +24,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/permission_guard.dart';
@@ -569,29 +570,18 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                   // Botón aplicar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          setState(() {
-                            _tipoFilter = tempTipoFilter;
-                          });
-                          Navigator.pop(context);
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.success,
-                          foregroundColor: AppColors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.allMd,
-                          ),
-                        ),
-                        child: Text(
-                          hayFiltros ? l.commonApplyFilters : l.commonClose,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    child: AppButton.primary(
+                      label: hayFiltros ? l.commonApplyFilters : l.commonClose,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _tipoFilter = tempTipoFilter;
+                        });
+                        Navigator.pop(context);
+                      },
+                      expanded: true,
+                      backgroundColor: AppColors.success,
+                      foregroundColor: AppColors.white,
                     ),
                   ),
                 ],

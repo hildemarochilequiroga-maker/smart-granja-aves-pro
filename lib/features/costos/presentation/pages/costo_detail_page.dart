@@ -20,6 +20,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
@@ -81,16 +82,10 @@ class CostoDetailPage extends ConsumerWidget {
             AppSpacing.gapBase,
             Text(l.costoDetailNotFound, style: theme.textTheme.titleLarge),
             AppSpacing.gapXl,
-            SizedBox(
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back),
-                label: Text(l.commonBack),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                ),
-              ),
+            AppButton.primary(
+              label: l.commonBack,
+              icon: Icons.arrow_back,
+              onPressed: () => context.pop(),
             ),
           ],
         ),

@@ -2,7 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:smartgranjaavespro/core/theme/app_radius.dart';
+import 'package:smartgranjaavespro/core/widgets/app_button.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 /// Widget para mostrar errores en la lista de costos
@@ -50,26 +50,10 @@ class CostosErrorState extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
-              SizedBox(
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded, size: 20),
-                  label: Text(
-                    l.commonRetry,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                  ),
-                ),
+              AppButton.primary(
+                label: l.commonRetry,
+                icon: Icons.refresh_rounded,
+                onPressed: onRetry,
               ),
             ],
           ],
