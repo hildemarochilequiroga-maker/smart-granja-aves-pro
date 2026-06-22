@@ -12,8 +12,8 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/save_success_overlay.dart';
@@ -282,80 +282,29 @@ class _InspeccionBioseguridadPageState
             // Botón Anterior
             if (_currentStep > 0)
               Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : _previousStep,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: _isLoading
-                            ? theme.colorScheme.outline.withValues(alpha: 0.4)
-                            : theme.colorScheme.outline.withValues(alpha: 0.6),
-                        width: 1,
-                      ),
-                      foregroundColor: theme.colorScheme.onSurface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadius.allSm,
-                      ),
-                    ),
-                    child: Text(
-                      S.of(context).commonPrevious,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                child: AppButton.secondary(
+                  label: S.of(context).commonPrevious,
+                  onPressed: _isLoading ? null : _previousStep,
+                  expanded: true,
                 ),
               ),
             if (_currentStep > 0) AppSpacing.hGapMd,
 
             // Botón Siguiente o Guardar
             Expanded(
-              child: SizedBox(
-                height: 48,
-                child: FilledButton(
-                  onPressed: _isLoading ? null : _onNextOrSubmit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _currentStep < _totalSteps - 1
-                        ? AppColors.primary
-                        : AppColors.success,
-                    foregroundColor: _currentStep < _totalSteps - 1
-                        ? AppColors.onPrimary
-                        : AppColors.white,
-                    disabledBackgroundColor:
-                        (_currentStep < _totalSteps - 1
-                                ? AppColors.primary
-                                : AppColors.success)
-                            .withValues(alpha: 0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                  ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              _currentStep < _totalSteps - 1
-                                  ? AppColors.onPrimary
-                                  : AppColors.white,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          _currentStep < _totalSteps - 1
-                              ? S.of(context).commonNext
-                              : S.of(context).bioInspectionSaveButton,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: _currentStep < _totalSteps - 1
-                                ? AppColors.onPrimary
-                                : AppColors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
+              child: AppButton.primary(
+                label: _currentStep < _totalSteps - 1
+                    ? S.of(context).commonNext
+                    : S.of(context).bioInspectionSaveButton,
+                onPressed: _isLoading ? null : _onNextOrSubmit,
+                isLoading: _isLoading,
+                expanded: true,
+                backgroundColor: _currentStep < _totalSteps - 1
+                    ? AppColors.primary
+                    : AppColors.success,
+                foregroundColor: _currentStep < _totalSteps - 1
+                    ? AppColors.onPrimary
+                    : AppColors.white,
               ),
             ),
           ],

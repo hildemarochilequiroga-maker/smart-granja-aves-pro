@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:smartgranjaavespro/core/widgets/app_button.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 /// Widget que muestra un estado de error con opción de reintentar
@@ -83,21 +84,13 @@ class VacunacionErrorState extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Botón de reintentar
-              FilledButton.icon(
+              AppButton.primary(
+                label: l.commonRetry,
+                icon: Icons.refresh_rounded,
                 onPressed: () {
                   HapticFeedback.mediumImpact();
                   onRetry();
                 },
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text(l.commonRetry),
               ),
             ],
           ),

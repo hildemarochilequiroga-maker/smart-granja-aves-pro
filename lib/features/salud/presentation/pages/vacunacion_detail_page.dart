@@ -17,6 +17,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -125,9 +126,9 @@ class _VacunacionDetailPageState extends ConsumerState<VacunacionDetailPage> {
                   AppSpacing.gapBase,
                   Text(S.of(context).vacDetailNotFound),
                   AppSpacing.gapBase,
-                  ElevatedButton(
+                  AppButton.primary(
+                    label: S.of(context).commonBack,
                     onPressed: () => context.pop(),
-                    child: Text(S.of(context).commonBack),
                   ),
                 ],
               ),
@@ -169,18 +170,12 @@ class _VacunacionDetailPageState extends ConsumerState<VacunacionDetailPage> {
 
           // Botón de acción principal si está pendiente
           if (!vacunacion.fueAplicada) ...[
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => _marcarAplicada(vacunacion),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: theme.colorScheme.surface,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-                ),
-                child: Text(S.of(context).vacDetailMarkAppliedButton),
-              ),
+            AppButton.primary(
+              label: S.of(context).vacDetailMarkAppliedButton,
+              onPressed: () => _marcarAplicada(vacunacion),
+              expanded: true,
+              backgroundColor: AppColors.success,
+              foregroundColor: theme.colorScheme.surface,
             ),
             AppSpacing.gapBase,
           ],

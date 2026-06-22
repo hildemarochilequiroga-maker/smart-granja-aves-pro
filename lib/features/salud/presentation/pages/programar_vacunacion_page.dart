@@ -11,8 +11,8 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -390,71 +390,23 @@ class _ProgramarVacunacionPageState
             // Botón Anterior
             if (_currentStep > 0)
               Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : _previousStep,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: _isLoading
-                            ? theme.colorScheme.outline.withValues(alpha: 0.4)
-                            : theme.colorScheme.outline.withValues(alpha: 0.6),
-                        width: 1,
-                      ),
-                      foregroundColor: theme.colorScheme.onSurface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadius.allSm,
-                      ),
-                    ),
-                    child: Text(
-                      S.of(context).commonPrevious,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                child: AppButton.secondary(
+                  label: S.of(context).commonPrevious,
+                  onPressed: _isLoading ? null : _previousStep,
+                  expanded: true,
                 ),
               ),
             if (_currentStep > 0) AppSpacing.hGapMd,
 
             // Botón Siguiente o Guardar
             Expanded(
-              flex: _currentStep > 0 ? 1 : 1,
-              child: SizedBox(
-                height: 48,
-                child: FilledButton(
-                  onPressed: _isLoading ? null : _onNextOrSubmit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    disabledBackgroundColor: AppColors.primary.withValues(
-                      alpha: 0.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.onPrimary,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          _currentStep < _steps.length - 1
-                              ? S.of(context).commonNext
-                              : S.of(context).vacScheduleTitle,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: AppColors.onPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
+              child: AppButton.primary(
+                label: _currentStep < _steps.length - 1
+                    ? S.of(context).commonNext
+                    : S.of(context).vacScheduleTitle,
+                onPressed: _isLoading ? null : _onNextOrSubmit,
+                isLoading: _isLoading,
+                expanded: true,
               ),
             ),
           ],

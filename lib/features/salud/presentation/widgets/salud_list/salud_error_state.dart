@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'package:smartgranjaavespro/core/widgets/app_button.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 /// Widget para mostrar errores en la carga de registros de salud
@@ -97,18 +98,10 @@ class SaludErrorState extends StatelessWidget {
                 SizedBox(height: isSmallScreen ? 24 : 32),
 
                 // Botón de reintentar
-                FilledButton.icon(
+                AppButton.danger(
+                  label: l.commonRetry,
+                  icon: Icons.refresh_rounded,
                   onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(l.commonRetry),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.error,
-                    foregroundColor: theme.colorScheme.onError,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 20 : 24,
-                      vertical: isSmallScreen ? 10 : 12,
-                    ),
-                  ),
                 ),
               ],
             ),

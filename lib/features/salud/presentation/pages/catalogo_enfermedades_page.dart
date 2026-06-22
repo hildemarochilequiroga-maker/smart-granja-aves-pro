@@ -19,6 +19,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_filter_tab.dart';
 import '../../../../core/widgets/app_search_bar.dart';
 import '../../application/providers/catalogo_enfermedades_provider.dart';
@@ -596,26 +597,10 @@ class _EnfermedadCard extends StatelessWidget {
   }
 
   Widget _buildActionButton(BuildContext context, ThemeData theme) {
-    return SizedBox(
-      height: 48,
-      width: double.infinity,
-      child: FilledButton(
-        onPressed: onTap,
-        style: FilledButton.styleFrom(
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-          elevation: 0,
-        ),
-        child: Text(
-          S.of(context).catalogDiseaseViewDetails,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+    return AppButton.primary(
+      label: S.of(context).catalogDiseaseViewDetails,
+      onPressed: onTap,
+      expanded: true,
     );
   }
 
@@ -701,10 +686,10 @@ class _EmptyState extends StatelessWidget {
             ),
             if (hasFilters) ...[
               AppSpacing.gapXl,
-              FilledButton.icon(
+              AppButton.primary(
+                label: S.of(context).diseaseCatalogClearFilters,
+                icon: Icons.clear_all_rounded,
                 onPressed: onClearFilters,
-                icon: const Icon(Icons.clear_all_rounded),
-                label: Text(S.of(context).diseaseCatalogClearFilters),
               ),
             ],
           ],

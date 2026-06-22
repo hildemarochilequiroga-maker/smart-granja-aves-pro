@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import 'package:intl/intl.dart';
 
@@ -127,9 +128,9 @@ class _SaludDetailPageState extends ConsumerState<SaludDetailPage> {
                   AppSpacing.gapBase,
                   Text(l.saludRecordNotFound),
                   AppSpacing.gapBase,
-                  ElevatedButton(
+                  AppButton.primary(
+                    label: l.commonBack,
                     onPressed: () => context.pop(),
-                    child: Text(l.commonBack),
                   ),
                 ],
               ),
@@ -180,19 +181,13 @@ class _SaludDetailPageState extends ConsumerState<SaludDetailPage> {
 
           // Botón de acción principal si está abierto
           if (registro.estaAbierto) ...[
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _cerrarTratamiento(registro),
-                icon: const Icon(Icons.check_circle),
-                label: Text(l.saludDetailCloseTreatment),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-                ),
-              ),
+            AppButton.primary(
+              label: l.saludDetailCloseTreatment,
+              icon: Icons.check_circle,
+              onPressed: () => _cerrarTratamiento(registro),
+              expanded: true,
+              backgroundColor: AppColors.success,
+              foregroundColor: AppColors.white,
             ),
             AppSpacing.gapBase,
           ],

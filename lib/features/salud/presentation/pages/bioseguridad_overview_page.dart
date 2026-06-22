@@ -10,6 +10,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../application/providers/inspeccion_bioseguridad_provider.dart';
@@ -524,10 +525,10 @@ class _OverviewError extends StatelessWidget {
             AppSpacing.gapSm,
             Text(message, textAlign: TextAlign.center),
             AppSpacing.gapBase,
-            OutlinedButton.icon(
+            AppButton.secondary(
+              label: l.commonRetry,
+              icon: Icons.refresh_rounded,
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(l.commonRetry),
             ),
           ],
         ),
