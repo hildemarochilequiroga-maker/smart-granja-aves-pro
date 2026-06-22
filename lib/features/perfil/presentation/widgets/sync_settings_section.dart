@@ -10,6 +10,7 @@ import '../../../../core/network/connectivity_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
 
@@ -181,7 +182,9 @@ class SyncSettingsSection extends ConsumerWidget {
       children: [
         // Botón para forzar sincronización
         if (state.hasPendingWrites && state.isOnline)
-          FilledButton.icon(
+          AppButton.primary(
+            label: S.of(context).syncForceSync,
+            icon: Icons.cloud_sync,
             onPressed: () async {
               await FirestoreConfig.waitForPendingWrites();
               if (context.mounted) {
@@ -191,8 +194,6 @@ class SyncSettingsSection extends ConsumerWidget {
                 );
               }
             },
-            icon: const Icon(Icons.cloud_sync),
-            label: Text(S.of(context).syncForceSync),
           ),
 
         AppSpacing.gapSm,

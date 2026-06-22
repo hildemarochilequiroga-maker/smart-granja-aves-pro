@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../application/providers/planificador_provider.dart';
 import '../../domain/entities/plan_avicola.dart';
 import '../../domain/enums/raza_ave.dart';
@@ -411,24 +412,14 @@ class _PlanificadorPageState extends ConsumerState<PlanificadorPage> {
   }
 
   Widget _buildGenerarButton(ThemeData theme) {
-    return SizedBox(
+    return AppButton.primary(
+      label: 'Generar Plan Completo',
+      icon: Icons.auto_awesome,
+      onPressed: _generarPlan,
+      expanded: true,
       height: 56,
-      child: ElevatedButton.icon(
-        onPressed: _generarPlan,
-        icon: const Icon(Icons.auto_awesome, size: 22),
-        label: const Text(
-          'Generar Plan Completo',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.success,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 2,
-        ),
-      ),
+      backgroundColor: AppColors.success,
+      foregroundColor: Colors.white,
     );
   }
 

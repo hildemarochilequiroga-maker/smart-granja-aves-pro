@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/theme/app_shadow.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/utils/formatters.dart';
@@ -459,13 +460,11 @@ class HomeHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push(AppRoutes.granjaCrear),
-              icon: const Icon(Icons.add_rounded),
-              label: Text(S.of(context).farmNewFarm),
-            ),
+          AppButton.primary(
+            label: S.of(context).farmNewFarm,
+            icon: Icons.add_rounded,
+            onPressed: () => context.push(AppRoutes.granjaCrear),
+            expanded: true,
           ),
           const SizedBox(height: AppSpacing.sm),
           Center(

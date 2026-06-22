@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../application/providers/planificador_provider.dart';
 import '../../application/services/plan_pdf_generator.dart';
@@ -196,37 +197,21 @@ class ResultadoPlanPage extends ConsumerWidget {
       builder: (context, ref, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
+          AppButton.primary(
+            label: 'Descargar PDF Completo',
+            icon: Icons.picture_as_pdf,
+            onPressed: () => _descargarPdf(context, ref),
+            expanded: true,
             height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () => _descargarPdf(context, ref),
-              icon: const Icon(Icons.picture_as_pdf, size: 20),
-              label: const Text(
-                'Descargar PDF Completo',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
+            backgroundColor: AppColors.success,
+            foregroundColor: Colors.white,
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.edit, size: 20),
-              label: const Text('Modificar Parámetros'),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
+          AppButton.secondary(
+            label: 'Modificar Parámetros',
+            icon: Icons.edit,
+            onPressed: () => Navigator.of(context).pop(),
+            expanded: true,
           ),
         ],
       ),

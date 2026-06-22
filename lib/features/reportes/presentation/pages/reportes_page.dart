@@ -16,6 +16,7 @@ import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_filter_tab.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../auth/application/providers/auth_provider.dart';
@@ -377,45 +378,19 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
+        child: AppButton.primary(
+          label: _isGenerating
+              ? S.of(context).reportGenerating
+              : S.of(context).reportGeneratePdf,
+          icon: Icons.picture_as_pdf_rounded,
+          onPressed: _isGenerating
+              ? null
+              : () => _generarReporte(tipoSeleccionado),
+          isLoading: _isGenerating,
+          expanded: true,
           height: 54,
-          child: ElevatedButton.icon(
-            onPressed: _isGenerating
-                ? null
-                : () => _generarReporte(tipoSeleccionado),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-              elevation: 0,
-            ),
-            icon: _isGenerating
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.white,
-                      ),
-                    ),
-                  )
-                : const Icon(
-                    Icons.picture_as_pdf_rounded,
-                    size: 22,
-                    color: AppColors.white,
-                  ),
-            label: Text(
-              _isGenerating
-                  ? S.of(context).reportGenerating
-                  : S.of(context).reportGeneratePdf,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
-          ),
+          backgroundColor: AppColors.success,
+          foregroundColor: AppColors.white,
         ),
       ),
     );

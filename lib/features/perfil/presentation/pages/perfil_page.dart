@@ -17,6 +17,7 @@ import '../../../../core/config/locale_provider.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -782,18 +783,13 @@ class PerfilPage extends ConsumerWidget {
             AppSpacing.gapBase,
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: AppButton.primary(
+                label: l.profileSendFeedback,
                 onPressed: () {
                   Navigator.pop(context);
                   AppSnackBar.success(context, message: l.profileFeedbackThanks);
                 },
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: Text(l.profileSendFeedback),
+                expanded: true,
               ),
             ),
           ],

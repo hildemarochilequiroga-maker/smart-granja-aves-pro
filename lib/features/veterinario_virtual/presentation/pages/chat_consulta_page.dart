@@ -13,6 +13,7 @@ import '../../application/providers/veterinario_providers.dart';
 import '../../application/services/contexto_builder.dart';
 import '../../domain/entities/entities.dart';
 import '../widgets/mensaje_burbuja_widget.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 
 /// Top-level function for compute() - compresses image bytes in isolate.
@@ -625,17 +626,13 @@ class _ErrorWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonalIcon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: Text(l.vetChatRetry),
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.errorContainer,
-                foregroundColor: theme.colorScheme.onErrorContainer,
-              ),
-            ),
+          AppButton.primary(
+            label: l.vetChatRetry,
+            icon: Icons.refresh_rounded,
+            onPressed: onRetry,
+            expanded: true,
+            backgroundColor: theme.colorScheme.errorContainer,
+            foregroundColor: theme.colorScheme.onErrorContainer,
           ),
         ],
       ),

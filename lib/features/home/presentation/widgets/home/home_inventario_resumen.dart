@@ -6,6 +6,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../granjas/application/providers/granja_providers.dart';
 import '../../../../inventario/application/providers/providers.dart';
@@ -53,9 +54,9 @@ class HomeInventarioResumen extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                TextButton(
+                AppButton.text(
+                  label: S.of(context).commonViewAll,
                   onPressed: () => context.push(AppRoutes.inventario),
-                  child: Text(S.of(context).commonViewAll),
                 ),
               ],
             ),

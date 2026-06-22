@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -174,18 +175,11 @@ class _NotificacionesConfigPageState
               ),
             ],
           ),
-          child: FilledButton(
+          child: AppButton.primary(
+            label: l.notifSaveConfig,
             onPressed: _hasChanges ? _guardarConfiguracion : null,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-            ),
-            child: Text(
-              l.notifSaveConfig,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            expanded: true,
+            height: 52,
           ),
         ),
         body: ListView(

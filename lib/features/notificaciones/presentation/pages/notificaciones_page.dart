@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../application/providers/notificaciones_providers.dart';
 import '../../application/services/notificacion_navigation_helper.dart';
@@ -81,9 +82,9 @@ class NotificacionesPage extends ConsumerWidget {
               AppSpacing.gapBase,
               Text(S.of(context).notifLoadError),
               AppSpacing.gapSm,
-              TextButton(
+              AppButton.text(
+                label: S.of(context).commonRetry,
                 onPressed: () => ref.invalidate(notificacionesStreamProvider),
-                child: Text(S.of(context).commonRetry),
               ),
             ],
           ),
