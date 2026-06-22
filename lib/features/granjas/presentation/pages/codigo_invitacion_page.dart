@@ -14,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/invitacion_granja.dart';
 import '../../domain/enums/rol_granja_enum.dart';
@@ -205,19 +206,10 @@ class _CodigoInvitacionPageState extends ConsumerState<CodigoInvitacionPage> {
   Widget _buildGenerarNuevoButton(ThemeData theme) {
     return Align(
       alignment: Alignment.centerRight,
-      child: TextButton(
+      child: AppButton.text(
+        label: S.of(context).farmGenerateNewCode,
         onPressed: _generarNuevoCodigo,
-        style: TextButton.styleFrom(
-          foregroundColor: theme.colorScheme.secondary,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        ),
-        child: Text(
-          S.of(context).farmGenerateNewCode,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.secondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        foregroundColor: theme.colorScheme.secondary,
       ),
     );
   }
@@ -296,24 +288,14 @@ class _CodigoInvitacionPageState extends ConsumerState<CodigoInvitacionPage> {
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
+        child: AppButton.primary(
+          label: S.of(context).commonShare,
+          icon: Icons.share_rounded,
+          onPressed: _compartirGeneral,
+          expanded: true,
           height: 56,
-          child: FilledButton.icon(
-            onPressed: _compartirGeneral,
-            icon: const Icon(Icons.share_rounded),
-            label: Text(
-              S.of(context).commonShare,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.info,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-            ),
-          ),
+          backgroundColor: AppColors.info,
+          foregroundColor: AppColors.white,
         ),
       ),
     );

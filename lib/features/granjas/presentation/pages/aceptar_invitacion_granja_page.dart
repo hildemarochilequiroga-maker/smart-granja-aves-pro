@@ -14,6 +14,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../application/providers/colaboradores_providers.dart';
@@ -502,51 +503,21 @@ class _AceptarInvitacionGranjaPageState
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
+                  AppButton.primary(
+                    label: S.of(context).farmJoinTheFarm,
+                    icon: Icons.check_circle_rounded,
+                    onPressed: _isLoading ? null : _confirmarAceptacion,
+                    isLoading: _isLoading,
+                    expanded: true,
                     height: 56,
-                    child: FilledButton.icon(
-                      onPressed: _isLoading ? null : _confirmarAceptacion,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: AppSpacing.lg,
-                              height: AppSpacing.lg,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.white,
-                              ),
-                            )
-                          : const Icon(Icons.check_circle_rounded),
-                      label: Text(
-                        _isLoading
-                            ? S.of(context).commonJoining
-                            : S.of(context).farmJoinTheFarm,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.success,
-                        foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.allMd,
-                        ),
-                      ),
-                    ),
+                    backgroundColor: AppColors.success,
+                    foregroundColor: AppColors.white,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  TextButton(
+                  AppButton.text(
+                    label: S.of(context).farmUseAnotherCode,
                     onPressed: _isLoading ? null : _volverAIngresar,
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.secondary,
-                    ),
-                    child: Text(
-                      S.of(context).farmUseAnotherCode,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.secondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    foregroundColor: theme.colorScheme.secondary,
                   ),
                 ],
               ),
@@ -635,31 +606,19 @@ class _AceptarInvitacionGranjaPageState
                   ),
                 ),
                 const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
+                AppButton.primary(
+                  label: S.of(context).farmViewMyFarms,
+                  icon: Icons.agriculture_rounded,
+                  onPressed: () => context.go(AppRoutes.granjas),
+                  expanded: true,
                   height: 56,
-                  child: FilledButton.icon(
-                    onPressed: () => context.go(AppRoutes.granjas),
-                    icon: const Icon(Icons.agriculture_rounded),
-                    label: Text(
-                      S.of(context).farmViewMyFarms,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.info,
-                      foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadius.allMd,
-                      ),
-                    ),
-                  ),
+                  backgroundColor: AppColors.info,
+                  foregroundColor: AppColors.white,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                TextButton(
+                AppButton.text(
+                  label: S.of(context).commonGoToHome,
                   onPressed: () => context.go(AppRoutes.home),
-                  child: Text(S.of(context).commonGoToHome),
                 ),
               ],
             ),

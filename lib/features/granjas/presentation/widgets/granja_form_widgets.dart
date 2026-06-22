@@ -7,6 +7,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/enums/enums.dart';
@@ -216,21 +217,11 @@ class GranjaErrorWidget extends StatelessWidget {
                 ),
                 SizedBox(height: isSmallScreen ? 20 : 24),
                 if (onReintentar != null)
-                  SizedBox(
-                    height: 48,
-                    child: FilledButton.icon(
-                      onPressed: onReintentar,
-                      icon: const Icon(Icons.refresh),
-                      label: Text(S.of(context).commonRetry),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: theme.colorScheme.error,
-                        foregroundColor: AppColors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.allSm,
-                        ),
-                      ),
-                    ),
+                  AppButton.danger(
+                    label: S.of(context).commonRetry,
+                    icon: Icons.refresh,
+                    onPressed: onReintentar,
+                    foregroundColor: AppColors.white,
                   ),
               ],
             ),

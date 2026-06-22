@@ -15,6 +15,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/application.dart';
 import '../../domain/entities/granja.dart';
@@ -67,16 +68,10 @@ class GranjaDetailPage extends ConsumerWidget {
             const SizedBox(height: AppSpacing.base),
             Text(S.of(context).farmNotFound, style: theme.textTheme.titleLarge),
             const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: () => context.go(AppRoutes.granjas),
-                icon: const Icon(Icons.arrow_back),
-                label: Text(S.of(context).commonBack),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                ),
-              ),
+            AppButton.primary(
+              label: S.of(context).commonBack,
+              icon: Icons.arrow_back,
+              onPressed: () => context.go(AppRoutes.granjas),
             ),
           ],
         ),

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/utils/formatters.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -442,16 +443,7 @@ class GranjaEmptySection extends StatelessWidget {
             ),
           ),
           AppSpacing.gapBase,
-          SizedBox(
-            height: 48,
-            child: FilledButton(
-              onPressed: onPressed,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-              ),
-              child: Text(buttonLabel),
-            ),
-          ),
+          AppButton.primary(label: buttonLabel, onPressed: onPressed),
         ],
       ),
     );
@@ -958,16 +950,10 @@ class GranjaGalponesSection extends ConsumerWidget {
             ),
           ),
           AppSpacing.gapBase,
-          SizedBox(
-            height: 48,
-            child: FilledButton.icon(
-              onPressed: onCrearGalpon,
-              icon: const Icon(Icons.add),
-              label: Text(S.of(context).farmCreateFirstShed),
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-              ),
-            ),
+          AppButton.primary(
+            label: S.of(context).farmCreateFirstShed,
+            icon: Icons.add,
+            onPressed: onCrearGalpon,
           ),
         ],
       ),
@@ -1167,33 +1153,18 @@ class GranjaGalponesSection extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: SizedBox(
-            height: 48,
-            child: OutlinedButton(
-              onPressed: onVerTodos,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.primary,
-                side: BorderSide(color: theme.colorScheme.primary, width: 1),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-              ),
-              child: Text(S.of(context).commonViewAll),
-            ),
+          child: AppButton.secondary(
+            label: S.of(context).commonViewAll,
+            onPressed: onVerTodos,
+            expanded: true,
           ),
         ),
         AppSpacing.hGapSm,
         Expanded(
-          child: SizedBox(
-            height: 48,
-            child: FilledButton(
-              onPressed: onCrearGalpon,
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                elevation: 0,
-              ),
-              child: Text(S.of(context).shedNewShed),
-            ),
+          child: AppButton.primary(
+            label: S.of(context).shedNewShed,
+            onPressed: onCrearGalpon,
+            expanded: true,
           ),
         ),
       ],
