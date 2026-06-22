@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import 'package:flutter/services.dart';
@@ -76,15 +77,11 @@ class EnvironmentalStep extends StatelessWidget {
                       RegExp(r'^\d+\.?\d{0,1}'),
                     ),
                   ],
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final temp = double.tryParse(value.trim());
-                      if (temp == null || temp < 0 || temp > 50) {
-                        return S.of(context).shedInvalidTempRange;
-                      }
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.optionalNumberRange(
+                    invalidMessage: S.of(context).shedInvalidTempRange,
+                    min: 0,
+                    max: 50,
+                  ),
                 ),
               ),
               AppSpacing.hGapMd,
@@ -103,15 +100,11 @@ class EnvironmentalStep extends StatelessWidget {
                       RegExp(r'^\d+\.?\d{0,1}'),
                     ),
                   ],
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final temp = double.tryParse(value.trim());
-                      if (temp == null || temp < 0 || temp > 50) {
-                        return S.of(context).shedInvalidTempRange;
-                      }
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.optionalNumberRange(
+                    invalidMessage: S.of(context).shedInvalidTempRange,
+                    min: 0,
+                    max: 50,
+                  ),
                 ),
               ),
             ],
@@ -141,15 +134,11 @@ class EnvironmentalStep extends StatelessWidget {
                       RegExp(r'^\d+\.?\d{0,1}'),
                     ),
                   ],
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final humidity = double.tryParse(value.trim());
-                      if (humidity == null || humidity < 0 || humidity > 100) {
-                        return S.of(context).shedInvalidHumidityRange;
-                      }
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.optionalNumberRange(
+                    invalidMessage: S.of(context).shedInvalidHumidityRange,
+                    min: 0,
+                    max: 100,
+                  ),
                 ),
               ),
               AppSpacing.hGapMd,
@@ -168,15 +157,11 @@ class EnvironmentalStep extends StatelessWidget {
                       RegExp(r'^\d+\.?\d{0,1}'),
                     ),
                   ],
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final humidity = double.tryParse(value.trim());
-                      if (humidity == null || humidity < 0 || humidity > 100) {
-                        return S.of(context).shedInvalidHumidityRange;
-                      }
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.optionalNumberRange(
+                    invalidMessage: S.of(context).shedInvalidHumidityRange,
+                    min: 0,
+                    max: 100,
+                  ),
                 ),
               ),
             ],
@@ -203,15 +188,10 @@ class EnvironmentalStep extends StatelessWidget {
                       RegExp(r'^\d+\.?\d{0,1}'),
                     ),
                   ],
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final vent = double.tryParse(value.trim());
-                      if (vent == null || vent < 0) {
-                        return S.of(context).shedInvalidValue;
-                      }
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.optionalNumberRange(
+                    invalidMessage: S.of(context).shedInvalidValue,
+                    min: 0,
+                  ),
                 ),
               ),
               AppSpacing.hGapMd,
@@ -230,15 +210,10 @@ class EnvironmentalStep extends StatelessWidget {
                       RegExp(r'^\d+\.?\d{0,1}'),
                     ),
                   ],
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final vent = double.tryParse(value.trim());
-                      if (vent == null || vent < 0) {
-                        return S.of(context).shedInvalidValue;
-                      }
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.optionalNumberRange(
+                    invalidMessage: S.of(context).shedInvalidValue,
+                    min: 0,
+                  ),
                 ),
               ),
             ],

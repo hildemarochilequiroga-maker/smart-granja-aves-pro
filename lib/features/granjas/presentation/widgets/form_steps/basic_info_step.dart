@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -63,15 +64,10 @@ class BasicInfoStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.farmNameRequired;
-              }
-              if (value.trim().length < 3) {
-                return l.farmNameMinLength;
-              }
-              return null;
-            },
+            validator: FieldValidators.compose([
+              FieldValidators.required(l.farmNameRequired),
+              FieldValidators.minLength(l.farmNameMinLength, 3),
+            ]),
           ),
           AppSpacing.gapBase,
 
@@ -87,15 +83,10 @@ class BasicInfoStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.farmOwnerRequired;
-              }
-              if (value.trim().length < 3) {
-                return l.farmNameMinLength;
-              }
-              return null;
-            },
+            validator: FieldValidators.compose([
+              FieldValidators.required(l.farmOwnerRequired),
+              FieldValidators.minLength(l.farmNameMinLength, 3),
+            ]),
           ),
           AppSpacing.gapBase,
 

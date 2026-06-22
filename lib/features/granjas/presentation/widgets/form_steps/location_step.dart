@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -157,12 +158,7 @@ class _LocationStepState extends State<LocationStep> {
             label: l.farmSelectCountry,
             items: LocationData.countries,
             onChanged: _onCountryChanged,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return l.farmSelectCountry;
-              }
-              return null;
-            },
+            validator: FieldValidators.required(l.farmSelectCountry),
           ),
           AppSpacing.gapBase,
 
@@ -187,16 +183,13 @@ class _LocationStepState extends State<LocationStep> {
                             _selectedCountry ?? '',
                           ).toLowerCase(),
                         ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l.commonSelect(
-                        LocationData.getRegionLabel(
-                          _selectedCountry ?? '',
-                        ).toLowerCase(),
-                      );
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.required(
+                    l.commonSelect(
+                      LocationData.getRegionLabel(
+                        _selectedCountry ?? '',
+                      ).toLowerCase(),
+                    ),
+                  ),
                 ),
           AppSpacing.gapBase,
 
@@ -219,16 +212,13 @@ class _LocationStepState extends State<LocationStep> {
                             _selectedCountry ?? '',
                           ).toLowerCase(),
                         ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l.commonSelect(
-                        LocationData.getCityLabel(
-                          _selectedCountry ?? '',
-                        ).toLowerCase(),
-                      );
-                    }
-                    return null;
-                  },
+                  validator: FieldValidators.required(
+                    l.commonSelect(
+                      LocationData.getCityLabel(
+                        _selectedCountry ?? '',
+                      ).toLowerCase(),
+                    ),
+                  ),
                 ),
           AppSpacing.gapBase,
 
@@ -245,15 +235,10 @@ class _LocationStepState extends State<LocationStep> {
             autovalidateMode: widget.autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.farmEnterAddress;
-              }
-              if (value.trim().length < 10) {
-                return l.farmAddressMinLength;
-              }
-              return null;
-            },
+            validator: FieldValidators.compose([
+              FieldValidators.required(l.farmEnterAddress),
+              FieldValidators.minLength(l.farmAddressMinLength, 10),
+            ]),
           ),
           AppSpacing.gapBase,
 
