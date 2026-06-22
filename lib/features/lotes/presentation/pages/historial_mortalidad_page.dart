@@ -17,6 +17,7 @@ import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../salud/domain/enums/causa_mortalidad.dart';
@@ -850,25 +851,14 @@ class HistorialMortalidadPageState
                   // Botón aplicar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.warning,
-                          foregroundColor: AppColors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.allMd,
-                          ),
-                        ),
-                        child: Text(
-                          hayFiltrosActivos
-                              ? S.of(context).commonApplyFilters
-                              : S.of(context).commonClose,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    child: AppButton.primary(
+                      label: hayFiltrosActivos
+                          ? S.of(context).commonApplyFilters
+                          : S.of(context).commonClose,
+                      onPressed: () => Navigator.pop(context),
+                      expanded: true,
+                      backgroundColor: AppColors.warning,
+                      foregroundColor: AppColors.white,
                     ),
                   ),
                 ],
@@ -1096,14 +1086,12 @@ class HistorialMortalidadPageState
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.xl),
-            FilledButton.icon(
+            AppButton.primary(
+              label: S.of(context).commonRetry,
+              icon: Icons.refresh,
               onPressed: () => _onRefresh(),
-              icon: const Icon(Icons.refresh),
-              label: Text(S.of(context).commonRetry),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.info,
-                foregroundColor: AppColors.white,
-              ),
+              backgroundColor: AppColors.info,
+              foregroundColor: AppColors.white,
             ),
           ],
         ),

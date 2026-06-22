@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/providers/registro_providers.dart';
@@ -200,14 +201,9 @@ class GraficosPesoPage extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  FilledButton.tonal(
+                  AppButton.secondary(
+                    label: S.of(context).batchBackToHistory,
                     onPressed: () => Navigator.of(context).pop(),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadius.allSm,
-                      ),
-                    ),
-                    child: Text(S.of(context).batchBackToHistory),
                   ),
                 ],
               ),
