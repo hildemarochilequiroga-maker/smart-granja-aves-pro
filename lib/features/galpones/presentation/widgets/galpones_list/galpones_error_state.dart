@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
-import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 
 class GalponesErrorState extends StatelessWidget {
   const GalponesErrorState({super.key, required this.mensaje, this.onRetry});
@@ -48,26 +48,10 @@ class GalponesErrorState extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
-              SizedBox(
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded, size: 20),
-                  label: Text(
-                    S.of(context).commonRetry,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                  ),
-                ),
+              AppButton.primary(
+                label: S.of(context).commonRetry,
+                icon: Icons.refresh_rounded,
+                onPressed: onRetry,
               ),
             ],
           ],

@@ -9,6 +9,7 @@ import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/theme/app_animations.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/entities/galpon.dart';
 import '../../../domain/enums/enums.dart';
@@ -324,32 +325,17 @@ class GalponListCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: SizedBox(
-            height: 48,
-            child: FilledButton(
-              onPressed: (onVerLotes ?? onTap) == null
-                  ? null
-                  : () {
-                      HapticFeedback.selectionClick();
-                      (onVerLotes ?? onTap)?.call();
-                    },
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                elevation: 0,
-              ),
-              child: Text(
-                galpon.loteActualId != null
-                    ? S.of(context).shedViewActiveBatch
-                    : S.of(context).shedViewBatches,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          child: AppButton.primary(
+            label: galpon.loteActualId != null
+                ? S.of(context).shedViewActiveBatch
+                : S.of(context).shedViewBatches,
+            onPressed: (onVerLotes ?? onTap) == null
+                ? null
+                : () {
+                    HapticFeedback.selectionClick();
+                    (onVerLotes ?? onTap)?.call();
+                  },
+            expanded: true,
           ),
         ),
         AppSpacing.hGapSm,

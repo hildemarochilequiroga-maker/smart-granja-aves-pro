@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../application/application.dart';
 import '../../domain/entities/galpon.dart';
@@ -72,15 +73,9 @@ class GalponDetailPage extends ConsumerWidget {
             const SizedBox(height: AppSpacing.base),
             Text(S.of(context).shedNotFound, style: theme.textTheme.titleLarge),
             const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              height: 48,
-              child: FilledButton(
-                onPressed: () => context.pop(),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                ),
-                child: Text(S.of(context).commonBack),
-              ),
+            AppButton.primary(
+              label: S.of(context).commonBack,
+              onPressed: () => context.pop(),
             ),
           ],
         ),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/enums/enums.dart';
 
@@ -80,10 +81,10 @@ class GalponErrorWidget extends StatelessWidget {
             ),
             AppSpacing.gapXl,
             if (onReintentar != null)
-              OutlinedButton.icon(
+              AppButton.secondary(
+                label: S.of(context).commonRetry,
+                icon: Icons.refresh,
                 onPressed: onReintentar,
-                icon: const Icon(Icons.refresh),
-                label: Text(S.of(context).commonRetry),
               ),
           ],
         ),

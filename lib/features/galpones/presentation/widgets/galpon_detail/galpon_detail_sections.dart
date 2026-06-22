@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../lotes/application/providers/lote_providers.dart';
 import '../../../domain/entities/galpon.dart';
@@ -897,16 +898,10 @@ class GalponEmptySection extends StatelessWidget {
           ),
           if (buttonLabel != null && onPressed != null) ...[
             const SizedBox(height: AppSpacing.base),
-            SizedBox(
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: onPressed,
-                icon: const Icon(Icons.add),
-                label: Text(buttonLabel!),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                ),
-              ),
+            AppButton.primary(
+              label: buttonLabel!,
+              icon: Icons.add,
+              onPressed: onPressed,
             ),
           ],
         ],
@@ -1495,19 +1490,11 @@ class GalponLoteActualSection extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.base),
         // Botón para ver lote
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: OutlinedButton.icon(
-            onPressed: onVerLote,
-            icon: const Icon(Icons.visibility_rounded),
-            label: Text(S.of(context).shedViewBatchDetail),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: theme.colorScheme.primary,
-              side: BorderSide(color: theme.colorScheme.primary),
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-            ),
-          ),
+        AppButton.secondary(
+          label: S.of(context).shedViewBatchDetail,
+          icon: Icons.visibility_rounded,
+          onPressed: onVerLote,
+          expanded: true,
         ),
       ],
     );
@@ -1568,18 +1555,12 @@ class GalponLoteActualSection extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.base),
         if (galpon.estaDisponible)
-          SizedBox(
-            height: 48,
-            child: FilledButton.icon(
-              onPressed: onAsignarLote,
-              icon: const Icon(Icons.add_circle_outline_rounded),
-              label: Text(S.of(context).shedAssignBatchLabel),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-              ),
-            ),
+          AppButton.primary(
+            label: S.of(context).shedAssignBatchLabel,
+            icon: Icons.add_circle_outline_rounded,
+            onPressed: onAsignarLote,
+            backgroundColor: AppColors.success,
+            foregroundColor: AppColors.white,
           )
         else
           Container(
