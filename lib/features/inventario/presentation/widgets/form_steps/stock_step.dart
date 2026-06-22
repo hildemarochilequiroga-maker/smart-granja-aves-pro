@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -142,15 +143,10 @@ class InventarioStockStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return l.invEnterCurrentStock;
-              }
-              if (double.tryParse(value) == null) {
-                return l.invEnterValidNumber;
-              }
-              return null;
-            },
+            validator: FieldValidators.numberRange(
+              requiredMessage: l.invEnterCurrentStock,
+              invalidMessage: l.invEnterValidNumber,
+            ),
             suffixText: unidadSeleccionada.simbolo,
           ),
           AppSpacing.gapBase,

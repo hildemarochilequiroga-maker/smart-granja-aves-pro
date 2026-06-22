@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../granjas/presentation/widgets/granja_form_field.dart';
@@ -63,15 +64,10 @@ class InventarioBasicInfoStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l.invEnterItemName;
-              }
-              if (value.trim().length < 2) {
-                return l.invNameRequired;
-              }
-              return null;
-            },
+            validator: FieldValidators.compose([
+              FieldValidators.required(l.invEnterItemName),
+              FieldValidators.minLength(l.invNameRequired, 2),
+            ]),
           ),
           AppSpacing.gapBase,
 
