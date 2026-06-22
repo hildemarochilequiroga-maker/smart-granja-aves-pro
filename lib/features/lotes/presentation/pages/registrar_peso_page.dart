@@ -18,6 +18,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/save_success_overlay.dart';
@@ -560,68 +561,23 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
             // Botón Anterior
             if (_currentStep > 0)
               Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: isProcessing ? null : _previousStep,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: isProcessing
-                            ? theme.colorScheme.outline.withValues(alpha: 0.4)
-                            : theme.colorScheme.outline.withValues(alpha: 0.6),
-                        width: 1,
-                      ),
-                      foregroundColor: theme.colorScheme.onSurface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadius.allSm,
-                      ),
-                    ),
-                    child: Text(
-                      S.of(context).batchPrevious,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                child: AppButton.secondary(
+                  label: S.of(context).batchPrevious,
+                  onPressed: isProcessing ? null : _previousStep,
+                  expanded: true,
                 ),
               ),
             if (_currentStep > 0) AppSpacing.hGapMd,
 
             // Botón Siguiente o Registrar
             Expanded(
-              child: SizedBox(
-                height: 48,
-                child: FilledButton(
-                  onPressed: isProcessing ? null : _onNextOrSubmit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    disabledBackgroundColor: theme.colorScheme.primary
-                        .withValues(alpha: 0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                  ),
-                  child: isProcessing
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.onPrimary,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          _currentStep < _steps.length - 1
-                              ? S.of(context).batchNext
-                              : S.of(context).batchRegister,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
+              child: AppButton.primary(
+                label: _currentStep < _steps.length - 1
+                    ? S.of(context).batchNext
+                    : S.of(context).batchRegister,
+                onPressed: isProcessing ? null : _onNextOrSubmit,
+                isLoading: isProcessing,
+                expanded: true,
               ),
             ),
           ],

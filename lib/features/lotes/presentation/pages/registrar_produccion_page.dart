@@ -8,8 +8,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -1041,73 +1041,27 @@ class _RegistrarProduccionPageState
             // Botón Anterior
             if (_currentStep > 0)
               Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: isProcessing ? null : _previousStep,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: isProcessing
-                            ? colorScheme.outline.withValues(alpha: 0.4)
-                            : colorScheme.outline.withValues(alpha: 0.6),
-                        width: 1,
-                      ),
-                      foregroundColor: colorScheme.onSurface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadius.allSm,
-                      ),
-                    ),
-                    child: Text(
-                      S.of(context).batchPrevious,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                child: AppButton.secondary(
+                  label: S.of(context).batchPrevious,
+                  onPressed: isProcessing ? null : _previousStep,
+                  expanded: true,
                 ),
               ),
             if (_currentStep > 0) const SizedBox(width: AppSpacing.md),
 
             // Botón Siguiente o Registrar
             Expanded(
-              child: SizedBox(
-                height: 48,
-                child: FilledButton(
-                  onPressed: isProcessing
-                      ? null
-                      : (_currentStep < _steps.length - 1
-                            ? _nextStep
-                            : _guardarRegistro),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    disabledBackgroundColor: colorScheme.primary.withValues(
-                      alpha: 0.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                  ),
-                  child: isProcessing
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              colorScheme.onPrimary,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          _currentStep < _steps.length - 1
-                              ? S.of(context).batchNext
-                              : S.of(context).batchRegister,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: colorScheme.onPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
+              child: AppButton.primary(
+                label: _currentStep < _steps.length - 1
+                    ? S.of(context).batchNext
+                    : S.of(context).batchRegister,
+                onPressed: isProcessing
+                    ? null
+                    : (_currentStep < _steps.length - 1
+                          ? _nextStep
+                          : _guardarRegistro),
+                isLoading: isProcessing,
+                expanded: true,
               ),
             ),
           ],
