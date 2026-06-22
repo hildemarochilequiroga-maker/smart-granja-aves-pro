@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/mensaje_chat.dart';
 
@@ -127,15 +128,10 @@ class _MensajeAsistenteWidget extends StatelessWidget {
                 size: 17,
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: mensaje.texto));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l.vetTextoCopied),
-                      duration: const Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
+                  AppSnackBar.success(
+                    context,
+                    message: l.vetTextoCopied,
+                    duration: const Duration(seconds: 1),
                   );
                 },
               ),

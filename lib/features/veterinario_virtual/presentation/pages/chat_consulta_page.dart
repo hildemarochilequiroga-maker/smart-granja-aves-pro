@@ -13,6 +13,7 @@ import '../../application/providers/veterinario_providers.dart';
 import '../../application/services/contexto_builder.dart';
 import '../../domain/entities/entities.dart';
 import '../widgets/mensaje_burbuja_widget.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 
 /// Top-level function for compute() - compresses image bytes in isolate.
 Future<Uint8List> _compressImage(Uint8List bytes) async {
@@ -532,9 +533,7 @@ class _ChatConsultaPageState extends ConsumerState<ChatConsultaPage> {
 
     if (!_speechDisponible) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.vetVoiceNotAvailable)));
+      AppSnackBar.warning(context, message: l.vetVoiceNotAvailable);
       return;
     }
 

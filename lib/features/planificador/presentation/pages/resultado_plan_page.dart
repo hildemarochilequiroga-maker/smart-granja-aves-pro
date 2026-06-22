@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../application/providers/planificador_provider.dart';
 import '../../application/services/plan_pdf_generator.dart';
 import '../../domain/entities/plan_avicola.dart';
@@ -270,9 +271,7 @@ class ResultadoPlanPage extends ConsumerWidget {
       );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text('Error al generar PDF: $e')));
+        AppSnackBar.error(context, message: 'Error al generar PDF: $e');
       }
     }
   }

@@ -17,6 +17,7 @@ import '../../../../core/config/locale_provider.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -389,15 +390,11 @@ class PerfilPage extends ConsumerWidget {
     granjasAsync.when(
       data: (granjas) {
         if (granjas.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l.profileNoFarmsMessage),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                label: l.profileCreate,
-                onPressed: () => context.push(AppRoutes.granjaCrear),
-              ),
-            ),
+          AppSnackBar.info(
+            context,
+            message: l.profileNoFarmsMessage,
+            actionLabel: l.profileCreate,
+            onAction: () => context.push(AppRoutes.granjaCrear),
           );
           return;
         }
@@ -517,21 +514,16 @@ class PerfilPage extends ConsumerWidget {
         );
       },
       loading: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l.profileLoadingFarms),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 1),
-          ),
+        AppSnackBar.info(
+          context,
+          message: l.profileLoadingFarms,
+          duration: const Duration(seconds: 1),
         );
       },
       error: (error, _) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l.commonErrorWithMessage(error.toString())),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: theme.colorScheme.error,
-          ),
+        AppSnackBar.error(
+          context,
+          message: l.commonErrorWithMessage(error.toString()),
         );
       },
     );
@@ -793,13 +785,7 @@ class PerfilPage extends ConsumerWidget {
               child: FilledButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l.profileFeedbackThanks),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
+                  AppSnackBar.success(context, message: l.profileFeedbackThanks);
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
