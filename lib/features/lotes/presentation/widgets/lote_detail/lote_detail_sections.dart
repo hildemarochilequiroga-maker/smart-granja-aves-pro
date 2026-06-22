@@ -12,6 +12,7 @@ import '../../../domain/enums/tipo_ave.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_progress_bar.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import 'lote_detail_utils.dart';
 
@@ -901,14 +902,12 @@ class _LoteProgressIndicator extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: percentage / 100,
-            minHeight: 10,
-            backgroundColor: color.withValues(alpha: 0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
+        AppProgressBar(
+          value: percentage / 100,
+          color: color,
+          backgroundColor: color.withValues(alpha: 0.1),
+          height: 10,
+          borderRadius: AppRadius.allMd,
         ),
         const SizedBox(height: AppSpacing.xxs),
         Text(

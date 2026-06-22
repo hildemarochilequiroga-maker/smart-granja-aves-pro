@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_progress_bar.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../lotes/application/providers/lote_providers.dart';
 import '../../../domain/entities/galpon.dart';
@@ -515,14 +516,12 @@ class _GalponProgressIndicator extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        ClipRRect(
+        AppProgressBar(
+          value: percentage / 100,
+          color: color,
+          backgroundColor: color.withValues(alpha: 0.1),
+          height: 10,
           borderRadius: AppRadius.allMd,
-          child: LinearProgressIndicator(
-            value: percentage / 100,
-            minHeight: 10,
-            backgroundColor: color.withValues(alpha: 0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
         ),
         const SizedBox(height: AppSpacing.xxs),
         Text(

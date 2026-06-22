@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_progress_bar.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -32,14 +33,12 @@ class PasswordStrengthIndicator extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: ClipRRect(
+              child: AppProgressBar(
+                value: strength.value,
+                color: strength.color,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                height: 6,
                 borderRadius: AppRadius.allXs,
-                child: LinearProgressIndicator(
-                  value: strength.value,
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(strength.color),
-                  minHeight: 6,
-                ),
               ),
             ),
             if (showText) ...[

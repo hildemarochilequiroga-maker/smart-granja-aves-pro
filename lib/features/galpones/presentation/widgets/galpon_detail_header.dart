@@ -9,6 +9,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_progress_bar.dart';
 import '../../../../../core/theme/app_spacing.dart';
 
 import '../../domain/entities/galpon.dart';
@@ -111,14 +112,11 @@ class GalponDetailHeader extends StatelessWidget {
                 ],
               ),
               AppSpacing.gapSm,
-              ClipRRect(
-                borderRadius: AppRadius.allSm,
-                child: LinearProgressIndicator(
-                  value: ocupacion / 100,
-                  minHeight: 10,
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation(ocupacionColor),
-                ),
+              AppProgressBar(
+                value: ocupacion / 100,
+                color: ocupacionColor,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                height: 10,
               ),
             ],
           ),

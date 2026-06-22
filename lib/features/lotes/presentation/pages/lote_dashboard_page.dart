@@ -20,6 +20,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_progress_bar.dart';
 import '../../application/providers/providers.dart';
 import '../../domain/entities/lote.dart';
 import '../../domain/enums/enums.dart';
@@ -305,18 +306,16 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
                           ],
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        ClipRRect(
-                          borderRadius: AppRadius.allXs,
-                          child: LinearProgressIndicator(
-                            value: (edad / 45).clamp(0.0, 1.0),
-                            minHeight: 8,
-                            backgroundColor: AppColors.info.withValues(
-                              alpha: 0.15,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              edad >= 45 ? AppColors.warning : AppColors.info,
-                            ),
+                        AppProgressBar(
+                          value: edad / 45,
+                          color: edad >= 45
+                              ? AppColors.warning
+                              : AppColors.info,
+                          backgroundColor: AppColors.info.withValues(
+                            alpha: 0.15,
                           ),
+                          height: 8,
+                          borderRadius: AppRadius.allXs,
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(

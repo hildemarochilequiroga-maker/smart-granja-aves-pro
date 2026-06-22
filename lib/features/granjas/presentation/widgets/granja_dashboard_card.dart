@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_progress_bar.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/providers/granja_providers.dart';
@@ -195,14 +196,11 @@ class _CapacidadWidget extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        ClipRRect(
-          borderRadius: AppRadius.allSm,
-          child: LinearProgressIndicator(
-            value: porcentajeOcupacion / 100,
-            backgroundColor: AppColors.surfaceVariant,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 12,
-          ),
+        AppProgressBar(
+          value: porcentajeOcupacion / 100,
+          color: color,
+          backgroundColor: AppColors.surfaceVariant,
+          height: 12,
         ),
       ],
     );

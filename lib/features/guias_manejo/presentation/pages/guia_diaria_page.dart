@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_progress_bar.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../lotes/domain/entities/lote.dart';
@@ -195,18 +197,14 @@ class _DayHeader extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: state.progreso,
-                    minHeight: 6,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      state.progreso >= 1.0
-                          ? AppColors.success
-                          : theme.colorScheme.primary,
-                    ),
-                  ),
+                child: AppProgressBar(
+                  value: state.progreso,
+                  height: 6,
+                  borderRadius: AppRadius.allXs,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  color: state.progreso >= 1.0
+                      ? AppColors.success
+                      : theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 12),

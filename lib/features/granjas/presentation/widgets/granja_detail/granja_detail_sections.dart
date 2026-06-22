@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_progress_bar.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/utils/formatters.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -706,14 +707,12 @@ class _ProgressIndicator extends StatelessWidget {
           ],
         ),
         AppSpacing.gapSm,
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: percentage / 100,
-            minHeight: 8,
-            backgroundColor: color.withValues(alpha: 0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
+        AppProgressBar(
+          value: percentage / 100,
+          color: color,
+          backgroundColor: color.withValues(alpha: 0.1),
+          height: 8,
+          borderRadius: AppRadius.allMd,
         ),
       ],
     );
@@ -1120,17 +1119,13 @@ class GranjaGalponesSection extends ConsumerWidget {
                         ],
                       ),
                       AppSpacing.gapSm,
-                      ClipRRect(
+                      AppProgressBar(
+                        value: ocupacion,
+                        color: _getOcupacionColor(ocupacion),
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        height: 6,
                         borderRadius: AppRadius.allXs,
-                        child: LinearProgressIndicator(
-                          value: ocupacion.clamp(0.0, 1.0),
-                          minHeight: 6,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _getOcupacionColor(ocupacion),
-                          ),
-                        ),
                       ),
                     ],
                   ),

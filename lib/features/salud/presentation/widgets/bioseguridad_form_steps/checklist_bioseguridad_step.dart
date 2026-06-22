@@ -9,6 +9,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_progress_bar.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/entities/inspeccion_bioseguridad.dart';
 import '../../../domain/enums/enums.dart';
@@ -148,18 +149,14 @@ class _CategoriaCardState extends State<_CategoriaCard> {
                   const SizedBox(width: AppSpacing.md),
                   SizedBox(
                     width: 56,
-                    child: ClipRRect(
+                    child: AppProgressBar(
+                      value: progreso,
+                      color: progreso == 1.0
+                          ? AppColors.success
+                          : theme.colorScheme.primary,
+                      backgroundColor: theme.colorScheme.outlineVariant,
+                      height: 6,
                       borderRadius: AppRadius.allFull,
-                      child: LinearProgressIndicator(
-                        value: progreso,
-                        minHeight: 6,
-                        backgroundColor: theme.colorScheme.outlineVariant,
-                        valueColor: AlwaysStoppedAnimation(
-                          progreso == 1.0
-                              ? AppColors.success
-                              : theme.colorScheme.primary,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
