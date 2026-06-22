@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -273,89 +274,18 @@ class _LocationStepState extends State<LocationStep> {
     String? hint,
     String? Function(String?)? validator,
   }) {
-    final theme = Theme.of(context);
-    final labelColor = theme.colorScheme.onSurface.withValues(alpha: 0.8);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Label encima del campo (estilo Wialon)
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: labelColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        AppSpacing.gapSm,
-        // Dropdown
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          autovalidateMode: widget.autoValidate
-              ? AutovalidateMode.always
-              : AutovalidateMode.onUserInteraction,
-          decoration: InputDecoration(
-            hintText: hint ?? S.of(context).commonSelect(label),
-            hintStyle: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              fontWeight: FontWeight.normal,
-            ),
-            filled: true,
-            fillColor: theme.colorScheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(color: theme.colorScheme.error, width: 1),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.error,
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            errorStyle: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
-              height: 1.2,
-            ),
-          ),
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w400,
-            color: theme.colorScheme.onSurface,
-          ),
-          items: items.map((item) {
-            return DropdownMenuItem(value: item, child: Text(item));
-          }).toList(),
-          onChanged: onChanged,
-          validator: validator,
-          isExpanded: true,
-        ),
-      ],
+    return AppDropdownField<String>(
+      label: label,
+      value: value,
+      hint: hint,
+      onChanged: onChanged,
+      validator: validator,
+      autovalidateMode: widget.autoValidate
+          ? AutovalidateMode.always
+          : AutovalidateMode.onUserInteraction,
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
     );
   }
 
