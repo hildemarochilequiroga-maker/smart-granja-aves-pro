@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_button.dart';
 
 /// Widget para mostrar estado de error en la lista de ventas
 class VentasErrorState extends StatelessWidget {
@@ -120,17 +120,10 @@ class VentasErrorState extends StatelessWidget {
   }
 
   Widget _buildRetryButton(BuildContext context, bool isSmallScreen) {
-    return FilledButton.icon(
+    return AppButton.primary(
+      label: S.of(context).commonRetry,
+      icon: Icons.refresh_rounded,
       onPressed: onRetry,
-      icon: const Icon(Icons.refresh_rounded),
-      label: Text(S.of(context).commonRetry),
-      style: FilledButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          horizontal: isSmallScreen ? 16 : 24,
-          vertical: isSmallScreen ? 10 : 12,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-      ),
     );
   }
 }

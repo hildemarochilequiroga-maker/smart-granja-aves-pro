@@ -22,6 +22,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -565,32 +566,21 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                   // Botón aplicar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          setState(() {
-                            _tipoFilter = tempTipoFilter;
-                            _estadoFilter = tempEstadoFilter;
-                          });
-                          Navigator.pop(context);
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.success,
-                          foregroundColor: AppColors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.allMd,
-                          ),
-                        ),
-                        child: Text(
-                          hayFiltros
-                              ? S.of(context).commonApplyFilters
-                              : S.of(context).commonClose,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    child: AppButton.primary(
+                      label: hayFiltros
+                          ? S.of(context).commonApplyFilters
+                          : S.of(context).commonClose,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _tipoFilter = tempTipoFilter;
+                          _estadoFilter = tempEstadoFilter;
+                        });
+                        Navigator.pop(context);
+                      },
+                      expanded: true,
+                      backgroundColor: AppColors.success,
+                      foregroundColor: AppColors.white,
                     ),
                   ),
                 ],

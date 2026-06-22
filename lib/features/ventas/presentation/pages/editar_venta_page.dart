@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
+import '../../../../core/widgets/app_button.dart';
 import '../../application/providers/ventas_provider.dart';
 import 'registrar_venta_page.dart';
 
@@ -47,9 +48,9 @@ class EditarVentaPage extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(l.ventaNotFound, style: theme.textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  TextButton(
+                  AppButton.text(
+                    label: l.commonBack,
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l.commonBack),
                   ),
                 ],
               ),
@@ -89,9 +90,9 @@ class EditarVentaPage extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              TextButton(
+              AppButton.text(
+                label: l.commonBack,
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(l.commonBack),
               ),
             ],
           ),
