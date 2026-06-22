@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../galpones/application/providers/providers.dart';
@@ -93,16 +94,11 @@ class LoteDetallesStep extends ConsumerWidget {
       hint: S.of(context).batchFormCountHint,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return S.of(context).batchInitialCountRequired;
-        }
-        final cantidad = int.tryParse(value);
-        if (cantidad == null || cantidad <= 0) {
-          return S.of(context).batchMustBeGreaterThanZero;
-        }
-        return null;
-      },
+      validator: FieldValidators.intRange(
+        requiredMessage: S.of(context).batchInitialCountRequired,
+        invalidMessage: S.of(context).batchMustBeGreaterThanZero,
+        min: 1,
+      ),
       autovalidateMode: autoValidate
           ? AutovalidateMode.always
           : AutovalidateMode.disabled,

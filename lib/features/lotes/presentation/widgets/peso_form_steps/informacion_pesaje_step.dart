@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../domain/enums/metodo_pesaje.dart';
 import 'package:smartgranjaavespro/core/theme/app_radius.dart';
 
@@ -73,16 +74,10 @@ class InformacionPesajeStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return S.of(context).batchRequiredField;
-              }
-              final peso = double.tryParse(value);
-              if (peso == null || peso <= 0) {
-                return S.of(context).batchMustBeGreaterThanZero;
-              }
-              return null;
-            },
+            validator: FieldValidators.positiveNumber(
+              requiredMessage: S.of(context).batchRequiredField,
+              invalidMessage: S.of(context).batchMustBeGreaterThanZero,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -98,16 +93,11 @@ class InformacionPesajeStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return S.of(context).batchRequiredField;
-              }
-              final cantidad = int.tryParse(value);
-              if (cantidad == null || cantidad <= 0) {
-                return S.of(context).batchMustBeGreaterThanZero;
-              }
-              return null;
-            },
+            validator: FieldValidators.intRange(
+              requiredMessage: S.of(context).batchRequiredField,
+              invalidMessage: S.of(context).batchMustBeGreaterThanZero,
+              min: 1,
+            ),
           ),
           const SizedBox(height: 16),
 

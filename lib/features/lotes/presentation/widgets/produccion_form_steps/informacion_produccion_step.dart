@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 
@@ -71,16 +72,11 @@ class InformacionProduccionStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.disabled,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return S.of(context).batchRequiredField;
-              }
-              final cantidad = int.tryParse(value);
-              if (cantidad == null || cantidad < 0) {
-                return S.of(context).batchFormInvalidNumber;
-              }
-              return null;
-            },
+            validator: FieldValidators.intRange(
+              requiredMessage: S.of(context).batchRequiredField,
+              invalidMessage: S.of(context).batchFormInvalidNumber,
+              min: 0,
+            ),
             onChanged: (_) => onHuevosBuenosChanged(),
           ),
           AppSpacing.gapBase,
