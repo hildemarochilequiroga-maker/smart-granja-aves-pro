@@ -19,6 +19,7 @@ import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../widgets/historial/historial_components.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../application/providers/registro_providers.dart';
@@ -126,18 +127,32 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
           SliverToBoxAdapter(
             child: statsAsync.when(
               data: (stats) => _buildEstadisticasSection(stats, theme),
-              loading: () => _buildStatsLoading(theme),
+              loading: () => const HistorialStatsLoading(),
               error: (_, __) => const SizedBox.shrink(),
             ),
           ),
 
           // Indicador de filtros activos (debajo de estadísticas)
           if (hayFiltrosActivos)
-            SliverToBoxAdapter(child: _buildFiltrosActivosChip(theme)),
+            SliverToBoxAdapter(
+              child: HistorialFiltrosActivosChip(
+                label: etiquetaFiltroActual,
+                onClear: _limpiarFiltros,
+              ),
+            ),
 
           // Divider visual
           const SliverToBoxAdapter(child: AppSpacing.gapSm),
-          SliverToBoxAdapter(child: _buildRegistrosHeader(theme)),
+          SliverToBoxAdapter(
+            child: HistorialRegistrosHeader(
+              title: S.of(context).historialConsumptionHistory,
+              ordenDesc: _ordenDesc,
+              onToggleOrden: () {
+                HapticFeedback.selectionClick();
+                setState(() => _ordenDesc = !_ordenDesc);
+              },
+            ),
+          ),
 
           // Lista de registros (lazy-loaded con SliverList)
           registrosAsync.when(
@@ -207,65 +222,6 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
   // CHIP DE FILTROS ACTIVOS
   // ==========================================================================
 
-  Widget _buildFiltrosActivosChip(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.base,
-        AppSpacing.base,
-        AppSpacing.base,
-        0,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.onSurfaceVariant,
-          borderRadius: AppRadius.allMd,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xxxl,
-                vertical: AppSpacing.md,
-              ),
-              child: Text(
-                etiquetaFiltroActual,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.surface,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            Positioned(
-              right: 0,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _limpiarFiltros,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 20,
-                      color: theme.colorScheme.surface,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _limpiarFiltros() {
     HapticFeedback.lightImpact();
@@ -279,86 +235,8 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
   // LOADING Y HEADERS
   // ==========================================================================
 
-  Widget _buildStatsLoading(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.base,
-        AppSpacing.sm,
-        AppSpacing.base,
-        AppSpacing.sm,
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(child: _buildSkeletonCard(theme)),
-              AppSpacing.hGapMd,
-              Expanded(child: _buildSkeletonCard(theme)),
-            ],
-          ),
-          AppSpacing.gapMd,
-          Row(
-            children: [
-              Expanded(child: _buildSkeletonCard(theme)),
-              AppSpacing.hGapMd,
-              Expanded(child: _buildSkeletonCard(theme)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSkeletonCard(ThemeData theme) {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: AppRadius.allMd,
-      ),
-    );
-  }
 
-  Widget _buildRegistrosHeader(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.base,
-        AppSpacing.sm,
-        AppSpacing.base,
-        0,
-      ),
-      child: Row(
-        children: [
-          Text(
-            S.of(context).historialConsumptionHistory,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _ordenDesc = !_ordenDesc);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-              child: Text(
-                _ordenDesc
-                    ? S.of(context).batchRecent
-                    : S.of(context).batchOldest,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ==========================================================================
   // SECCIÓN DE ESTADÍSTICAS
@@ -387,8 +265,7 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: '${totalKg.toStringAsFixed(1)} kg',
                   subtitle: S.of(context).historialTotalConsumed,
                   color: theme.colorScheme.tertiary,
@@ -396,8 +273,7 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
               ),
               AppSpacing.hGapMd,
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: '${promedioDiario.toStringAsFixed(2)} kg',
                   subtitle: S.of(context).historialAvgDaily,
                   color: theme.colorScheme.primary,
@@ -409,8 +285,7 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: totalRegistros.toString(),
                   subtitle: S.of(context).historialRecords,
                   color: theme.colorScheme.secondary,
@@ -418,8 +293,7 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
               ),
               AppSpacing.hGapMd,
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: '${(consumoPorAve * 1000).toStringAsFixed(0)} g',
                   subtitle: S.of(context).historialAccumulatedPerBird,
                   color: AppColors.success,
@@ -429,92 +303,13 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
           ),
           AppSpacing.gapMd,
           // Tarjeta Ver Gráficos (debajo de KPIs)
-          _buildGraficosCard(theme),
+          HistorialGraficosCard(onTap: _navegarAGraficos),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard({
-    required ThemeData theme,
-    required String value,
-    required String subtitle,
-    required Color color,
-    bool isHighlight = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isHighlight
-            ? color.withValues(alpha: 0.08)
-            : theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: isHighlight
-            ? Border.all(color: color.withValues(alpha: 0.3))
-            : null,
-        boxShadow: isHighlight
-            ? null
-            : [
-                BoxShadow(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-              height: 1,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            subtitle,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildGraficosCard(ThemeData theme) {
-    return GestureDetector(
-      onTap: _navegarAGraficos,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.info,
-          borderRadius: AppRadius.allMd,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              S.of(context).batchViewCharts,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ==========================================================================
   // TARJETAS DE REGISTRO

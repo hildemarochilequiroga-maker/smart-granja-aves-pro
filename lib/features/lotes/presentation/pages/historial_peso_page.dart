@@ -17,6 +17,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../widgets/historial/historial_components.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
@@ -75,18 +76,32 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
           SliverToBoxAdapter(
             child: statsAsync.when(
               data: (stats) => _buildEstadisticasSection(stats, theme),
-              loading: () => _buildStatsLoading(theme),
+              loading: () => const HistorialStatsLoading(),
               error: (_, __) => const SizedBox.shrink(),
             ),
           ),
 
           // Indicador de filtros activos (debajo de estad�sticas)
           if (hayFiltrosActivos)
-            SliverToBoxAdapter(child: _buildFiltrosActivosChip(theme)),
+            SliverToBoxAdapter(
+              child: HistorialFiltrosActivosChip(
+                label: etiquetaFiltroActual,
+                onClear: _limpiarFiltros,
+              ),
+            ),
 
           // Divider visual
           const SliverToBoxAdapter(child: AppSpacing.gapSm),
-          SliverToBoxAdapter(child: _buildRegistrosHeader(theme)),
+          SliverToBoxAdapter(
+            child: HistorialRegistrosHeader(
+              title: S.of(context).historialWeighingHistory,
+              ordenDesc: _ordenDesc,
+              onToggleOrden: () {
+                HapticFeedback.selectionClick();
+                setState(() => _ordenDesc = !_ordenDesc);
+              },
+            ),
+          ),
 
           // Lista de registros (lazy-loaded con SliverList)
           registrosAsync.when(
@@ -150,71 +165,6 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
   // CHIP DE FILTROS ACTIVOS
   // ==========================================================================
 
-  Widget _buildFiltrosActivosChip(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.onSurfaceVariant,
-          borderRadius: AppRadius.allMd,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_metodoFiltro != null) ...[
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _metodoFiltro!.color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    AppSpacing.hGapSm,
-                  ],
-                  Text(
-                    etiquetaFiltroActual,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              right: 0,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _limpiarFiltros,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 20,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _limpiarFiltros() {
     HapticFeedback.lightImpact();
@@ -228,72 +178,8 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
   // LOADING Y HEADERS
   // ==========================================================================
 
-  Widget _buildStatsLoading(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(child: _buildSkeletonCard(theme)),
-              AppSpacing.hGapMd,
-              Expanded(child: _buildSkeletonCard(theme)),
-            ],
-          ),
-          AppSpacing.gapMd,
-          Row(
-            children: [
-              Expanded(child: _buildSkeletonCard(theme)),
-              AppSpacing.hGapMd,
-              Expanded(child: _buildSkeletonCard(theme)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSkeletonCard(ThemeData theme) {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: AppRadius.allMd,
-      ),
-    );
-  }
 
-  Widget _buildRegistrosHeader(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Row(
-        children: [
-          Text(
-            S.of(context).historialWeighingHistory,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _ordenDesc = !_ordenDesc);
-            },
-            child: Text(
-              _ordenDesc
-                  ? S.of(context).batchRecent
-                  : S.of(context).batchOldest,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ==========================================================================
   // SECCI�N DE ESTAD�STICAS
@@ -317,8 +203,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: totalRegistros.toString(),
                   subtitle: S.of(context).historialRecords,
                   color: AppColors.info,
@@ -326,8 +211,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
               ),
               AppSpacing.hGapMd,
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: '${ultimoPeso.toStringAsFixed(2)} kg',
                   subtitle: S.of(context).historialLastWeight,
                   color: theme.colorScheme.primary,
@@ -339,8 +223,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: '${gdp.toStringAsFixed(1)} g',
                   subtitle: S.of(context).historialDailyGainStat,
                   color: gdp >= 0 ? AppColors.success : AppColors.error,
@@ -349,8 +232,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
               ),
               AppSpacing.hGapMd,
               Expanded(
-                child: _buildStatCard(
-                  theme: theme,
+                child: HistorialStatCard(
                   value: '${cv.toStringAsFixed(1)}%',
                   subtitle: S.of(context).historialUniformityCV,
                   color: cv <= 10 ? AppColors.success : AppColors.warning,
@@ -361,92 +243,13 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
           ),
           AppSpacing.gapMd,
           // Tarjeta Ver Gr�ficos (debajo de KPIs)
-          _buildGraficosCard(theme),
+          HistorialGraficosCard(onTap: _navegarAGraficos),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard({
-    required ThemeData theme,
-    required String value,
-    required String subtitle,
-    required Color color,
-    bool isHighlight = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isHighlight
-            ? color.withValues(alpha: 0.08)
-            : theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: isHighlight
-            ? Border.all(color: color.withValues(alpha: 0.3))
-            : null,
-        boxShadow: isHighlight
-            ? null
-            : [
-                BoxShadow(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-              height: 1,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            subtitle,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildGraficosCard(ThemeData theme) {
-    return GestureDetector(
-      onTap: _navegarAGraficos,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.info,
-          borderRadius: AppRadius.allMd,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              S.of(context).batchViewCharts,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ==========================================================================
   // TARJETAS DE REGISTRO
