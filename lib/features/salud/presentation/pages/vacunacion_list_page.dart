@@ -22,6 +22,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -474,9 +475,9 @@ class _VacunacionListPageState extends ConsumerState<VacunacionListPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Sección: Estado
-                        _buildFilterSectionHeader(
-                          theme: theme,
+                        AppSectionHeader(
                           title: S.of(context).vacVaccinationStatus,
+                          padding: EdgeInsets.zero,
                         ),
                         AppSpacing.gapMd,
 
@@ -590,19 +591,6 @@ class _VacunacionListPageState extends ConsumerState<VacunacionListPage> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterSectionHeader({
-    required ThemeData theme,
-    required String title,
-  }) {
-    return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

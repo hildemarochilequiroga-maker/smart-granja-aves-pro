@@ -27,6 +27,7 @@ import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/permission_guard.dart';
 import '../../../lotes/application/providers/lote_providers.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
@@ -449,9 +450,9 @@ class _SaludListPageState extends ConsumerState<SaludListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Sección: Estado
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: l.saludTreatmentStatus,
+                            padding: EdgeInsets.zero,
                           ),
                           const SizedBox(height: 12),
 
@@ -506,19 +507,6 @@ class _SaludListPageState extends ConsumerState<SaludListPage> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterSectionHeader({
-    required ThemeData theme,
-    required String title,
-  }) {
-    return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

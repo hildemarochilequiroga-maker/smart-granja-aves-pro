@@ -19,6 +19,7 @@ import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../application/providers/registro_providers.dart';
 import '../../domain/entities/lote.dart';
@@ -762,9 +763,9 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Período
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: S.of(context).batchTimePeriod,
+                            padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
                           Row(
@@ -816,9 +817,9 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
                           AppSpacing.gapXl,
 
                           // Tipo de alimento
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: S.of(context).historialFilterFoodType,
+                            padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
                           AspectRatio(
@@ -888,19 +889,6 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterSectionHeader({
-    required ThemeData theme,
-    required String title,
-  }) {
-    return Text(
-      title,
-      style: theme.textTheme.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

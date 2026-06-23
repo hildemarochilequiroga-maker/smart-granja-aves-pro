@@ -18,6 +18,7 @@ import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../salud/domain/enums/causa_mortalidad.dart';
@@ -743,9 +744,9 @@ class HistorialMortalidadPageState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Sección: Período
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: S.of(context).batchTimePeriod,
+                            padding: EdgeInsets.zero,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Row(
@@ -794,9 +795,9 @@ class HistorialMortalidadPageState
                           const SizedBox(height: AppSpacing.xl),
 
                           // Sección: Causa
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: S.of(context).historialFilterMortalityCause,
+                            padding: EdgeInsets.zero,
                           ),
                           const SizedBox(height: AppSpacing.md),
 
@@ -866,19 +867,6 @@ class HistorialMortalidadPageState
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterSectionHeader({
-    required ThemeData theme,
-    required String title,
-  }) {
-    return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

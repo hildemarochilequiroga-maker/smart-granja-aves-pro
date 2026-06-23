@@ -25,6 +25,7 @@ import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/permission_guard.dart';
@@ -515,9 +516,9 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Sección: Tipo de gasto
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: l.costoFilterExpenseType,
+                            padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
 
@@ -589,19 +590,6 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterSectionHeader({
-    required ThemeData theme,
-    required String title,
-  }) {
-    return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

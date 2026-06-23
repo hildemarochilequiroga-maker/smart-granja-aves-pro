@@ -19,6 +19,7 @@ import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../application/providers/registro_providers.dart';
@@ -721,9 +722,9 @@ class HistorialProduccionPageState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Período
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: S.of(context).batchTimePeriod,
+                            padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
                           Row(
@@ -775,9 +776,9 @@ class HistorialProduccionPageState
                           AppSpacing.gapXl,
 
                           // Rango de postura
-                          _buildFilterSectionHeader(
-                            theme: theme,
+                          AppSectionHeader(
                             title: S.of(context).historialPostureRange,
+                            padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
                           AspectRatio(
@@ -859,19 +860,6 @@ class HistorialProduccionPageState
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterSectionHeader({
-    required ThemeData theme,
-    required String title,
-  }) {
-    return Text(
-      title,
-      style: theme.textTheme.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }
