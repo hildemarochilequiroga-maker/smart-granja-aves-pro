@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
+import '../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/value_objects/cliente.dart';
@@ -211,65 +212,27 @@ class _ClienteStepState extends State<ClienteStep> {
           const SizedBox(height: AppSpacing.base),
 
           // Tipo de documento
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.of(context).ventaClientDocType,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<String>(
-                initialValue: _tipoDocumento,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: theme.colorScheme.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: AppRadius.allSm,
-                    borderSide: BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: AppRadius.allSm,
-                    borderSide: BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'DNI',
-                    child: Text(S.of(context).salesDni),
-                  ),
-                  DropdownMenuItem(
-                    value: 'RUC',
-                    child: Text(S.of(context).salesRuc),
-                  ),
-                  DropdownMenuItem(
-                    value: 'CE',
-                    child: Text(S.of(context).salesForeignCard),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      _tipoDocumento = value;
-                      _identificacionController.clear();
-                      _identificacionError = null;
-                    });
-                  }
-                },
+          AppDropdownField<String>(
+            label: S.of(context).ventaClientDocType,
+            value: _tipoDocumento,
+            items: [
+              DropdownMenuItem(value: 'DNI', child: Text(S.of(context).salesDni)),
+              DropdownMenuItem(value: 'RUC', child: Text(S.of(context).salesRuc)),
+              DropdownMenuItem(
+                value: 'CE',
+                child: Text(S.of(context).salesForeignCard),
               ),
             ],
+            onChanged: (value) {
+              if (value != null) {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _tipoDocumento = value;
+                  _identificacionController.clear();
+                  _identificacionError = null;
+                });
+              }
+            },
           ),
           const SizedBox(height: AppSpacing.base),
 

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
+import '../../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -140,65 +141,24 @@ class VacunaInfoStep extends StatelessWidget {
         ? loteSeleccionado
         : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l.vacStepBatchRequired,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500,
+    return AppDropdownField<Lote>(
+      label: l.vacStepBatchRequired,
+      value: safeSelectedLote,
+      hint: l.vacStepSelectBatch,
+      onChanged: onLoteChanged,
+      validator: (value) => value == null ? l.vacStepSelectBatch : null,
+      autovalidateMode: autoValidate
+          ? AutovalidateMode.always
+          : AutovalidateMode.onUserInteraction,
+      items: lotes!.map((lote) {
+        return DropdownMenuItem<Lote>(
+          value: lote,
+          child: Text(
+            lote.nombre ?? lote.codigo,
+            style: theme.textTheme.bodyLarge,
           ),
-        ),
-        AppSpacing.gapSm,
-        DropdownButtonFormField<Lote>(
-          initialValue: safeSelectedLote,
-          isExpanded: true,
-          menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: theme.colorScheme.surface,
-            hintText: l.vacStepSelectBatch,
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-          items: lotes!.map((lote) {
-            return DropdownMenuItem<Lote>(
-              value: lote,
-              child: Text(
-                lote.nombre ?? lote.codigo,
-                style: theme.textTheme.bodyLarge,
-              ),
-            );
-          }).toList(),
-          onChanged: onLoteChanged,
-          validator: (value) {
-            if (value == null) {
-              return l.vacStepSelectBatch;
-            }
-            return null;
-          },
-          autovalidateMode: autoValidate
-              ? AutovalidateMode.always
-              : AutovalidateMode.onUserInteraction,
-        ),
-      ],
+        );
+      }).toList(),
     );
   }
 
