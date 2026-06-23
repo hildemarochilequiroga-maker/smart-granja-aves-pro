@@ -131,7 +131,7 @@ class HistorialMortalidadPageState
             ),
 
           // Divider visual
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SliverToBoxAdapter(child: AppSpacing.gapSm),
           SliverToBoxAdapter(
             child: HistorialRegistrosHeader(
               title: S.of(context).historialNoEventsRecords,

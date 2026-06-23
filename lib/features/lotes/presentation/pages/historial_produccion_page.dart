@@ -74,7 +74,7 @@ class HistorialProduccionPageState
     // Solo el body, sin Scaffold ni AppBar (el dashboard ya lo proporciona)
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: AppColors.primary,
+      color: theme.colorScheme.primary,
       child: CustomScrollView(
         slivers: [
           const SliverPadding(padding: EdgeInsets.only(top: 8)),

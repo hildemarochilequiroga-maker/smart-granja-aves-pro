@@ -119,7 +119,7 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
     // Solo el body, sin Scaffold ni AppBar (el dashboard ya lo proporciona)
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: AppColors.tertiary,
+      color: theme.colorScheme.primary,
       child: CustomScrollView(
         slivers: [
           const SliverPadding(padding: EdgeInsets.only(top: AppSpacing.sm)),
