@@ -673,50 +673,11 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.info.withValues(alpha: 0.1)
-              : theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-          borderRadius: AppRadius.allMd,
-          border: Border.all(
-            color: isSelected
-                ? AppColors.info.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected
-                    ? AppColors.info
-                    : theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return HistorialPeriodOption(
+      label: label,
+      subtitle: subtitle,
+      isSelected: isSelected,
+      onTap: onTap,
     );
   }
 
@@ -800,86 +761,18 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
   // ==========================================================================
 
   Widget _buildEmptyState(ThemeData theme, bool sinDatos) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.scale(scale: 0.9 + (0.1 * value), child: child),
-        );
-      },
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                sinDatos
-                    ? S.of(context).historialNoWeightRecords
-                    : S.of(context).historialNoResults,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              AppSpacing.gapSm,
-              Text(
-                sinDatos
-                    ? S.of(context).historialRegisterFirstWeighingLote
-                    : S.of(context).historialNoRecordsWithFilters,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return HistorialEmptyState(
+      title: sinDatos
+          ? S.of(context).historialNoWeightRecords
+          : S.of(context).historialNoResults,
+      subtitle: sinDatos
+          ? S.of(context).historialRegisterFirstWeighingLote
+          : S.of(context).historialNoRecordsWithFilters,
     );
   }
 
   Widget _buildErrorState(ThemeData theme, Object error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: theme.colorScheme.error,
-            ),
-            AppSpacing.gapBase,
-            Text(
-              S.of(context).batchErrorLoadingRecords,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            AppSpacing.gapSm,
-            Text(
-              error.toString(),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            AppSpacing.gapXl,
-            AppButton.primary(
-              label: S.of(context).commonRetry,
-              icon: Icons.refresh,
-              onPressed: _onRefresh,
-              backgroundColor: AppColors.info,
-              foregroundColor: Colors.white,
-            ),
-          ],
-        ),
-      ),
-    );
+    return HistorialErrorState(error: error.toString(), onRetry: _onRefresh);
   }
 
   // ==========================================================================
