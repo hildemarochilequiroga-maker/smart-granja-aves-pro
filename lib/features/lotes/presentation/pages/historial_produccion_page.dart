@@ -171,7 +171,6 @@ class HistorialProduccionPageState
   // CHIP DE FILTROS ACTIVOS
   // ==========================================================================
 
-
   void _limpiarFiltros() {
     HapticFeedback.lightImpact();
     setState(() {
@@ -183,9 +182,6 @@ class HistorialProduccionPageState
   // ==========================================================================
   // LOADING Y HEADERS
   // ==========================================================================
-
-
-
 
   // ==========================================================================
   // SECCIÓN DE ESTADÍSTICAS
@@ -268,8 +264,6 @@ class HistorialProduccionPageState
     return AppColors.error;
   }
 
-
-
   // ==========================================================================
   // TARJETAS DE REGISTRO
   // ==========================================================================
@@ -288,186 +282,134 @@ class HistorialProduccionPageState
   Widget _buildRegistroCard(RegistroProduccion reg, ThemeData theme) {
     final posturaColor = _colorPostura(reg.porcentajePostura);
     final locale = Localizations.localeOf(context).languageCode;
-    final fechaFormat = DateFormat('EEEE, d MMMM yyyy', locale).format(reg.fecha);
+    final fechaFormat = DateFormat(
+      'EEEE, d MMMM yyyy',
+      locale,
+    ).format(reg.fecha);
     final horaFormat = DateFormat('HH:mm', locale).format(reg.fecha);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.3),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.allMd,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _showDetail(reg);
-          },
-          borderRadius: AppRadius.allMd,
-          splashColor: posturaColor.withValues(alpha: 0.1),
-          highlightColor: posturaColor.withValues(alpha: 0.05),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                // Barra lateral de color
-                Container(
-                  width: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.info,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
+    return HistorialRegistroCardShell(
+      accentColor: posturaColor,
+      borderWidth: 2,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showDetail(reg);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Primera fila: Fecha y badge de huevos
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fecha y hora
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fechaFormat,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      horaFormat,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Badge de huevos
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.info,
+                  borderRadius: AppRadius.allSm,
+                ),
+                child: Text(
+                  S.of(context).historialEggsUnit(reg.huevosRecolectados),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
+            ],
+          ),
 
-                // Contenido principal
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Primera fila: Fecha y badge de huevos
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Fecha y hora
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    fechaFormat,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    horaFormat,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Badge de huevos
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.info,
-                                borderRadius: AppRadius.allSm,
-                              ),
-                              child: Text(
-                                S
-                                    .of(context)
-                                    .historialEggsUnit(reg.huevosRecolectados),
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+          AppSpacing.gapMd,
 
-                        AppSpacing.gapMd,
-
-                        // Postura
-                        RichText(
-                          text: TextSpan(
-                            style: theme.textTheme.bodyMedium,
-                            children: [
-                              TextSpan(
-                                text: S.of(context).historialPostureLabel,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              TextSpan(
-                                text:
-                                    '${reg.porcentajePostura.toStringAsFixed(1)}%',
-                                style: TextStyle(
-                                  color: posturaColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Huevos buenos
-                        AppSpacing.gapXxs,
-                        Text(
-                          S
-                              .of(context)
-                              .historialGoodLabel(
-                                reg.huevosBuenos,
-                                reg.porcentajeBuenos.toStringAsFixed(1),
-                              ),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-
-                        AppSpacing.gapSm,
-
-                        // Aves y Edad
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              S
-                                  .of(context)
-                                  .historialBirdsLabel(reg.cantidadAvesActual),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            if ((reg.huevosRotos ?? 0) > 0)
-                              Text(
-                                S
-                                    .of(context)
-                                    .historialBrokenLabel(reg.huevosRotos ?? 0),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            Text(
-                              S.of(context).historialAgeLabel(reg.edadDias),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+          // Postura
+          RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium,
+              children: [
+                TextSpan(
+                  text: S.of(context).historialPostureLabel,
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                TextSpan(
+                  text: '${reg.porcentajePostura.toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    color: posturaColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+
+          // Huevos buenos
+          AppSpacing.gapXxs,
+          Text(
+            S
+                .of(context)
+                .historialGoodLabel(
+                  reg.huevosBuenos,
+                  reg.porcentajeBuenos.toStringAsFixed(1),
+                ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+
+          AppSpacing.gapSm,
+
+          // Aves y Edad
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                S.of(context).historialBirdsLabel(reg.cantidadAvesActual),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if ((reg.huevosRotos ?? 0) > 0)
+                Text(
+                  S.of(context).historialBrokenLabel(reg.huevosRotos ?? 0),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              Text(
+                S.of(context).historialAgeLabel(reg.edadDias),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
