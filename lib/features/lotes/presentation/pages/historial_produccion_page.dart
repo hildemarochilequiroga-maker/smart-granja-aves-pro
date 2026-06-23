@@ -201,9 +201,6 @@ class HistorialProduccionPageState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tarjeta Ver Gráficos (arriba)
-          HistorialGraficosCard(onTap: _navegarAGraficos),
-          AppSpacing.gapMd,
           // Grid de estadísticas 2x2
           Row(
             children: [
@@ -244,6 +241,9 @@ class HistorialProduccionPageState
               ),
             ],
           ),
+          AppSpacing.gapMd,
+          // Botón Ver Gráficos debajo de los KPIs
+          HistorialGraficosCard(onTap: _navegarAGraficos),
         ],
       ),
     );
