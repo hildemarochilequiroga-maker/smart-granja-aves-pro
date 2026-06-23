@@ -436,3 +436,54 @@ class HistorialErrorState extends StatelessWidget {
     );
   }
 }
+
+/// Shell (contenedor) de una card de registro del historial: borde de color
+/// de acento, sombra suave y InkWell. El contenido específico de cada tipo se
+/// pasa como [child].
+class HistorialRegistroCardShell extends StatelessWidget {
+  const HistorialRegistroCardShell({
+    super.key,
+    required this.accentColor,
+    required this.onTap,
+    required this.child,
+    this.borderWidth = 1.5,
+  });
+
+  final Color accentColor;
+  final VoidCallback onTap;
+  final Widget child;
+  final double borderWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: AppRadius.allMd,
+        border: Border.all(color: accentColor, width: borderWidth),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: AppRadius.allMd,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.allMd,
+          splashColor: accentColor.withValues(alpha: 0.1),
+          highlightColor: accentColor.withValues(alpha: 0.05),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}

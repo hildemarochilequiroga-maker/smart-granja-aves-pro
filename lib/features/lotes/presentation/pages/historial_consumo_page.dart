@@ -222,7 +222,6 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
   // CHIP DE FILTROS ACTIVOS
   // ==========================================================================
 
-
   void _limpiarFiltros() {
     HapticFeedback.lightImpact();
     setState(() {
@@ -234,9 +233,6 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
   // ==========================================================================
   // LOADING Y HEADERS
   // ==========================================================================
-
-
-
 
   // ==========================================================================
   // SECCIÓN DE ESTADÍSTICAS
@@ -309,8 +305,6 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
     );
   }
 
-
-
   // ==========================================================================
   // TARJETAS DE REGISTRO
   // ==========================================================================
@@ -336,150 +330,123 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
     final horaFormat = DateFormat('HH:mm', locale).format(reg.fecha);
     final semanasVida = (reg.edadDias / 7).ceil();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: Border.all(color: tipoColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.allMd,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _showDetail(reg);
-          },
-          borderRadius: AppRadius.allMd,
-          splashColor: tipoColor.withValues(alpha: 0.1),
-          highlightColor: tipoColor.withValues(alpha: 0.05),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Primera fila: Fecha y badge de cantidad
-                Row(
+    return HistorialRegistroCardShell(
+      accentColor: tipoColor,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showDetail(reg);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Primera fila: Fecha y badge de cantidad
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fecha y hora
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Fecha y hora
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fechaFormat,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            horaFormat,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Badge de cantidad
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tipoColor,
-                        borderRadius: AppRadius.allSm,
-                      ),
-                      child: Text(
-                        '${reg.cantidadKg.toStringAsFixed(2)} kg',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.surface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                AppSpacing.gapMd,
-
-                // Tipo de alimento
-                RichText(
-                  text: TextSpan(
-                    style: theme.textTheme.bodyMedium,
-                    children: [
-                      TextSpan(
-                        text: '${S.of(context).historialFilterFoodType}: ',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      TextSpan(
-                        text: reg.tipoAlimento.localizedDisplayName(
-                          S.of(context),
-                        ),
-                        style: TextStyle(
-                          color: tipoColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Consumo por ave
-                AppSpacing.gapXxs,
-                Text(
-                  S
-                      .of(context)
-                      .historialConsumptionValue(
-                        (reg.consumoPorAve * 1000).toStringAsFixed(0),
-                      ),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-
-                AppSpacing.gapSm,
-
-                // Aves y Edad
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
                     Text(
-                      S.of(context).historialBirdNumber(reg.cantidadAvesActual),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      fechaFormat,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      S
-                          .of(context)
-                          .detailDaysWeek(
-                            reg.edadDias.toString(),
-                            semanasVida.toString(),
-                          ),
+                      horaFormat,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
+                ),
+              ),
+              // Badge de cantidad
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: tipoColor,
+                  borderRadius: AppRadius.allSm,
+                ),
+                child: Text(
+                  '${reg.cantidadKg.toStringAsFixed(2)} kg',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.surface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          AppSpacing.gapMd,
+
+          // Tipo de alimento
+          RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium,
+              children: [
+                TextSpan(
+                  text: '${S.of(context).historialFilterFoodType}: ',
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                TextSpan(
+                  text: reg.tipoAlimento.localizedDisplayName(S.of(context)),
+                  style: TextStyle(
+                    color: tipoColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
           ),
-        ),
+
+          // Consumo por ave
+          AppSpacing.gapXxs,
+          Text(
+            S
+                .of(context)
+                .historialConsumptionValue(
+                  (reg.consumoPorAve * 1000).toStringAsFixed(0),
+                ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+
+          AppSpacing.gapSm,
+
+          // Aves y Edad
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                S.of(context).historialBirdNumber(reg.cantidadAvesActual),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                S
+                    .of(context)
+                    .detailDaysWeek(
+                      reg.edadDias.toString(),
+                      semanasVida.toString(),
+                    ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

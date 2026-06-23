@@ -316,145 +316,119 @@ class HistorialMortalidadPageState
     ).format(reg.fecha);
     final horaFormat = DateFormat('HH:mm', locale).format(reg.fecha);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: Border.all(color: causaColor, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.allMd,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _showDetail(reg);
-          },
-          borderRadius: AppRadius.allMd,
-          splashColor: causaColor.withValues(alpha: 0.1),
-          highlightColor: causaColor.withValues(alpha: 0.05),
-          child: IntrinsicHeight(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Primera fila: Fecha y badge de aves
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Fecha y hora
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              fechaFormat,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              horaFormat,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Badge de cantidad
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: AppRadius.allSm,
-                        ),
-                        child: Text(
-                          S.of(context).historialBirdsUnit(reg.cantidad),
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Causa
-                  RichText(
-                    text: TextSpan(
-                      style: theme.textTheme.bodyMedium,
-                      children: [
-                        TextSpan(
-                          text: S.of(context).historialCauseLabel,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        TextSpan(
-                          text: reg.causa.localizedName(S.of(context)),
-                          style: TextStyle(
-                            color: causaColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Descripción (si existe)
-                  if (reg.descripcion.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.xxs),
+    return HistorialRegistroCardShell(
+      accentColor: causaColor,
+      borderWidth: 2,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showDetail(reg);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Primera fila: Fecha y badge de aves
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fecha y hora
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      S.of(context).historialDescriptionLabel(reg.descripcion),
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      fechaFormat,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onSurface,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      horaFormat,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
-
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // Usuario y Edad
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        S.of(context).historialUserLabel(reg.nombreUsuario),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      Text(
-                        S.of(context).historialAgeDaysLabel(reg.edadAvesDias),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
+              // Badge de cantidad
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: AppRadius.allSm,
+                ),
+                child: Text(
+                  S.of(context).historialBirdsUnit(reg.cantidad),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Causa
+          RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium,
+              children: [
+                TextSpan(
+                  text: S.of(context).historialCauseLabel,
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                TextSpan(
+                  text: reg.causa.localizedName(S.of(context)),
+                  style: TextStyle(
+                    color: causaColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+
+          // Descripción (si existe)
+          if (reg.descripcion.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              S.of(context).historialDescriptionLabel(reg.descripcion),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+
+          const SizedBox(height: AppSpacing.sm),
+
+          // Usuario y Edad
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                S.of(context).historialUserLabel(reg.nombreUsuario),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                S.of(context).historialAgeDaysLabel(reg.edadAvesDias),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
