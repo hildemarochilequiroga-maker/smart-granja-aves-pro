@@ -12,6 +12,7 @@ export 'app_search_bar.dart';
 export 'app_section_header.dart';
 export 'app_stat_item.dart';
 export 'app_states.dart';
+export 'app_status_badge.dart';
 export 'connectivity_banner.dart';
 export 'skeleton_loading.dart';
 export 'sync_status_indicator.dart';

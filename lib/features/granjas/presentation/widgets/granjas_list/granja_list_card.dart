@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_status_badge.dart';
 import '../../../../../core/widgets/app_image.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../domain/entities/granja.dart';
@@ -115,7 +116,11 @@ class GranjaListCard extends StatelessWidget {
             ),
             AppSpacing.hGapSm,
             // Badge de estado
-            _buildStatusBadge(theme, statusInfo, isSmallScreen),
+            AppStatusBadge(
+              text: statusInfo.text,
+              color: statusInfo.color,
+              compact: isSmallScreen,
+            ),
           ],
         ),
         AppSpacing.gapXxs,
@@ -304,33 +309,6 @@ class GranjaListCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(
-    ThemeData theme,
-    _StatusInfo statusInfo,
-    bool isSmallScreen,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 10 : 12,
-        vertical: isSmallScreen ? 4 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: statusInfo.color,
-        borderRadius: AppRadius.allSm,
-      ),
-      child: Text(
-        statusInfo.text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: AppColors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: isSmallScreen ? 10 : 11,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_animations.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_status_badge.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/entities/galpon.dart';
 import '../../../domain/enums/enums.dart';
@@ -120,7 +121,11 @@ class GalponListCard extends StatelessWidget {
             ),
             AppSpacing.hGapSm,
             // Badge de estado
-            _buildStatusBadge(theme, statusInfo, isSmallScreen),
+            AppStatusBadge(
+              text: statusInfo.text,
+              color: statusInfo.color,
+              compact: isSmallScreen,
+            ),
           ],
         ),
         AppSpacing.gapXxs,
@@ -290,33 +295,6 @@ class GalponListCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(
-    ThemeData theme,
-    _StatusInfo statusInfo,
-    bool isSmallScreen,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 10 : 12,
-        vertical: isSmallScreen ? 4 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: statusInfo.color,
-        borderRadius: AppRadius.allSm,
-      ),
-      child: Text(
-        statusInfo.text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: AppColors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: isSmallScreen ? 10 : 11,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }

@@ -19,6 +19,7 @@ import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
@@ -686,7 +687,11 @@ class _LoteCard extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         // Badge de estado
-        _buildStatusBadge(theme, statusInfo, isSmallScreen),
+        AppStatusBadge(
+          text: statusInfo.text,
+          color: statusInfo.color,
+          compact: isSmallScreen,
+        ),
       ],
     );
   }
@@ -791,33 +796,6 @@ class _LoteCard extends StatelessWidget {
           size: 48,
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(
-    ThemeData theme,
-    _StatusInfo statusInfo,
-    bool isSmallScreen,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 10 : 12,
-        vertical: isSmallScreen ? 4 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: statusInfo.color,
-        borderRadius: AppRadius.allSm,
-      ),
-      child: Text(
-        statusInfo.text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: AppColors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: isSmallScreen ? 10 : 11,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
