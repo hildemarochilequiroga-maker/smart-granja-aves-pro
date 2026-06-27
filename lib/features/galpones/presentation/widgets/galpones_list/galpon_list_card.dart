@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../../core/constants/app_assets.dart';
+import '../../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../../core/theme/app_animations.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/widgets/app_action_sheet.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_status_badge.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -21,6 +23,7 @@ class GalponListCard extends StatelessWidget {
     super.key,
     required this.galpon,
     required this.onTap,
+    this.index = 0,
     this.onEditar,
     this.onCambiarEstado,
     this.onEliminar,
@@ -28,6 +31,10 @@ class GalponListCard extends StatelessWidget {
   });
 
   final Galpon galpon;
+
+  /// Posición en la lista — usada para escalonar la animación de entrada.
+  final int index;
+
   final VoidCallback? onTap;
   final VoidCallback? onEditar;
   final VoidCallback? onCambiarEstado;
@@ -41,58 +48,60 @@ class GalponListCard extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isSmallScreen = size.width < 360;
 
-    return Semantics(
-      button: true,
-      label: S
-          .of(context)
-          .shedSemanticsLabel(
-            galpon.nombre,
-            galpon.codigo,
-            galpon.avesActuales,
-            statusInfo.text,
-          ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: AppRadius.allMd,
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+    return FormTextScale(
+      child: Semantics(
+        button: true,
+        label: S
+            .of(context)
+            .shedSemanticsLabel(
+              galpon.nombre,
+              galpon.codigo,
+              galpon.avesActuales,
+              statusInfo.text,
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: AppRadius.allMd,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header: Nombre + Área + Estado
-                _buildHeader(context, theme, statusInfo, isSmallScreen),
-                AppSpacing.gapBase,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: AppRadius.allMd,
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: AppRadius.allMd,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header: Nombre + Área + Estado
+                  _buildHeader(context, theme, statusInfo, isSmallScreen),
+                  AppSpacing.gapBase,
 
-                // Imagen ilustrativa
-                _buildImageSection(
-                  theme,
-                  statusInfo,
-                  size.width,
-                  isSmallScreen,
-                ),
-                AppSpacing.gapBase,
+                  // Imagen ilustrativa
+                  _buildImageSection(
+                    theme,
+                    statusInfo,
+                    size.width,
+                    isSmallScreen,
+                  ),
+                  AppSpacing.gapBase,
 
-                // Botón de acción principal
-                _buildActionButton(context, theme),
-              ],
+                  // Botón de acción principal
+                  _buildActionButton(context, theme),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    ).cardEntrance();
+      ).staggeredEntrance(index: index),
+    );
   }
 
   Widget _buildHeader(
@@ -143,85 +152,40 @@ class GalponListCard extends StatelessWidget {
   }
 
   Widget _buildMenuButton(BuildContext context, ThemeData theme) {
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(
         Icons.more_vert,
         color: theme.colorScheme.onSurfaceVariant,
         size: 22,
       ),
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-      color: theme.colorScheme.surface,
-      elevation: 3,
-      offset: const Offset(0, 40),
       tooltip: S.of(context).shedMoreOptions,
-      onSelected: (value) {
-        switch (value) {
-          case 'detalles':
-            onTap?.call();
-            break;
-          case 'edit':
-            onEditar?.call();
-            break;
-          case 'cambiar_estado':
-            onCambiarEstado?.call();
-            break;
-          case 'eliminar':
-            onEliminar?.call();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        // Detalles
-        PopupMenuItem(
-          value: 'detalles',
-          height: 48,
-          child: Text(
-            S.of(context).shedDetails,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+      onPressed: () => showAppActionSheet(
+        context: context,
+        title: galpon.nombre,
+        actions: [
+          AppActionSheetItem(
+            label: S.of(context).shedDetails,
+            icon: Icons.info_outline,
+            onTap: onTap,
           ),
-        ),
-        // Editar
-        PopupMenuItem(
-          value: 'edit',
-          height: 48,
-          child: Text(
-            S.of(context).commonEdit,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).commonEdit,
+            icon: Icons.edit_outlined,
+            onTap: onEditar,
           ),
-        ),
-        // Cambiar estado
-        PopupMenuItem(
-          value: 'cambiar_estado',
-          height: 48,
-          child: Text(
-            S.of(context).shedChangeStateAction,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).shedChangeStateAction,
+            icon: Icons.swap_horiz_rounded,
+            onTap: onCambiarEstado,
           ),
-        ),
-        // Separador
-        const PopupMenuDivider(height: 8),
-        // Eliminar
-        PopupMenuItem(
-          value: 'eliminar',
-          height: 48,
-          child: Text(
-            S.of(context).commonDelete,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.error,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).commonDelete,
+            icon: Icons.delete_outline,
+            isDestructive: true,
+            onTap: onEliminar,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -70,7 +71,7 @@ class _WhatsAppContactFabState extends State<WhatsAppContactFab>
             foregroundColor: AppColors.white,
             elevation: 4,
             onPressed: () => _showContactSheet(context),
-            child: const Icon(Icons.chat_rounded, size: 28),
+            child: const Icon(Icons.chat_rounded, size: 34),
           ),
         ),
       ),
@@ -105,7 +106,9 @@ class _ContactBottomSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
+    return FormTextScale(
+      factor: 1.2,
+      child: Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
@@ -144,7 +147,7 @@ class _ContactBottomSheet extends StatelessWidget {
                 ),
                 child: const Icon(
                   Icons.chat_rounded,
-                  size: 36,
+                  size: 44,
                   color: _kWhatsAppGreen,
                 ),
               ),
@@ -219,6 +222,7 @@ class _ContactBottomSheet extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -269,7 +273,7 @@ class _ContactOption extends StatelessWidget {
                   color: color.withValues(alpha: 0.12),
                   borderRadius: AppRadius.allSm,
                 ),
-                child: Icon(icon, size: 22, color: color),
+                child: Icon(icon, size: 26, color: color),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -294,7 +298,7 @@ class _ContactOption extends StatelessWidget {
               ),
               Icon(
                 Icons.arrow_forward_ios_rounded,
-                size: 16,
+                size: 19,
                 color: colorScheme.onSurfaceVariant,
               ),
             ],

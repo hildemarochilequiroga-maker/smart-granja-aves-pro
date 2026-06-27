@@ -12,8 +12,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -90,7 +92,7 @@ class _LotesHomePageState extends ConsumerState<LotesHomePage> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         color: theme.colorScheme.primary,
-        edgeOffset: 110,
+        edgeOffset: 132,
         child: CustomScrollView(
           slivers: [
             // Barra de busqueda sticky - Usando SliverPersistentHeader
@@ -239,7 +241,7 @@ class _LotesHomePageState extends ConsumerState<LotesHomePage> {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (context) => DraggableScrollableSheet(
@@ -247,26 +249,37 @@ class _LotesHomePageState extends ConsumerState<LotesHomePage> {
         minChildSize: 0.25,
         maxChildSize: 0.8,
         expand: false,
-        builder: (context, scrollController) => SafeArea(
-          child: Column(
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xxl),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
               Container(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: AppRadius.allFull,
                 ),
               ),
-              const SizedBox(height: AppSpacing.base),
+              const SizedBox(height: AppSpacing.md),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  S.of(context).batchSelectFarm,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    S.of(context).batchSelectFarm,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -346,6 +359,7 @@ class _LotesHomePageState extends ConsumerState<LotesHomePage> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),
@@ -495,89 +509,92 @@ class _GranjaLotesSectionContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header de granja
-        Semantics(
-          header: true,
-          label: S
-              .of(context)
-              .batchFarmWithBatchesLabel(granja.nombre, lotes.length),
-          child: Padding(
-            padding: EdgeInsets.only(top: isFirst ? 16 : 24, bottom: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        granja.nombre,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+    return FormTextScale(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header de granja
+          Semantics(
+            header: true,
+            label: S
+                .of(context)
+                .batchFarmWithBatchesLabel(granja.nombre, lotes.length),
+            child: Padding(
+              padding: EdgeInsets.only(top: isFirst ? 16 : 24, bottom: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          granja.nombre,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        granja.direccion.direccionCorta,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 2),
+                        Text(
+                          granja.direccion.direccionCorta,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: AppRadius.allSm,
-                  ),
-                  child: Text(
-                    '${lotes.length}',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: AppRadius.allSm,
+                    ),
+                    child: Text(
+                      '${lotes.length}',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
-        // Lista de lotes
-        ...lotes.asMap().entries.map((entry) {
-          final index = entry.key;
-          final lote = entry.value;
-          return Padding(
-            key: ValueKey('lote_card_${lote.id}'),
-            padding: EdgeInsets.only(
-              bottom: index == lotes.length - 1 ? (isLast ? 100 : 0) : 12,
-            ),
-            child: _LoteCard(
-              lote: lote,
-              granjaId: granja.id,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                context.push(
-                  AppRoutes.loteDashboardById(granja.id, lote.id),
-                  extra: lote,
-                );
-              },
-            ),
-          );
-        }),
-      ],
+          // Lista de lotes
+          ...lotes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final lote = entry.value;
+            return Padding(
+              key: ValueKey('lote_card_${lote.id}'),
+              padding: EdgeInsets.only(
+                bottom: index == lotes.length - 1 ? (isLast ? 100 : 0) : 12,
+              ),
+              child: _LoteCard(
+                lote: lote,
+                granjaId: granja.id,
+                index: index,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push(
+                    AppRoutes.loteDashboardById(granja.id, lote.id),
+                    extra: lote,
+                  );
+                },
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 }
@@ -588,11 +605,15 @@ class _LoteCard extends StatelessWidget {
     required this.lote,
     required this.granjaId,
     required this.onTap,
+    this.index = 0,
   });
 
   final Lote lote;
   final String granjaId;
   final VoidCallback onTap;
+
+  /// Posición en la lista — usada para escalonar la animación de entrada.
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -603,8 +624,14 @@ class _LoteCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label:
-          S.of(context).semanticsLoteSummary(lote.codigo, lote.tipoAve.localizedDisplayName(S.of(context)), '${lote.avesActuales}', statusInfo.text),
+      label: S
+          .of(context)
+          .semanticsLoteSummary(
+            lote.codigo,
+            lote.tipoAve.localizedDisplayName(S.of(context)),
+            '${lote.avesActuales}',
+            statusInfo.text,
+          ),
       child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
@@ -646,7 +673,7 @@ class _LoteCard extends StatelessWidget {
             ),
           ),
         ),
-      ).cardEntrance(),
+      ).staggeredEntrance(index: index),
     );
   }
 
@@ -663,7 +690,10 @@ class _LoteCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                lote.codigo,
+                DateFormat(
+                  "d 'de' MMMM 'de' y",
+                  'es',
+                ).format(lote.fechaIngreso),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSurface,
@@ -1031,10 +1061,10 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final EstadoLote? estadoFilter;
 
   @override
-  double get minExtent => 110;
+  double get minExtent => 132;
 
   @override
-  double get maxExtent => 110;
+  double get maxExtent => 132;
 
   @override
   Widget build(

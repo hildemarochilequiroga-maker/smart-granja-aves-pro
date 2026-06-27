@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_action_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../application/providers/notificaciones_providers.dart';
@@ -31,19 +32,9 @@ class NotificacionesPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(S.of(context).notifPageTitle),
         actions: [
-          PopupMenuButton<String>(
+          IconButton(
             icon: const Icon(Icons.more_vert),
-            onSelected: (value) => _handleMenuAction(context, ref, value),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'marcar_todas',
-                child: Text(S.of(context).notifMarkAllRead),
-              ),
-              PopupMenuItem(
-                value: 'eliminar_leidas',
-                child: Text(S.of(context).notifDeleteRead),
-              ),
-            ],
+            onPressed: () => _showMenuSheet(context, ref),
           ),
         ],
       ),
@@ -56,15 +47,18 @@ class NotificacionesPage extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(notificacionesStreamProvider);
+              // Esperar el primer dato fresco para que el indicador permanezca
+              // visible hasta que el stream reemita (evita parpadeo).
+              await ref.read(notificacionesStreamProvider.future);
             },
-            child: ListView.separated(
+            child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: notificaciones.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final notificacion = notificaciones[index];
                 return NotificacionTile(
                   notificacion: notificacion,
+                  index: index,
                   onTap: () => _onNotificacionTap(context, ref, notificacion),
                   onDismiss: () =>
                       _onNotificacionDismiss(context, notifier, notificacion),
@@ -93,36 +87,52 @@ class NotificacionesPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleMenuAction(
-    BuildContext context,
-    WidgetRef ref,
-    String action,
-  ) async {
+  void _showMenuSheet(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(notificacionesNotifierProvider.notifier);
 
-    switch (action) {
-      case 'marcar_todas':
-        await notifier.marcarTodasComoLeidas();
-        if (!context.mounted) return;
-        AppSnackBar.success(context, message: S.of(context).notifAllMarkedRead);
-        break;
-      case 'eliminar_leidas':
-        _confirmarEliminarLeidas(context, notifier);
-        break;
-    }
+    showAppActionSheet(
+      context: context,
+      title: S.of(context).notifPageTitle,
+      actions: [
+        AppActionSheetItem(
+          label: S.of(context).notifMarkAllRead,
+          icon: Icons.done_all,
+          onTap: () async {
+            await notifier.marcarTodasComoLeidas();
+            if (!context.mounted) return;
+            AppSnackBar.success(
+              context,
+              message: S.of(context).notifAllMarkedRead,
+            );
+          },
+        ),
+        AppActionSheetItem(
+          label: S.of(context).notifDeleteRead,
+          icon: Icons.delete_sweep_outlined,
+          isDestructive: true,
+          onTap: () => _confirmarEliminarLeidas(context, notifier),
+        ),
+      ],
+    );
   }
 
   void _confirmarEliminarLeidas(
     BuildContext context,
     NotificacionesNotifier notifier,
   ) {
+    // Capturamos el messenger del contexto de la página (no el del diálogo) para
+    // poder mostrar el snackbar tras cerrar el diálogo.
+    final messenger = ScaffoldMessenger.of(context);
+    final mensajeOk = S.of(context).notifDeleted;
+    final mensajeError = S.of(context).notifLoadError;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
         title: Text(
-          S.of(context).notifDeleteTitle,
+          S.of(dialogContext).notifDeleteTitle,
           style: AppTextStyles.titleLarge.copyWith(
             color: AppColors.onSurface,
             fontWeight: FontWeight.w600,
@@ -130,7 +140,7 @@ class NotificacionesPage extends ConsumerWidget {
           textAlign: TextAlign.center,
         ),
         content: Text(
-          S.of(context).notifDeleteReadConfirm,
+          S.of(dialogContext).notifDeleteReadConfirm,
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.onSurfaceVariant,
           ),
@@ -138,25 +148,26 @@ class NotificacionesPage extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.onSurfaceVariant,
             ),
-            child: Text(S.of(context).commonCancel),
+            child: Text(S.of(dialogContext).commonCancel),
           ),
           FilledButton(
             onPressed: () async {
-              Navigator.pop(context);
-              await notifier.eliminarLeidas();
-              if (!context.mounted) return;
-              AppSnackBar.success(context, message: S.of(context).notifDeleted);
+              Navigator.pop(dialogContext);
+              final ok = await notifier.eliminarLeidas();
+              messenger.showSnackBar(
+                SnackBar(content: Text(ok ? mensajeOk : mensajeError)),
+              );
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
             ),
-            child: Text(S.of(context).commonDelete),
+            child: Text(S.of(dialogContext).commonDelete),
           ),
         ],
       ),
@@ -195,8 +206,15 @@ class NotificacionesPage extends ConsumerWidget {
     NotificacionesNotifier notifier,
     Notificacion notificacion,
   ) async {
-    await notifier.eliminar(notificacion.id);
+    final ok = await notifier.eliminar(notificacion.id);
     if (!context.mounted) return;
-    AppSnackBar.info(context, message: S.of(context).notifSingleDeleted);
+
+    // Si la eliminación falló, el stream volverá a mostrar la notificación;
+    // avisamos al usuario en lugar de fingir éxito.
+    if (ok) {
+      AppSnackBar.info(context, message: S.of(context).notifSingleDeleted);
+    } else {
+      AppSnackBar.error(context, message: S.of(context).notifLoadError);
+    }
   }
 }

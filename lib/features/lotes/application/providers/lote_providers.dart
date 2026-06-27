@@ -43,26 +43,6 @@ final loteNotifierProvider =
       return LoteNotifier(repository: ref.watch(loteRepositoryProvider));
     });
 
-/// Provider del notifier de formulario.
-final loteFormNotifierProvider =
-    StateNotifierProvider.autoDispose<LoteFormNotifier, LoteFormState>((ref) {
-      return LoteFormNotifier();
-    });
-
-/// Provider del notifier de búsqueda.
-final loteSearchNotifierProvider =
-    StateNotifierProvider.autoDispose<LoteSearchNotifier, LoteSearchState>((
-      ref,
-    ) {
-      return LoteSearchNotifier(repository: ref.watch(loteRepositoryProvider));
-    });
-
-/// Provider del notifier de estadísticas.
-final loteStatsNotifierProvider =
-    StateNotifierProvider.autoDispose<LoteStatsNotifier, LoteStatsState>((ref) {
-      return LoteStatsNotifier(repository: ref.watch(loteRepositoryProvider));
-    });
-
 // =============================================================================
 // PROVIDERS DE DATOS (StreamProvider para reactividad)
 // =============================================================================

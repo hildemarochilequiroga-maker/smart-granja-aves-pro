@@ -17,6 +17,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../application/application.dart';
 import '../../domain/entities/galpon.dart';
 import '../widgets/galpon_form_widgets.dart';
@@ -98,13 +99,13 @@ class _GalponDetailView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(S.of(context).shedDetails),
+        title: FormTextScale(child: Text(S.of(context).shedDetails)),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_outlined, size: 28),
             onPressed: () =>
                 context.push(AppRoutes.galponEditarById(granjaId, galpon.id)),
             tooltip: S.of(context).shedEditTooltip,
@@ -113,7 +114,8 @@ class _GalponDetailView extends ConsumerWidget {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
-      body: SingleChildScrollView(
+      body: FormTextScale(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.base),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,6 +178,7 @@ class _GalponDetailView extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xxl),
           ],
         ),
+        ),
       ),
     );
   }
@@ -203,7 +206,11 @@ class _GalponDetailView extends ConsumerWidget {
     ThemeData theme,
   ) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
+      icon: Icon(
+        Icons.more_vert,
+        size: 28,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
       shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
       color: theme.colorScheme.surface,
       elevation: 3,

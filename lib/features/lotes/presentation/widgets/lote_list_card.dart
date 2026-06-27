@@ -7,6 +7,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_action_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/theme/app_animations.dart';
@@ -20,6 +21,7 @@ class LoteListCard extends StatelessWidget {
   const LoteListCard({
     super.key,
     required this.lote,
+    this.index = 0,
     this.onDetalles,
     this.onEditar,
     this.onRegistrarMortalidad,
@@ -29,6 +31,9 @@ class LoteListCard extends StatelessWidget {
   });
 
   final Lote lote;
+
+  /// Posición en la lista — usada para escalonar la animación de entrada.
+  final int index;
   final VoidCallback? onDetalles;
   final VoidCallback? onEditar;
   final VoidCallback? onRegistrarMortalidad;
@@ -95,7 +100,7 @@ class LoteListCard extends StatelessWidget {
             ),
           ),
         ),
-      ).cardEntrance(),
+      ).staggeredEntrance(index: index),
     );
   }
 
@@ -149,86 +154,41 @@ class LoteListCard extends StatelessWidget {
   Widget _buildMenuButton(BuildContext context, ThemeData theme) {
     final isCerrado = lote.estado == EstadoLote.cerrado;
 
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(
         Icons.more_vert,
         color: theme.colorScheme.onSurfaceVariant,
         size: 22,
       ),
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-      color: theme.colorScheme.surface,
-      elevation: 3,
-      offset: const Offset(0, 40),
       tooltip: S.of(context).batchMoreOptions,
-      onSelected: (value) {
-        switch (value) {
-          case 'detalles':
-            onDetalles?.call();
-            break;
-          case 'editar':
-            onEditar?.call();
-            break;
-          case 'estado':
-            onCambiarEstado?.call();
-            break;
-          case 'eliminar':
-            onEliminar?.call();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        // Detalles
-        PopupMenuItem(
-          value: 'detalles',
-          height: 48,
-          child: Text(
-            S.of(context).batchDetails,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+      onPressed: () => showAppActionSheet(
+        context: context,
+        title: lote.codigo,
+        actions: [
+          AppActionSheetItem(
+            label: S.of(context).batchDetails,
+            icon: Icons.info_outline,
+            onTap: onDetalles,
           ),
-        ),
-        // Editar
-        PopupMenuItem(
-          value: 'editar',
-          height: 48,
-          child: Text(
-            S.of(context).commonEdit,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).commonEdit,
+            icon: Icons.edit_outlined,
+            onTap: onEditar,
           ),
-        ),
-        // Cambiar estado
-        if (!isCerrado)
-          PopupMenuItem(
-            value: 'estado',
-            height: 48,
-            child: Text(
-              S.of(context).batchChangeStatus,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
+          if (!isCerrado)
+            AppActionSheetItem(
+              label: S.of(context).batchChangeStatus,
+              icon: Icons.swap_horiz_rounded,
+              onTap: onCambiarEstado,
             ),
+          AppActionSheetItem(
+            label: S.of(context).commonDelete,
+            icon: Icons.delete_outline,
+            isDestructive: true,
+            onTap: onEliminar,
           ),
-        // Separador
-        const PopupMenuDivider(height: 8),
-        // Eliminar
-        PopupMenuItem(
-          value: 'eliminar',
-          height: 48,
-          child: Text(
-            S.of(context).commonDelete,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.error,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

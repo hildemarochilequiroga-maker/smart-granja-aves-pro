@@ -53,11 +53,11 @@ class GranjaUsuario extends Equatable {
   final String? email;
 
   /// Verifica si el acceso está expirado
-  bool get espirado =>
+  bool get expirado =>
       fechaExpiracion != null && fechaExpiracion!.isBefore(DateTime.now());
 
   /// Verifica si el acceso es válido (activo y no expirado)
-  bool get esValido => activo && !espirado;
+  bool get esValido => activo && !expirado;
 
   /// Crea una copia con campos opcionalmente reemplazados
   GranjaUsuario copyWith({

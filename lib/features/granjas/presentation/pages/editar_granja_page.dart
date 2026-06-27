@@ -63,8 +63,28 @@ class _EditarGranjaPageState extends ConsumerState<EditarGranjaPage> {
 
   bool _isLoading = false;
   bool _inicializado = false;
+  bool _hayCambios = false;
   Granja? _granjaOriginal;
   Timer? _autoSaveTimer;
+
+  /// Todos los controllers cuyo cambio puede afectar `_hayCambios`.
+  List<TextEditingController> get _trackedControllers => [
+    _nombreController,
+    _propietarioController,
+    _descripcionController,
+    _direccionController,
+    _ciudadController,
+    _departamentoController,
+    _referenciaController,
+    _latitudController,
+    _longitudController,
+    _emailController,
+    _telefonoController,
+    _rucController,
+    _capacidadTotalController,
+    _areaTotalController,
+    _numeroCasasController,
+  ];
 
   // Definición de los pasos del formulario
   List<FormStepInfo> _buildSteps(S l) => [
@@ -77,6 +97,9 @@ class _EditarGranjaPageState extends ConsumerState<EditarGranjaPage> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    for (final controller in _trackedControllers) {
+      controller.removeListener(_onCampoCambiado);
+    }
     _pageController.dispose();
     _nombreController.dispose();
     _propietarioController.dispose();
@@ -134,10 +157,23 @@ class _EditarGranjaPageState extends ConsumerState<EditarGranjaPage> {
     _areaTotalController.text = granja.areaTotalM2?.toString() ?? '';
     _numeroCasasController.text = granja.numeroTotalGalpones?.toString() ?? '';
 
+    // Recalcular `_hayCambios` solo cuando algún campo cambia, en vez de
+    // comparar los 16 controllers en cada build del AppBar.
+    for (final controller in _trackedControllers) {
+      controller.addListener(_onCampoCambiado);
+    }
+
     _inicializado = true;
   }
 
-  bool _tieneCambios() {
+  void _onCampoCambiado() {
+    final cambios = _calcularCambios();
+    if (cambios != _hayCambios) {
+      setState(() => _hayCambios = cambios);
+    }
+  }
+
+  bool _calcularCambios() {
     if (_granjaOriginal == null) return false;
 
     // Comparar cada campo con el original
@@ -289,7 +325,7 @@ class _EditarGranjaPageState extends ConsumerState<EditarGranjaPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(granja.nombre),
-              if (_tieneCambios())
+              if (_hayCambios)
                 Text(
                   l.commonUnsavedChanges,
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -689,7 +725,7 @@ class _EditarGranjaPageState extends ConsumerState<EditarGranjaPage> {
 
   Future<void> _onBackPressed() async {
     // Si no hay cambios, salir directamente
-    if (!_tieneCambios()) {
+    if (!_hayCambios) {
       context.pop();
       return;
     }

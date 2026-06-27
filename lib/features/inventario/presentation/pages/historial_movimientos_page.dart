@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../application/providers/providers.dart';
 import '../../domain/entities/entities.dart';
@@ -250,18 +251,25 @@ class _HistorialMovimientosPageState
   Future<void> _mostrarFiltros(BuildContext context, ThemeData theme) async {
     await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(AppSpacing.base),
+            return AppBottomSheetScaffold(
+              title: l.invFilterMovements,
+              child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.base,
+                0,
+                AppSpacing.base,
+                AppSpacing.base,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(l.invFilterMovements, style: theme.textTheme.titleLarge),
-                  const SizedBox(height: AppSpacing.base),
-
                   // Filtro por tipo
                   Text(l.invMovementType, style: theme.textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
@@ -364,6 +372,7 @@ class _HistorialMovimientosPageState
                   ),
                   const SizedBox(height: AppSpacing.sm),
                 ],
+              ),
               ),
             );
           },

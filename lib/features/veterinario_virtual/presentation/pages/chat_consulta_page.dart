@@ -13,6 +13,7 @@ import '../../application/providers/veterinario_providers.dart';
 import '../../application/services/contexto_builder.dart';
 import '../../domain/entities/entities.dart';
 import '../widgets/mensaje_burbuja_widget.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 
@@ -410,90 +411,27 @@ class _ChatConsultaPageState extends ConsumerState<ChatConsultaPage> {
   }
 
   Future<void> _mostrarOpcionesImagen(S l) async {
-    final theme = Theme.of(context);
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showAppBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.shadow.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Título
-                Text(
-                  l.vetImageAttach,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  l.vetImageSelectSource,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Opciones en row
-                Row(
-                  children: [
-                    // Cámara
-                    Expanded(
-                      child: _ImageOptionCard(
-                        icon: Icons.camera_alt_rounded,
-                        label: l.vetFromCamera,
-                        iconColor: const Color(0xFF2196F3),
-                        backgroundColor: const Color(
-                          0xFF2196F3,
-                        ).withValues(alpha: 0.1),
-                        onTap: () => Navigator.pop(ctx, ImageSource.camera),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Galería
-                    Expanded(
-                      child: _ImageOptionCard(
-                        icon: Icons.photo_library_rounded,
-                        label: l.vetFromGallery,
-                        iconColor: const Color(0xFFE91E63),
-                        backgroundColor: const Color(
-                          0xFFE91E63,
-                        ).withValues(alpha: 0.1),
-                        onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      title: l.vetImageAttach,
+      subtitle: l.vetImageSelectSource,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetOptionTile(
+            icon: Icons.camera_alt_rounded,
+            color: const Color(0xFF2196F3),
+            label: l.vetFromCamera,
+            onTap: () => Navigator.pop(ctx, ImageSource.camera),
           ),
-        ),
+          AppSheetOptionTile(
+            icon: Icons.photo_library_rounded,
+            color: const Color(0xFFE91E63),
+            label: l.vetFromGallery,
+            onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
 
@@ -679,61 +617,3 @@ class _InputBarIcon extends StatelessWidget {
   }
 }
 
-/// Card de opción de imagen para el bottom sheet.
-class _ImageOptionCard extends StatelessWidget {
-  const _ImageOptionCard({
-    required this.icon,
-    required this.label,
-    required this.iconColor,
-    required this.backgroundColor,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color iconColor;
-  final Color backgroundColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: iconColor, size: 26),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

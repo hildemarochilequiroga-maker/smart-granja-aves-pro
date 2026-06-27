@@ -4,3 +4,4 @@ library;
 export 'lote_notifiers.dart';
 export 'lote_providers.dart';
 export 'registro_providers.dart';
+export 'costo_por_ave_provider.dart';

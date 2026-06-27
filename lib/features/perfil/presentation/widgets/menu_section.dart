@@ -109,7 +109,7 @@ class _MenuItemTile extends StatelessWidget {
               ),
               child: Icon(
                 item.icon,
-                size: 20,
+                size: 24,
                 color: item.iconColor ?? theme.colorScheme.primary,
               ),
             ),
@@ -161,6 +161,7 @@ class _MenuItemTile extends StatelessWidget {
             item.trailing ??
                 Icon(
                   Icons.chevron_right,
+                  size: 28,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
           ],

@@ -49,6 +49,10 @@ final fechaFinReporteProvider = StateProvider<DateTime>((ref) {
 /// Estado de carga de generación de PDF.
 final generandoPdfProvider = StateProvider<bool>((ref) => false);
 
+/// Lote seleccionado para los reportes que son por lote individual
+/// (p. ej. Producción de Lote). `null` = aún no se ha elegido lote.
+final loteReporteSeleccionadoProvider = StateProvider<String?>((ref) => null);
+
 // =============================================================================
 // PROVIDERS DE DATOS AGREGADOS
 // =============================================================================

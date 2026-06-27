@@ -17,12 +17,16 @@ class DetallesStep extends StatelessWidget {
     required this.numeroFacturaController,
     required this.observacionesController,
     this.autoValidate = false,
+    this.loteSelector,
   });
 
   final TextEditingController proveedorController;
   final TextEditingController numeroFacturaController;
   final TextEditingController observacionesController;
   final bool autoValidate;
+
+  /// Selector de lote opcional (solo para gastos directos: alimento/medicamento).
+  final Widget? loteSelector;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +54,12 @@ class DetallesStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+
+          // Selector de lote (solo para gastos directos)
+          if (loteSelector != null) ...[
+            loteSelector!,
+            const SizedBox(height: 16),
+          ],
 
           // Proveedor
           CostoFormField(

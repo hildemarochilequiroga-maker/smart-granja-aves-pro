@@ -74,7 +74,7 @@ class AppNavigationBar extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.only(bottom: bottomPadding > 0 ? 0 : 4, top: 4),
           child: SizedBox(
-            height: 56,
+            height: 64,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: AppNavigationDestination.values.asMap().entries.map((
@@ -159,7 +159,7 @@ class _NavigationItemState extends State<_NavigationItem>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
-          width: 64,
+          width: 72,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -173,7 +173,7 @@ class _NavigationItemState extends State<_NavigationItem>
                       : widget.destination.icon,
                   key: ValueKey(widget.isSelected),
                   color: widget.isSelected ? selectedColor : unselectedColor,
-                  size: 24,
+                  size: 28,
                 ),
               ),
               const SizedBox(height: 2),
@@ -181,7 +181,7 @@ class _NavigationItemState extends State<_NavigationItem>
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: theme.textTheme.labelSmall!.copyWith(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: widget.isSelected ? selectedColor : unselectedColor,
                   fontWeight: widget.isSelected
                       ? FontWeight.w600

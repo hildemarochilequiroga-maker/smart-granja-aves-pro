@@ -59,46 +59,6 @@ final conteoNotificacionesNoLeidasProvider = StreamProvider.autoDispose<int>((
   return repo.streamConteoNoLeidas(user.id);
 });
 
-/// Provider para marcar notificación como leída.
-final marcarNotificacionLeidaProvider = FutureProvider.autoDispose
-    .family<void, String>((ref, notificacionId) async {
-      final user = ref.watch(currentUserProvider);
-      if (user == null) return;
-
-      final repo = ref.watch(notificacionesRepositoryProvider);
-      await repo.marcarComoLeida(user.id, notificacionId);
-    });
-
-/// Provider para marcar todas como leídas.
-final marcarTodasLeidasProvider = FutureProvider.autoDispose<void>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return;
-
-  final repo = ref.watch(notificacionesRepositoryProvider);
-  await repo.marcarTodasComoLeidas(user.id);
-});
-
-/// Provider para eliminar notificación.
-final eliminarNotificacionProvider = FutureProvider.autoDispose
-    .family<void, String>((ref, notificacionId) async {
-      final user = ref.watch(currentUserProvider);
-      if (user == null) return;
-
-      final repo = ref.watch(notificacionesRepositoryProvider);
-      await repo.eliminar(user.id, notificacionId);
-    });
-
-/// Provider para eliminar notificaciones leídas.
-final eliminarNotificacionesLeidasProvider = FutureProvider.autoDispose<void>((
-  ref,
-) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return;
-
-  final repo = ref.watch(notificacionesRepositoryProvider);
-  await repo.eliminarLeidas(user.id);
-});
-
 /// Notifier para acciones de notificaciones.
 class NotificacionesNotifier extends StateNotifier<AsyncValue<void>> {
   NotificacionesNotifier(this._ref) : super(const AsyncValue.data(null));
@@ -107,6 +67,7 @@ class NotificacionesNotifier extends StateNotifier<AsyncValue<void>> {
 
   /// Marca una notificación como leída.
   Future<void> marcarComoLeida(String notificacionId) async {
+    if (!mounted) return;
     state = const AsyncValue.loading();
     try {
       final user = _ref.read(currentUserProvider);
@@ -126,6 +87,7 @@ class NotificacionesNotifier extends StateNotifier<AsyncValue<void>> {
 
   /// Marca todas las notificaciones como leídas.
   Future<void> marcarTodasComoLeidas() async {
+    if (!mounted) return;
     state = const AsyncValue.loading();
     try {
       final user = _ref.read(currentUserProvider);
@@ -144,8 +106,10 @@ class NotificacionesNotifier extends StateNotifier<AsyncValue<void>> {
   }
 
   /// Elimina una notificación.
-  Future<void> eliminar(String notificacionId) async {
-    state = const AsyncValue.loading();
+  ///
+  /// Retorna `true` si la operación fue exitosa, `false` si falló.
+  Future<bool> eliminar(String notificacionId) async {
+    if (mounted) state = const AsyncValue.loading();
     try {
       final user = _ref.read(currentUserProvider);
       if (user == null) {
@@ -154,17 +118,19 @@ class NotificacionesNotifier extends StateNotifier<AsyncValue<void>> {
 
       final repo = _ref.read(notificacionesRepositoryProvider);
       await repo.eliminar(user.id, notificacionId);
-      if (!mounted) return;
-      state = const AsyncValue.data(null);
+      if (mounted) state = const AsyncValue.data(null);
+      return true;
     } on Exception catch (e, st) {
-      if (!mounted) return;
-      state = AsyncValue.error(e, st);
+      if (mounted) state = AsyncValue.error(e, st);
+      return false;
     }
   }
 
   /// Elimina todas las notificaciones leídas.
-  Future<void> eliminarLeidas() async {
-    state = const AsyncValue.loading();
+  ///
+  /// Retorna `true` si la operación fue exitosa, `false` si falló.
+  Future<bool> eliminarLeidas() async {
+    if (mounted) state = const AsyncValue.loading();
     try {
       final user = _ref.read(currentUserProvider);
       if (user == null) {
@@ -173,19 +139,22 @@ class NotificacionesNotifier extends StateNotifier<AsyncValue<void>> {
 
       final repo = _ref.read(notificacionesRepositoryProvider);
       await repo.eliminarLeidas(user.id);
-      if (!mounted) return;
-      state = const AsyncValue.data(null);
+      if (mounted) state = const AsyncValue.data(null);
+      return true;
     } on Exception catch (e, st) {
-      if (!mounted) return;
-      state = AsyncValue.error(e, st);
+      if (mounted) state = AsyncValue.error(e, st);
+      return false;
     }
   }
 }
 
 /// Provider del notifier de notificaciones.
+///
+/// No se usa `autoDispose`: es un notifier de acciones (marcar leída, eliminar…)
+/// que se invoca con `ref.read(...notifier)`. Si fuese autoDispose podría
+/// destruirse mientras una acción está en curso (p.ej. al cerrar el diálogo de
+/// "eliminar leídas") y lanzar "Tried to use … after dispose".
 final notificacionesNotifierProvider =
-    StateNotifierProvider.autoDispose<NotificacionesNotifier, AsyncValue<void>>(
-      (ref) {
-        return NotificacionesNotifier(ref);
-      },
-    );
+    StateNotifierProvider<NotificacionesNotifier, AsyncValue<void>>((ref) {
+      return NotificacionesNotifier(ref);
+    });

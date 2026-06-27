@@ -114,45 +114,6 @@ class ObservacionesFotosStep extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             _buildEmptyFotosPlaceholder(context, theme),
           ],
-
-          const SizedBox(height: AppSpacing.xl),
-
-          // Card informativa
-          _buildInfoCard(context, theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).batchAttention,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.info,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            S.of(context).batchFormMetricsAutoCalculated,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
         ],
       ),
     );

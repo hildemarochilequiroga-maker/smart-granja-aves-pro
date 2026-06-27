@@ -61,20 +61,6 @@ final eliminarGalponUseCaseProvider =
       );
     });
 
-final obtenerPorGranjaUseCaseProvider =
-    Provider.autoDispose<ObtenerPorGranjaUseCase>((ref) {
-      return ObtenerPorGranjaUseCase(
-        repository: ref.watch(galponRepositoryProvider),
-      );
-    });
-
-final obtenerDisponiblesUseCaseProvider =
-    Provider.autoDispose<ObtenerDisponiblesUseCase>((ref) {
-      return ObtenerDisponiblesUseCase(
-        repository: ref.watch(galponRepositoryProvider),
-      );
-    });
-
 final cambiarEstadoUseCaseProvider = Provider.autoDispose<CambiarEstadoUseCase>(
   (ref) {
     return CambiarEstadoUseCase(
@@ -111,13 +97,6 @@ final registrarDesinfeccionUseCaseProvider =
       );
     });
 
-final obtenerEstadisticasUseCaseProvider =
-    Provider.autoDispose<ObtenerEstadisticasUseCase>((ref) {
-      return ObtenerEstadisticasUseCase(
-        repository: ref.watch(galponRepositoryProvider),
-      );
-    });
-
 // =============================================================================
 // PROVIDERS DE NOTIFIERS
 // =============================================================================
@@ -137,37 +116,6 @@ final galponNotifierProvider =
         ),
         registrarDesinfeccionUseCase: ref.watch(
           registrarDesinfeccionUseCaseProvider,
-        ),
-      );
-    });
-
-/// Provider del notifier de búsqueda.
-final galponSearchNotifierProvider =
-    StateNotifierProvider.autoDispose<GalponSearchNotifier, GalponSearchState>((
-      ref,
-    ) {
-      return GalponSearchNotifier(
-        obtenerPorGranjaUseCase: ref.watch(obtenerPorGranjaUseCaseProvider),
-        obtenerDisponiblesUseCase: ref.watch(obtenerDisponiblesUseCaseProvider),
-      );
-    });
-
-/// Provider del notifier de formulario.
-final galponFormNotifierProvider =
-    StateNotifierProvider.autoDispose<GalponFormNotifier, GalponFormState>((
-      ref,
-    ) {
-      return GalponFormNotifier();
-    });
-
-/// Provider del notifier de estadísticas.
-final galponStatsNotifierProvider =
-    StateNotifierProvider.autoDispose<GalponStatsNotifier, GalponStatsState>((
-      ref,
-    ) {
-      return GalponStatsNotifier(
-        obtenerEstadisticasUseCase: ref.watch(
-          obtenerEstadisticasUseCaseProvider,
         ),
       );
     });

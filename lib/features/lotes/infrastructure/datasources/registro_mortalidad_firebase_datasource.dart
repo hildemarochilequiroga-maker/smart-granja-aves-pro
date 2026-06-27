@@ -3,10 +3,8 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../domain/entities/lote.dart';
 import '../../domain/entities/registro_mortalidad.dart';
 import '../../../salud/domain/enums/causa_mortalidad.dart';
-import '../models/lote_model.dart';
 import '../models/registro_mortalidad_model.dart';
 
 /// Datasource para operaciones de registro de mortalidad en Firebase.
@@ -167,26 +165,32 @@ class RegistroMortalidadFirebaseDatasource {
     return snapshot.docs.isNotEmpty;
   }
 
-  /// Crea un registro de mortalidad y actualiza el lote en una transacción atómica.
+  /// Crea un registro de mortalidad y actualiza los contadores del lote de
+  /// forma segura ante concurrencia.
   ///
-  /// Esto garantiza que si una operación falla, ninguna se aplica,
-  /// evitando inconsistencias de datos.
+  /// En vez de escribir el lote completo precalculado por el cliente (que se
+  /// corrompe si dos usuarios registran mortalidad del mismo lote a la vez),
+  /// aplica deltas atómicos con `FieldValue.increment` sobre el valor del
+  /// servidor: `mortalidadAcumulada += cantidad`, `cantidadActual -= cantidad`.
+  /// La creación del registro y la actualización van en la misma transacción.
   Future<RegistroMortalidad> crearConActualizacionLote({
     required RegistroMortalidad registro,
-    required Lote loteActualizado,
   }) async {
     final registroModel = RegistroMortalidadModel.fromEntity(registro);
-    final loteModel = LoteModel.fromEntity(loteActualizado);
+    final cantidad = registro.cantidad;
 
     final loteRef = _firestore.collection('lotes').doc(registro.loteId);
     final registroRef = _collection(registro.loteId).doc();
 
     await _firestore.runTransaction((transaction) async {
-      // Crear el registro de mortalidad
       transaction.set(registroRef, registroModel.toFirestore());
 
-      // Actualizar el lote
-      transaction.update(loteRef, loteModel.toFirestore());
+      // Incrementos relativos: inmunes a lost updates concurrentes.
+      transaction.update(loteRef, {
+        'mortalidadAcumulada': FieldValue.increment(cantidad),
+        'cantidadActual': FieldValue.increment(-cantidad),
+        'fechaActualizacion': FieldValue.serverTimestamp(),
+      });
     });
 
     return registro.copyWith(id: registroRef.id);

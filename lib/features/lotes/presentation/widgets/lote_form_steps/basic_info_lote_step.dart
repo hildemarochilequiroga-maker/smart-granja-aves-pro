@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -81,14 +82,11 @@ class _LoteBasicInfoStepState extends ConsumerState<LoteBasicInfoStep> {
     final now = DateTime.now();
     final initialDate = widget.fechaIngreso ?? now;
 
-    final picked = await showDatePicker(
+    final picked = await showRegistroDatePicker(
       context: context,
       initialDate: initialDate.isAfter(now) ? now : initialDate,
       firstDate: DateTime(2020),
       lastDate: now,
-      helpText: S.of(context).batchSelectDate,
-      cancelText: S.of(context).commonCancel,
-      confirmText: S.of(context).commonConfirm,
     );
 
     if (picked != null && picked != widget.fechaIngreso) {
@@ -136,10 +134,6 @@ class _LoteBasicInfoStepState extends ConsumerState<LoteBasicInfoStep> {
 
           // Fecha de ingreso
           _buildFechaIngresoField(theme),
-          AppSpacing.gapXl,
-
-          // Nota informativa
-          _buildNotaInformativa(theme),
         ],
       ),
     );
@@ -155,137 +149,20 @@ class _LoteBasicInfoStepState extends ConsumerState<LoteBasicInfoStep> {
   }
 
   Widget _buildTipoAveDropdown(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final labelColor = theme.colorScheme.onSurface.withValues(alpha: 0.8);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '${S.of(context).batchFormBirdType} *',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: labelColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        AppSpacing.gapSm,
-        DropdownButtonFormField<TipoAve>(
-          initialValue: widget.selectedTipoAve,
-          autovalidateMode: widget.autoValidate
-              ? AutovalidateMode.always
-              : AutovalidateMode.disabled,
-          decoration: InputDecoration(
-            hintText: S.of(context).batchFormSelectType,
-            hintStyle: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              fontWeight: FontWeight.normal,
-            ),
-            filled: true,
-            fillColor: widget.isEditing
-                ? (isDark
-                          ? theme.colorScheme.surface
-                          : theme.colorScheme.surface)
-                      .withValues(alpha: 0.5)
-                : (isDark
-                      ? theme.colorScheme.surface
-                      : theme.colorScheme.surface),
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(color: theme.colorScheme.error, width: 1),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allSm,
-              borderSide: BorderSide(
-                color: theme.colorScheme.error,
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            errorStyle: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
-              height: 1.2,
-            ),
-          ),
-          isExpanded: true,
-          itemHeight: null,
-          menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
-          selectedItemBuilder: (BuildContext context) {
-            return TipoAve.values.map((tipo) {
-              return Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  tipo.localizedDisplayName(S.of(context)),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).toList();
-          },
-          items: TipoAve.values.map((tipo) {
-            return DropdownMenuItem(
-              value: tipo,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      tipo.localizedDisplayName(S.of(context)),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      _getTipoDescripcion(tipo),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: widget.isEditing ? null : widget.onTipoAveChanged,
-          validator: (value) {
-            if (value == null) {
-              return S.of(context).batchSelectBirdType;
-            }
-            return null;
-          },
-        ),
+    return RegistroSelectorField<TipoAve>(
+      label: S.of(context).batchFormBirdType,
+      required: true,
+      value: widget.selectedTipoAve,
+      hint: S.of(context).batchFormSelectType,
+      options: const [
+        TipoAve.polloEngorde,
+        TipoAve.gallinaPonedora,
+        TipoAve.otro,
       ],
+      labelOf: (tipo) => tipo.localizedDisplayName(S.of(context)),
+      subtitleOf: (tipo) => _getTipoDescripcion(tipo),
+      colorOf: (tipo) => _getTipoColor(tipo),
+      onSelected: widget.isEditing ? (_) {} : widget.onTipoAveChanged,
     );
   }
 
@@ -425,40 +302,6 @@ class _LoteBasicInfoStepState extends ConsumerState<LoteBasicInfoStep> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildNotaInformativa(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).batchAttention,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.info,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            S.of(context).batchFormBasicInfoNote,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -12,6 +12,8 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../../inventario/domain/entities/entities.dart';
 import '../../../inventario/domain/enums/enums.dart';
@@ -209,8 +211,11 @@ abstract class GalponDialogs {
     BuildContext context,
     Galpon galpon,
   ) async {
-    return showDialog<EstadoGalpon>(
+    return showModalBottomSheet<EstadoGalpon>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => _CambiarEstadoDialog(galpon: galpon),
     );
   }
@@ -555,157 +560,83 @@ class _CambiarEstadoDialog extends StatelessWidget {
         .where((e) => e != galpon.estado)
         .toList();
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-      title: Text(
-        S.of(context).shedChangeStatus,
-        style: AppTextStyles.titleLarge.copyWith(
-          fontWeight: FontWeight.w600,
-          color: AppColors.onSurface,
-        ),
-        textAlign: TextAlign.center,
-      ),
-      content: Column(
+    return AppBottomSheetScaffold(
+      title: S.of(context).shedChangeStatus,
+      scrollable: true,
+      child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Label estado actual
-          Text(
-            S.of(context).shedCurrentState,
-            style: AppTextStyles.labelMedium.copyWith(
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Card estado actual
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: AppRadius.allSm,
-              border: Border.all(
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.black.withValues(alpha: 0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               children: [
-                _buildColorDot(galpon.estado.color),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        galpon.estado.localizedDisplayName(S.of(context)),
-                        style: AppTextStyles.titleSmall.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        _getDescripcionEstado(context, galpon.estado),
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                // Label estado actual
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Text(
+                    S.of(context).shedCurrentState,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.xs),
+                // Card estado actual
+                AppSheetOptionTile(
+                  leading: _buildColorDot(galpon.estado.color, size: 14),
+                  label: galpon.estado.localizedDisplayName(S.of(context)),
+                  subtitle: _getDescripcionEstado(context, galpon.estado),
+                  trailing: const SizedBox.shrink(),
+                  onTap: () {},
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Text(
+                    S.of(context).shedSelectNewState,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                // Opciones de estado como tarjetas
+                ...estadosDisponibles.map((estado) {
+                  return AppSheetOptionTile(
+                    leading: _buildColorDot(estado.color, size: 14),
+                    label: estado.localizedDisplayName(S.of(context)),
+                    subtitle: _getDescripcionEstado(context, estado),
+                    onTap: () => Navigator.pop(context, estado),
+                  );
+                }),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.base),
-          Text(
-            S.of(context).shedSelectNewState,
-            style: AppTextStyles.labelMedium.copyWith(
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+          // Botón cerrar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.base,
+            ),
+            child: AppButton.primary(
+              label: S.of(context).commonClose,
+              onPressed: () => Navigator.pop(context),
+              expanded: true,
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.white,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          // Opciones de estado como tarjetas
-          ...estadosDisponibles.map((estado) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => Navigator.pop(context, estado),
-                  borderRadius: AppRadius.allSm,
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: AppRadius.allSm,
-                      border: Border.all(
-                        color: AppColors.onSurfaceVariant.withValues(
-                          alpha: 0.3,
-                        ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.black.withValues(alpha: 0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        _buildColorDot(estado.color),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                estado.localizedDisplayName(S.of(context)),
-                                style: AppTextStyles.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.xxs),
-                              Text(
-                                _getDescripcionEstado(context, estado),
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.onSurfaceVariant,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          child: Text(S.of(context).commonCancel),
-        ),
-      ],
     );
   }
 }

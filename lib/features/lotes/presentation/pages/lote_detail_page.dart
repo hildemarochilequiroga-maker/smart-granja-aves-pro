@@ -15,6 +15,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/sync_status_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../application/providers/providers.dart';
 import '../../application/state/lote_state.dart';
 import '../../domain/entities/lote.dart';
@@ -139,7 +140,7 @@ class _LoteDetailView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(S.of(context).batchDetails),
+        title: FormTextScale(child: Text(S.of(context).batchDetails)),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -150,7 +151,7 @@ class _LoteDetailView extends ConsumerWidget {
             child: SyncStatusBadge(),
           ),
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_outlined, size: 28),
             onPressed: () => context.push(
               AppRoutes.loteEditarById(granjaId, lote.galponId, lote.id),
             ),
@@ -160,7 +161,8 @@ class _LoteDetailView extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
+      body: FormTextScale(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,6 +201,7 @@ class _LoteDetailView extends ConsumerWidget {
             const SizedBox(height: 32),
           ],
         ),
+        ),
       ),
     );
   }
@@ -209,7 +212,11 @@ class _LoteDetailView extends ConsumerWidget {
     ThemeData theme,
   ) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
+      icon: Icon(
+        Icons.more_vert,
+        size: 28,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
       shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
       color: theme.colorScheme.surface,
       elevation: 3,

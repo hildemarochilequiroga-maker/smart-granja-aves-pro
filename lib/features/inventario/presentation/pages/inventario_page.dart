@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/permission_guard.dart';
 import 'package:flutter/services.dart';
@@ -473,49 +474,11 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
         builder: (context, setModalState) {
           final theme = Theme.of(context);
 
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
+          return AppBottomSheetScaffold(
+            title: l.invFilterByType,
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      l.invFilterByType,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
                   // Contenido
                   Padding(
                     padding: const EdgeInsets.all(20),
@@ -581,7 +544,6 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
                   ),
                 ],
               ),
-            ),
           );
         },
       ),

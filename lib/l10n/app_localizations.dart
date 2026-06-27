@@ -1473,6 +1473,30 @@ abstract class S {
   /// **'Salir'**
   String get commonExit;
 
+  /// No description provided for @appExitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Salir de la aplicación?'**
+  String get appExitTitle;
+
+  /// No description provided for @appExitMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de que deseas cerrar la aplicación?'**
+  String get appExitMessage;
+
+  /// No description provided for @appExitConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí, salir'**
+  String get appExitConfirm;
+
+  /// No description provided for @appExitPressAgain.
+  ///
+  /// In es, this message translates to:
+  /// **'Presiona atrás de nuevo para salir'**
+  String get appExitPressAgain;
+
   /// No description provided for @commonDontWorryDataSafe.
   ///
   /// In es, this message translates to:
@@ -2570,6 +2594,72 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Costo por Ave'**
   String get batchCostPerBird;
+
+  /// No description provided for @batchCostBreakdown.
+  ///
+  /// In es, this message translates to:
+  /// **'Desglose del costo'**
+  String get batchCostBreakdown;
+
+  /// No description provided for @batchCostByType.
+  ///
+  /// In es, this message translates to:
+  /// **'Costo por tipo de gasto'**
+  String get batchCostByType;
+
+  /// No description provided for @batchCalcBasis.
+  ///
+  /// In es, this message translates to:
+  /// **'Base del cálculo'**
+  String get batchCalcBasis;
+
+  /// No description provided for @batchPendingCosts.
+  ///
+  /// In es, this message translates to:
+  /// **'Costos por registrar'**
+  String get batchPendingCosts;
+
+  /// No description provided for @batchDirectExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos directos'**
+  String get batchDirectExpenses;
+
+  /// No description provided for @batchSharedExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos compartidos'**
+  String get batchSharedExpenses;
+
+  /// No description provided for @batchFeedCost.
+  ///
+  /// In es, this message translates to:
+  /// **'Alimento'**
+  String get batchFeedCost;
+
+  /// No description provided for @batchLiveBirdsBasis.
+  ///
+  /// In es, this message translates to:
+  /// **'Calculado sobre {count} aves vivas'**
+  String batchLiveBirdsBasis(String count);
+
+  /// No description provided for @batchMissingInitialCost.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta el costo inicial de las aves'**
+  String get batchMissingInitialCost;
+
+  /// No description provided for @batchNoCostData.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay costos registrados para este lote'**
+  String get batchNoCostData;
+
+  /// No description provided for @batchConsumosSinCosto.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} registros de consumo sin costo: el alimento puede estar subestimado'**
+  String batchConsumosSinCosto(String count);
 
   /// No description provided for @batchEstimatedClose.
   ///
@@ -9918,6 +10008,12 @@ abstract class S {
   /// **'Ver Gráficos'**
   String get batchViewCharts;
 
+  /// No description provided for @commonCharts.
+  ///
+  /// In es, this message translates to:
+  /// **'Gráficos'**
+  String get commonCharts;
+
   /// No description provided for @batchFilterRecords.
   ///
   /// In es, this message translates to:
@@ -10029,7 +10125,7 @@ abstract class S {
   /// No description provided for @historialDeadBirds.
   ///
   /// In es, this message translates to:
-  /// **'aves fallecidas'**
+  /// **'aves muertas'**
   String get historialDeadBirds;
 
   /// No description provided for @historialNoProductionRecords.
@@ -11689,6 +11785,12 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Aves Vivas'**
   String get batchLiveBirds;
+
+  /// No description provided for @batchEnteredBirds.
+  ///
+  /// In es, this message translates to:
+  /// **'Aves ingresadas'**
+  String get batchEnteredBirds;
 
   /// No description provided for @batchTotalLosses.
   ///
@@ -19386,6 +19488,30 @@ abstract class S {
   /// **'El nombre debe tener al menos 3 caracteres'**
   String get costoSupplierMinLength;
 
+  /// No description provided for @costoBatchLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Lote asignado'**
+  String get costoBatchLabel;
+
+  /// No description provided for @costoSelectBatchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona el lote para este gasto'**
+  String get costoSelectBatchHint;
+
+  /// No description provided for @costoSelectBatchRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona el lote al que se asigna este gasto'**
+  String get costoSelectBatchRequired;
+
+  /// No description provided for @costoBatchNoneOption.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin lote (gasto general)'**
+  String get costoBatchNoneOption;
+
   /// No description provided for @costoInvoiceLabel.
   ///
   /// In es, this message translates to:
@@ -19416,6 +19542,36 @@ abstract class S {
   /// **'Proveedor: '**
   String get costoCardSupplier;
 
+  /// No description provided for @costoTypeCompraAves.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra de Aves'**
+  String get costoTypeCompraAves;
+
+  /// No description provided for @costoTotalPurchaseLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Costo total de la compra'**
+  String get costoTotalPurchaseLabel;
+
+  /// No description provided for @costoPerBirdLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Costo por ave'**
+  String get costoPerBirdLabel;
+
+  /// No description provided for @costoPurchaseBirdsBasis.
+  ///
+  /// In es, this message translates to:
+  /// **'Sobre {count} aves del lote'**
+  String costoPurchaseBirdsBasis(String count);
+
+  /// No description provided for @costoPurchaseNoBatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Asigna un lote para calcular el costo por ave'**
+  String get costoPurchaseNoBatch;
+
   /// No description provided for @costoTypeAlimento.
   ///
   /// In es, this message translates to:
@@ -19439,6 +19595,12 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Medicamento'**
   String get costoTypeMedicamento;
+
+  /// No description provided for @costoTypeCama.
+  ///
+  /// In es, this message translates to:
+  /// **'Cama'**
+  String get costoTypeCama;
 
   /// No description provided for @costoTypeMantenimiento.
   ///
@@ -23661,7 +23823,7 @@ abstract class S {
   /// No description provided for @diseaseCatalogSearch.
   ///
   /// In es, this message translates to:
-  /// **'diseaseCatalogSearch'**
+  /// **'Buscar enfermedad...'**
   String get diseaseCatalogSearch;
 
   /// No description provided for @diseaseCatalogWarning.

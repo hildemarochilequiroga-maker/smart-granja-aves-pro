@@ -135,24 +135,6 @@ final granjaNotifierProvider =
       );
     });
 
-/// Provider del notifier de búsqueda
-final granjaSearchNotifierProvider =
-    StateNotifierProvider.autoDispose<GranjaSearchNotifier, GranjaSearchState>((
-      ref,
-    ) {
-      return GranjaSearchNotifier(
-        buscarUseCase: ref.watch(buscarGranjasUseCaseProvider),
-      );
-    });
-
-/// Provider del notifier de formulario
-final granjaFormNotifierProvider =
-    StateNotifierProvider.autoDispose<GranjaFormNotifier, GranjaFormState>((
-      ref,
-    ) {
-      return GranjaFormNotifier();
-    });
-
 // =============================================================================
 // PROVIDERS DE DATOS (StreamProvider para reactividad)
 // =============================================================================
@@ -259,7 +241,7 @@ final tieneGranjasProvider = Provider.autoDispose<AsyncValue<bool>>((ref) {
 
 /// Provider del dashboard de una granja específica
 final dashboardGranjaProvider = FutureProvider.autoDispose
-    .family<Map<String, dynamic>, String>((ref, granjaId) async {
+    .family<GranjaDashboard, String>((ref, granjaId) async {
       final useCase = ref.watch(obtenerDashboardGranjaUseCaseProvider);
       final result = await useCase(granjaId);
 

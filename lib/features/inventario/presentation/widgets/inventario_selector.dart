@@ -310,7 +310,7 @@ class _InventarioSelectorSheetState
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
+          top: Radius.circular(AppRadius.xxl),
         ),
       ),
       child: Column(
@@ -321,8 +321,8 @@ class _InventarioSelectorSheetState
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
+              color: colorScheme.outlineVariant,
+              borderRadius: AppRadius.allFull,
             ),
           ),
 

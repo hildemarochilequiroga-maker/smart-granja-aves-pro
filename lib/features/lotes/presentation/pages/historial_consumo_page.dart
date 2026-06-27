@@ -14,11 +14,10 @@ import 'package:intl/intl.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/historial/historial_components.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
@@ -117,103 +116,105 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
     final statsAsync = ref.watch(registrosConsumoStatsProvider(widget.lote.id));
 
     // Solo el body, sin Scaffold ni AppBar (el dashboard ya lo proporciona)
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      color: theme.colorScheme.primary,
-      child: CustomScrollView(
-        slivers: [
-          const SliverPadding(padding: EdgeInsets.only(top: AppSpacing.sm)),
-          // Estadísticas con tarjeta de gráficos
-          SliverToBoxAdapter(
-            child: statsAsync.when(
-              data: (stats) => _buildEstadisticasSection(stats, theme),
-              loading: () => const HistorialStatsLoading(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // Indicador de filtros activos (debajo de estadísticas)
-          if (hayFiltrosActivos)
+    return FormTextScale(
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: theme.colorScheme.primary,
+        child: CustomScrollView(
+          slivers: [
+            const SliverPadding(padding: EdgeInsets.only(top: AppSpacing.sm)),
+            // Estadísticas con tarjeta de gráficos
             SliverToBoxAdapter(
-              child: HistorialFiltrosActivosChip(
-                label: etiquetaFiltroActual,
-                onClear: _limpiarFiltros,
+              child: statsAsync.when(
+                data: (stats) => _buildEstadisticasSection(stats, theme),
+                loading: () => const HistorialStatsLoading(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
             ),
 
-          // Divider visual
-          const SliverToBoxAdapter(child: AppSpacing.gapSm),
-          SliverToBoxAdapter(
-            child: HistorialRegistrosHeader(
-              title: S.of(context).historialConsumptionHistory,
-              ordenDesc: _ordenDesc,
-              onToggleOrden: () {
-                HapticFeedback.selectionClick();
-                setState(() => _ordenDesc = !_ordenDesc);
-              },
+            // Indicador de filtros activos (debajo de estadísticas)
+            if (hayFiltrosActivos)
+              SliverToBoxAdapter(
+                child: HistorialFiltrosActivosChip(
+                  label: etiquetaFiltroActual,
+                  onClear: _limpiarFiltros,
+                ),
+              ),
+
+            // Divider visual
+            const SliverToBoxAdapter(child: AppSpacing.gapSm),
+            SliverToBoxAdapter(
+              child: HistorialRegistrosHeader(
+                title: S.of(context).historialConsumptionHistory,
+                ordenDesc: _ordenDesc,
+                onToggleOrden: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _ordenDesc = !_ordenDesc);
+                },
+              ),
             ),
-          ),
 
-          // Lista de registros (lazy-loaded con SliverList)
-          registrosAsync.when(
-            data: (registros) {
-              final lista = _filtrarYOrdenar(registros);
+            // Lista de registros (lazy-loaded con SliverList)
+            registrosAsync.when(
+              data: (registros) {
+                final lista = _filtrarYOrdenar(registros);
 
-              if (lista.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: _buildEmptyState(theme, registros.isEmpty),
+                if (lista.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: _buildEmptyState(theme, registros.isEmpty),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.only(
+                    top: AppSpacing.sm,
+                    left: AppSpacing.base,
+                    right: AppSpacing.base,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index < lista.length - 1 ? AppSpacing.md : 0,
+                        ),
+                        child: _buildAnimatedRegistroCard(
+                          lista[index],
+                          theme,
+                          index,
+                        ),
+                      ),
+                      childCount: lista.length,
+                    ),
+                  ),
                 );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.sm,
-                  left: AppSpacing.base,
-                  right: AppSpacing.base,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index < lista.length - 1 ? AppSpacing.md : 0,
-                      ),
-                      child: _buildAnimatedRegistroCard(
-                        lista[index],
-                        theme,
-                        index,
-                      ),
-                    ),
-                    childCount: lista.length,
+              },
+              loading: () => SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.base,
                   ),
-                ),
-              );
-            },
-            loading: () => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.base,
-                ),
-                child: Column(
-                  children: List.generate(
-                    5,
-                    (index) => const Padding(
-                      padding: EdgeInsets.only(bottom: AppSpacing.md),
-                      child: SkeletonListCard(
-                        hasIcon: true,
-                        hasSubtitle: true,
-                        hasBadge: true,
-                        hasFooter: false,
+                  child: Column(
+                    children: List.generate(
+                      5,
+                      (index) => const Padding(
+                        padding: EdgeInsets.only(bottom: AppSpacing.md),
+                        child: SkeletonListCard(
+                          hasIcon: true,
+                          hasSubtitle: true,
+                          hasBadge: true,
+                          hasFooter: false,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              error: (error, _) =>
+                  SliverToBoxAdapter(child: _buildErrorState(theme, error)),
             ),
-            error: (error, _) =>
-                SliverToBoxAdapter(child: _buildErrorState(theme, error)),
-          ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-        ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+          ],
+        ),
       ),
     );
   }
@@ -247,61 +248,30 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
     final totalRegistros = stats['totalRegistros'] as int? ?? 0;
     final consumoPorAve = stats['consumoPorAve'] as double? ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.base,
-        AppSpacing.sm,
-        AppSpacing.base,
-        AppSpacing.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Grid de estadísticas 2x2
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${totalKg.toStringAsFixed(1)} kg',
-                  subtitle: S.of(context).historialTotalConsumed,
-                  color: theme.colorScheme.tertiary,
-                ),
-              ),
-              AppSpacing.hGapMd,
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${promedioDiario.toStringAsFixed(2)} kg',
-                  subtitle: S.of(context).historialAvgDaily,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapMd,
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: totalRegistros.toString(),
-                  subtitle: S.of(context).historialRecords,
-                  color: theme.colorScheme.secondary,
-                ),
-              ),
-              AppSpacing.hGapMd,
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${(consumoPorAve * 1000).toStringAsFixed(0)} g',
-                  subtitle: S.of(context).historialAccumulatedPerBird,
-                  color: AppColors.success,
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapMd,
-          // Tarjeta Ver Gráficos (debajo de KPIs)
-          HistorialGraficosCard(onTap: _navegarAGraficos),
-        ],
-      ),
+    return HistorialStatsGrid(
+      onVerGraficos: _navegarAGraficos,
+      cards: [
+        HistorialStatCard(
+          value: '${totalKg.toStringAsFixed(1)} kg',
+          subtitle: S.of(context).historialTotalConsumed,
+          color: theme.colorScheme.tertiary,
+        ),
+        HistorialStatCard(
+          value: '${promedioDiario.toStringAsFixed(2)} kg',
+          subtitle: S.of(context).historialAvgDaily,
+          color: theme.colorScheme.primary,
+        ),
+        HistorialStatCard(
+          value: totalRegistros.toString(),
+          subtitle: S.of(context).historialRecords,
+          color: theme.colorScheme.secondary,
+        ),
+        HistorialStatCard(
+          value: '${(consumoPorAve * 1000).toStringAsFixed(0)} g',
+          subtitle: S.of(context).historialAccumulatedPerBird,
+          color: AppColors.success,
+        ),
+      ],
     );
   }
 
@@ -457,295 +427,63 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
 
   /// Método público para mostrar el menú de filtros (accesible desde el dashboard)
   void showFilterMenu() {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    HistorialFiltrosBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final theme = Theme.of(context);
-
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: AppSpacing.md,
-                      bottom: AppSpacing.sm,
-                    ),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.sm,
-                      AppSpacing.lg,
-                      AppSpacing.base,
-                    ),
-                    child: Text(
-                      S.of(context).batchFilterRecords,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
-                  // Contenido
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Período
-                          AppSectionHeader(
-                            title: S.of(context).batchTimePeriod,
-                            padding: EdgeInsets.zero,
-                          ),
-                          AppSpacing.gapMd,
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchAllTime,
-                                  subtitle: S.of(context).batchNoTimeLimit,
-                                  icon: Icons.all_inclusive_rounded,
-                                  isSelected: _filtro == 'todos',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = 'todos');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays7,
-                                  subtitle: S.of(context).batchLastWeek,
-                                  icon: Icons.today_rounded,
-                                  isSelected: _filtro == '7d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '7d');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays30,
-                                  subtitle: S.of(context).batchLastMonth,
-                                  icon: Icons.date_range_rounded,
-                                  isSelected: _filtro == '30d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '30d');
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          AppSpacing.gapXl,
-
-                          // Tipo de alimento
-                          AppSectionHeader(
-                            title: S.of(context).historialFilterFoodType,
-                            padding: EdgeInsets.zero,
-                          ),
-                          AppSpacing.gapMd,
-                          AspectRatio(
-                            aspectRatio: 4.8,
-                            child: _buildTipoOption(
-                              theme: theme,
-                              label: S.of(context).historialAllFoodTypes,
-                              isSelected: _tipoFiltro == null,
-                              color: theme.colorScheme.primary,
-                              onTap: () {
-                                setModalState(() {});
-                                setState(() => _tipoFiltro = null);
-                              },
-                            ),
-                          ),
-                          AppSpacing.gapSm,
-                          GridView.count(
-                            crossAxisCount: AppBreakpoints.of(
-                              context,
-                            ).gridColumns,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: AppSpacing.sm,
-                            crossAxisSpacing: AppSpacing.sm,
-                            childAspectRatio: 2.4,
-                            children: TipoAlimento.values.map((tipo) {
-                              return _buildTipoOption(
-                                theme: theme,
-                                label: tipo.localizedDisplayName(S.of(context)),
-                                subtitle: tipo.localizedRangoEdadDescripcion(
-                                  S.of(context),
-                                ),
-                                isSelected: _tipoFiltro == tipo,
-                                color: tipo.color,
-                                onTap: () {
-                                  setModalState(() {});
-                                  setState(() => _tipoFiltro = tipo);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Botón aplicar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.md,
-                      AppSpacing.lg,
-                      AppSpacing.base,
-                    ),
-                    child: AppButton.primary(
-                      label: hayFiltrosActivos
-                          ? S.of(context).commonApplyFilters
-                          : S.of(context).commonClose,
-                      onPressed: () => Navigator.pop(context),
-                      expanded: true,
-                      backgroundColor: AppColors.warning,
-                      foregroundColor: AppColors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPeriodOption({
-    required ThemeData theme,
-    required String label,
-    required String subtitle,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return HistorialPeriodOption(
-      label: label,
-      subtitle: subtitle,
-      isSelected: isSelected,
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildTipoOption({
-    required ThemeData theme,
-    required String label,
-    String? subtitle,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: 10,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.info.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-          borderRadius: AppRadius.allMd,
-          border: Border.all(
-            color: isSelected
-                ? AppColors.info.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: 1.5,
+      hasActiveFilters: () => hayFiltrosActivos,
+      sectionsBuilder: (setModalState) {
+        final theme = Theme.of(context);
+        return [
+          // Período
+          HistorialPeriodoFilterSection(
+            selected: _filtro,
+            onSelect: (value) {
+              setModalState(() {});
+              setState(() => _filtro = value);
+            },
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+
+          AppSpacing.gapXl,
+
+          // Tipo de alimento
+          AppSectionHeader(
+            title: S.of(context).historialFilterFoodType,
+            padding: EdgeInsets.zero,
+          ),
+          AppSpacing.gapMd,
+          AspectRatio(
+            aspectRatio: 4.8,
+            child: HistorialFiltroOption(
+              label: S.of(context).historialAllFoodTypes,
+              isSelected: _tipoFiltro == null,
+              color: theme.colorScheme.primary,
+              onTap: () {
+                setModalState(() {});
+                setState(() => _tipoFiltro = null);
+              },
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.info
-                          : theme.colorScheme.onSurface,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+          ),
+          AppSpacing.gapSm,
+          // Tipos a ancho completo (texto completo sin recortes)
+          Column(
+            children: [
+              for (final tipo in TipoAlimento.values)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: HistorialFiltroOption(
+                    label: tipo.localizedDisplayName(S.of(context)),
+                    subtitle: tipo.localizedRangoEdadDescripcion(S.of(context)),
+                    isSelected: _tipoFiltro == tipo,
+                    color: tipo.color,
+                    onTap: () {
+                      setModalState(() {});
+                      setState(() => _tipoFiltro = tipo);
+                    },
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
+            ],
+          ),
+        ];
+      },
     );
   }
 
@@ -806,6 +544,7 @@ class HistorialConsumoPageState extends ConsumerState<HistorialConsumoPage> {
   Future<void> _onRefresh() async {
     ref.invalidate(registrosConsumoStreamProvider(widget.lote.id));
     ref.invalidate(registrosConsumoStatsProvider(widget.lote.id));
+    await ref.read(registrosConsumoStreamProvider(widget.lote.id).future);
   }
 
   void _navegarAGraficos() {
@@ -847,170 +586,174 @@ class _DetailSheet extends StatelessWidget {
     final horaFormat = DateFormat('HH:mm', locale).format(registro.fecha);
     final semanasVida = (registro.edadDias / 7).ceil();
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
+    return FormTextScale(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            MediaQuery.paddingOf(context).bottom + AppSpacing.lg,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xxl),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              AppSpacing.gapLg,
-
-              // Header con cantidad y fecha
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fechaFormat,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          horaFormat,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.base,
-                      vertical: AppSpacing.sm,
-                    ),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              MediaQuery.paddingOf(context).bottom + AppSpacing.lg,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.success,
-                      borderRadius: AppRadius.allSm,
-                    ),
-                    child: Text(
-                      '${registro.cantidadKg.toStringAsFixed(2)} kg',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.surface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              AppSpacing.gapLg,
-
-              // Información en formato tabla
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLowest,
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                child: Column(
+                AppSpacing.gapLg,
+
+                // Header con cantidad y fecha
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTableRow(
-                      theme,
-                      S.of(context).detailFoodType,
-                      registro.tipoAlimento.localizedDisplayName(S.of(context)),
-                      valueColor: tipoColor,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      S.of(context).detailBirdAge,
-                      S
-                          .of(context)
-                          .detailDaysWeek(
-                            registro.edadDias.toString(),
-                            semanasVida.toString(),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fechaFormat,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                    ),
-                    _buildTableRow(
-                      theme,
-                      S.of(context).detailBirdCount,
-                      '${registro.cantidadAvesActual}',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      S.of(context).detailConsumptionPerBird,
-                      '${(registro.consumoPorAve * 1000).toStringAsFixed(0)} g',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      S.of(context).detailAccumulatedConsumption,
-                      '${registro.consumoAcumulado.toStringAsFixed(2)} kg',
-                    ),
-                    if (registro.loteAlimento != null)
-                      _buildTableRow(
-                        theme,
-                        S.of(context).detailFoodBatch,
-                        registro.loteAlimento!,
+                          const SizedBox(height: 2),
+                          Text(
+                            horaFormat,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                    if (registro.costoPorKg != null)
-                      _buildTableRow(
-                        theme,
-                        S.of(context).detailCostPerKg,
-                        '\$${registro.costoPorKg!.toStringAsFixed(2)}',
-                        valueColor: AppColors.success,
-                      ),
-                    if (registro.costoTotal != null)
-                      _buildTableRow(
-                        theme,
-                        S.of(context).detailTotalCost,
-                        '\$${registro.costoTotal!.toStringAsFixed(2)}',
-                        valueColor: AppColors.success,
-                      ),
-                    _buildTableRow(
-                      theme,
-                      S.of(context).detailRegisteredBy,
-                      registro.nombreUsuario,
-                      isLast: !(registro.observaciones?.isNotEmpty ?? false),
                     ),
-                    if (registro.observaciones?.isNotEmpty ?? false)
-                      _buildTableRow(
-                        theme,
-                        S.of(context).detailObservations,
-                        registro.observaciones!,
-                        isLast: true,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.base,
+                        vertical: AppSpacing.sm,
                       ),
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        borderRadius: AppRadius.allSm,
+                      ),
+                      child: Text(
+                        '${registro.cantidadKg.toStringAsFixed(2)} kg',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.surface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
 
-              AppSpacing.gapSm,
-            ],
+                AppSpacing.gapLg,
+
+                // Información en formato tabla
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildTableRow(
+                        theme,
+                        S.of(context).detailFoodType,
+                        registro.tipoAlimento.localizedDisplayName(
+                          S.of(context),
+                        ),
+                        valueColor: tipoColor,
+                      ),
+                      _buildTableRow(
+                        theme,
+                        S.of(context).detailBirdAge,
+                        S
+                            .of(context)
+                            .detailDaysWeek(
+                              registro.edadDias.toString(),
+                              semanasVida.toString(),
+                            ),
+                      ),
+                      _buildTableRow(
+                        theme,
+                        S.of(context).detailBirdCount,
+                        '${registro.cantidadAvesActual}',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        S.of(context).detailConsumptionPerBird,
+                        '${(registro.consumoPorAve * 1000).toStringAsFixed(0)} g',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        S.of(context).detailAccumulatedConsumption,
+                        '${registro.consumoAcumulado.toStringAsFixed(2)} kg',
+                      ),
+                      if (registro.loteAlimento != null)
+                        _buildTableRow(
+                          theme,
+                          S.of(context).detailFoodBatch,
+                          registro.loteAlimento!,
+                        ),
+                      if (registro.costoPorKg != null)
+                        _buildTableRow(
+                          theme,
+                          S.of(context).detailCostPerKg,
+                          '\$${registro.costoPorKg!.toStringAsFixed(2)}',
+                          valueColor: AppColors.success,
+                        ),
+                      if (registro.costoTotal != null)
+                        _buildTableRow(
+                          theme,
+                          S.of(context).detailTotalCost,
+                          '\$${registro.costoTotal!.toStringAsFixed(2)}',
+                          valueColor: AppColors.success,
+                        ),
+                      _buildTableRow(
+                        theme,
+                        S.of(context).detailRegisteredBy,
+                        registro.nombreUsuario,
+                        isLast: !(registro.observaciones?.isNotEmpty ?? false),
+                      ),
+                      if (registro.observaciones?.isNotEmpty ?? false)
+                        _buildTableRow(
+                          theme,
+                          S.of(context).detailObservations,
+                          registro.observaciones!,
+                          isLast: true,
+                        ),
+                    ],
+                  ),
+                ),
+
+                AppSpacing.gapSm,
+              ],
+            ),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../galpones/domain/repositories/galpon_repository.dart';
 import '../../../lotes/domain/repositories/lote_repository.dart';
+import '../entities/granja_dashboard.dart';
 import '../repositories/granja_repository.dart';
 
 /// Use Case para obtener dashboard completo de una granja.
@@ -24,7 +25,7 @@ import '../repositories/granja_repository.dart';
 /// - Identifica alertas (sobrepoblación, datos desactualizados)
 /// - Agrupa estadísticas por secciones
 class ObtenerDashboardGranjaUseCase
-    implements UseCase<Map<String, dynamic>, String> {
+    implements UseCase<GranjaDashboard, String> {
   const ObtenerDashboardGranjaUseCase({
     required this.granjaRepository,
     required this.loteRepository,
@@ -36,7 +37,7 @@ class ObtenerDashboardGranjaUseCase
   final GalponRepository galponRepository;
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> call(String granjaId) async {
+  Future<Either<Failure, GranjaDashboard>> call(String granjaId) async {
     try {
       final granjaResult = await granjaRepository.obtenerPorId(granjaId);
 
@@ -81,31 +82,34 @@ class ObtenerDashboardGranjaUseCase
                 ? (totalAves / capacidadMaxima) * 100
                 : 0.0;
 
-            final dashboard = {
-              'granja': {
-                'id': granja.id,
-                'nombre': granja.nombre,
-                'estado': granja.estado.displayName,
-                'propietario': granja.propietarioNombre,
-              },
-              'capacidad': {
-                'totalAves': totalAves,
-                'capacidadMaxima': capacidadMaxima,
-                'porcentajeOcupacion': porcentajeOcupacion,
-                'densidadPromedio': granja.densidadPromedioAvesM2,
-              },
-              'lotes': {'activos': lotesActivos.length, 'totalAves': totalAves},
-              'galpones': {
-                'total': galpones.length,
-                'activos': galponesActivos,
-                'enMantenimiento': galponesEnMantenimiento,
-              },
-              'alertas': {
-                'sobrepoblacion': totalAves > capacidadMaxima,
-                'datosDesactualizados': granja.datosDesactualizados,
-                'sinLotes': lotesActivos.isEmpty && galpones.isNotEmpty,
-              },
-            };
+            final dashboard = GranjaDashboard(
+              resumen: GranjaDashboardResumen(
+                id: granja.id,
+                nombre: granja.nombre,
+                estado: granja.estado.displayName,
+                propietario: granja.propietarioNombre,
+              ),
+              capacidad: GranjaDashboardCapacidad(
+                totalAves: totalAves,
+                capacidadMaxima: capacidadMaxima,
+                porcentajeOcupacion: porcentajeOcupacion,
+                densidadPromedio: granja.densidadPromedioAvesM2,
+              ),
+              lotes: GranjaDashboardLotes(
+                activos: lotesActivos.length,
+                totalAves: totalAves,
+              ),
+              galpones: GranjaDashboardGalpones(
+                total: galpones.length,
+                activos: galponesActivos,
+                enMantenimiento: galponesEnMantenimiento,
+              ),
+              alertas: GranjaDashboardAlertas(
+                sobrepoblacion: totalAves > capacidadMaxima,
+                datosDesactualizados: granja.datosDesactualizados,
+                sinLotes: lotesActivos.isEmpty && galpones.isNotEmpty,
+              ),
+            );
 
             return Right(dashboard);
           });

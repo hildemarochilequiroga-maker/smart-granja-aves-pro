@@ -92,6 +92,7 @@ class AlertasService {
             'stockActual': stockActual,
           },
           accionUrl: AppRoutes.inventarioPorGranjaId(granjaId),
+          dedupeKey: 'stockBajo_${itemDoc.id}',
         );
       }
 
@@ -110,6 +111,7 @@ class AlertasService {
           prioridad: PrioridadNotificacion.urgente,
           data: {'itemId': itemDoc.id, 'itemNombre': nombreItem},
           accionUrl: AppRoutes.inventarioPorGranjaId(granjaId),
+          dedupeKey: 'stockAgotado_${itemDoc.id}',
         );
       }
 
@@ -165,6 +167,7 @@ class AlertasService {
               'fechaVencimiento': fechaVenc.toIso8601String(),
             },
             accionUrl: AppRoutes.inventarioPorGranjaId(granjaId),
+            dedupeKey: 'productoVencido_${doc.id}',
           );
         }
         // Próximo a vencer
@@ -191,6 +194,7 @@ class AlertasService {
               'diasRestantes': diasRestantes,
             },
             accionUrl: AppRoutes.inventarioPorGranjaId(granjaId),
+            dedupeKey: 'proximoVencer_${doc.id}_$diasRestantes',
           );
         }
       }
@@ -527,9 +531,8 @@ class AlertasService {
       final ahora = DateTime.now();
 
       final snapshot = await _firestore
-          .collection('granjas')
-          .doc(granjaId)
           .collection('lotes')
+          .where('granjaId', isEqualTo: granjaId)
           .where('estado', isEqualTo: 'activo')
           .get();
 
@@ -573,6 +576,7 @@ class AlertasService {
               'diasRestantes': diasRestantes,
             },
             accionUrl: AppRoutes.loteDashboardById(granjaId, doc.id),
+            dedupeKey: 'loteCierreProximo_${doc.id}_$diasRestantes',
           );
         }
       }
@@ -628,9 +632,8 @@ class AlertasService {
       final hace3Dias = DateTime.now().subtract(const Duration(days: 3));
 
       final lotesSnapshot = await _firestore
-          .collection('granjas')
-          .doc(granjaId)
           .collection('lotes')
+          .where('granjaId', isEqualTo: granjaId)
           .where('estado', isEqualTo: 'activo')
           .get();
 
@@ -647,8 +650,6 @@ class AlertasService {
 
         // Verificar último registro
         final ultimoRegistro = await _firestore
-            .collection('granjas')
-            .doc(granjaId)
             .collection('lotes')
             .doc(loteId)
             .collection('registros_diarios')
@@ -684,6 +685,7 @@ class AlertasService {
               'diasSinRegistro': diasSinRegistro,
             },
             accionUrl: AppRoutes.loteDashboardById(granjaId, loteId),
+            dedupeKey: 'loteSinRegistros_${loteId}_$diasSinRegistro',
           );
         }
       }
@@ -1032,6 +1034,7 @@ class AlertasService {
             'fechaProgramada': fechaProgramada.toIso8601String(),
           },
           accionUrl: AppRoutes.vacunaciones,
+          dedupeKey: 'vacunacion_${doc.id}_${tipo.value}',
         );
       }
     } on Exception catch (e) {
@@ -1596,6 +1599,7 @@ class AlertasService {
             'fechaProgramada': fechaProgramada.toIso8601String(),
           },
           accionUrl: AppRoutes.bioseguridadPorGranja(granjaId),
+          dedupeKey: 'inspeccion_${doc.id}_${tipo.value}',
         );
       }
     } on Exception catch (e) {
@@ -1824,6 +1828,7 @@ class AlertasService {
             prioridad: PrioridadNotificacion.alta,
             data: {'pedidoId': doc.id, 'clienteNombre': clienteNombre},
             accionUrl: AppRoutes.ventas,
+            dedupeKey: 'entregaHoy_${doc.id}',
           );
         } else if (fechaSinHora.isAtSameMomentAs(manana)) {
           await _crearNotificacion(
@@ -1836,6 +1841,7 @@ class AlertasService {
             prioridad: PrioridadNotificacion.normal,
             data: {'pedidoId': doc.id, 'clienteNombre': clienteNombre},
             accionUrl: AppRoutes.ventas,
+            dedupeKey: 'entregaManana_${doc.id}',
           );
         }
       }
@@ -2758,6 +2764,54 @@ class AlertasService {
     return '${fecha.day}/${fecha.month}/${fecha.year}';
   }
 
+  /// Filtra de [usuarioIds] aquellos que YA recibieron una notificación del
+  /// mismo [tipo] y [dedupeKey] dentro de [ventana].
+  ///
+  /// Evita el spam de las verificaciones periódicas (cada 15 min): sin esto,
+  /// una condición persistente (stock bajo, vacuna vencida…) generaría una
+  /// notificación nueva en cada corrida. Devuelve solo los usuarios a los que
+  /// SÍ corresponde notificar.
+  Future<List<String>> _filtrarUsuariosSinNotificacionReciente({
+    required List<String> usuarioIds,
+    required TipoNotificacion tipo,
+    required String dedupeKey,
+    required String granjaId,
+    Duration ventana = const Duration(hours: 24),
+  }) async {
+    final desde = Timestamp.fromDate(DateTime.now().subtract(ventana));
+    final pendientes = <String>[];
+
+    await Future.wait(
+      usuarioIds.map((usuarioId) async {
+        try {
+          // Se filtra por granjaId para que las reglas de Firestore puedan
+          // autorizar la consulta a la subcolección de OTRO usuario
+          // (allow read por miembro de la granja).
+          final existing = await _firestore
+              .collection('usuarios')
+              .doc(usuarioId)
+              .collection('notificaciones')
+              .where('granjaId', isEqualTo: granjaId)
+              .where('tipo', isEqualTo: tipo.value)
+              .where('dedupeKey', isEqualTo: dedupeKey)
+              .where('fechaCreacion', isGreaterThan: desde)
+              .limit(1)
+              .get();
+          if (existing.docs.isEmpty) {
+            pendientes.add(usuarioId);
+          }
+        } on Exception catch (e) {
+          // Ante un fallo de la query (p.ej. índice faltante) preferimos
+          // notificar a no hacerlo, para no perder alertas importantes.
+          debugPrint('Dedupe fallback (notificando) para $usuarioId: $e');
+          pendientes.add(usuarioId);
+        }
+      }),
+    );
+
+    return pendientes;
+  }
+
   /// Crea notificación para múltiples usuarios.
   Future<void> _crearNotificacion({
     required List<String> usuarioIds,
@@ -2769,8 +2823,24 @@ class AlertasService {
     required PrioridadNotificacion prioridad,
     Map<String, dynamic>? data,
     String? accionUrl,
+    String? dedupeKey,
+    Duration dedupeVentana = const Duration(hours: 24),
   }) async {
     if (usuarioIds.isEmpty) return;
+
+    // Deduplicación para alertas de polling: no recrear la misma alerta
+    // (tipo + ítem) si el usuario ya la recibió dentro de la ventana.
+    var destinatarios = usuarioIds;
+    if (dedupeKey != null) {
+      destinatarios = await _filtrarUsuariosSinNotificacionReciente(
+        usuarioIds: usuarioIds,
+        tipo: tipo,
+        dedupeKey: dedupeKey,
+        granjaId: granjaId,
+        ventana: dedupeVentana,
+      );
+      if (destinatarios.isEmpty) return;
+    }
 
     final notificacion = Notificacion(
       id: '',
@@ -2784,10 +2854,11 @@ class AlertasService {
       prioridad: prioridad,
       data: data,
       accionUrl: accionUrl,
+      dedupeKey: dedupeKey,
     );
 
     await _notificacionesRepo.crearParaMultiplesUsuarios(
-      usuarioIds: usuarioIds,
+      usuarioIds: destinatarios,
       notificacionBase: notificacion,
     );
 
@@ -2795,7 +2866,7 @@ class AlertasService {
     if (prioridad == PrioridadNotificacion.alta ||
         prioridad == PrioridadNotificacion.urgente) {
       await Future.wait(
-        usuarioIds.map(
+        destinatarios.map(
           (usuarioId) => NotificationService.instance.crearNotificacionLocal(
             usuarioId: usuarioId,
             tipo: tipo,
@@ -2813,9 +2884,29 @@ class AlertasService {
   // VERIFICACIONES PROGRAMADAS (SCHEDULER)
   // ============================================================
 
+  /// Ventana de coalescencia del lock distribuido de verificaciones.
+  ///
+  /// Solo un cliente por granja ejecuta el set completo de verificaciones
+  /// dentro de esta ventana; el resto sale temprano sin gastar lecturas.
+  /// Debe ser >= al intervalo del scheduler del cliente (30 min).
+  static const Duration _ventanaVerificacion = Duration(minutes: 30);
+
   /// Ejecuta todas las verificaciones periódicas para una granja.
+  ///
+  /// Protegido por un lock distribuido (`alertas_locks/{granjaId}`): con varios
+  /// usuarios de la misma granja con la app abierta, solo UNO corre las ~7
+  /// verificaciones por ventana; los demás abortan sin ejecutar queries. Esto
+  /// evita que el costo de lecturas se multiplique por número de usuarios.
   Future<void> ejecutarVerificacionesProgramadas(String granjaId) async {
     try {
+      if (!await _intentarAdquirirLock(granjaId)) {
+        debugPrint(
+          'ℹ️ Verificaciones ya ejecutadas en esta ventana para $granjaId '
+          '(otro cliente tomó el lock). Saltando.',
+        );
+        return;
+      }
+
       debugPrint('🔄 Ejecutando verificaciones para granja: $granjaId');
 
       await Future.wait([
@@ -2831,6 +2922,39 @@ class AlertasService {
       debugPrint('✅ Verificaciones completadas para: $granjaId');
     } on Exception catch (e) {
       debugPrint('Error en verificaciones: $e');
+    }
+  }
+
+  /// Intenta tomar el lock de verificación para la granja en la ventana actual.
+  ///
+  /// Devuelve `true` si este cliente debe ejecutar las verificaciones, `false`
+  /// si otro cliente ya las ejecutó dentro de [_ventanaVerificacion]. Usa una
+  /// transacción para que la decisión sea atómica entre clientes concurrentes.
+  /// Ante cualquier error, devuelve `true` (degradación segura: prefiere
+  /// ejecutar a perder alertas).
+  Future<bool> _intentarAdquirirLock(String granjaId) async {
+    final lockRef = _firestore.collection('alertas_locks').doc(granjaId);
+    try {
+      return await _firestore.runTransaction<bool>((txn) async {
+        final snap = await txn.get(lockRef);
+        final ahora = DateTime.now();
+        if (snap.exists) {
+          final ultima = (snap.data()?['ultimaEjecucion'] as Timestamp?)
+              ?.toDate();
+          if (ultima != null &&
+              ahora.difference(ultima) < _ventanaVerificacion) {
+            return false; // Otro cliente ya corrió en esta ventana.
+          }
+        }
+        txn.set(lockRef, {
+          'ultimaEjecucion': FieldValue.serverTimestamp(),
+          'granjaId': granjaId,
+        });
+        return true;
+      });
+    } on Exception catch (e) {
+      debugPrint('⚠️ Lock de verificación no disponible ($e); ejecutando igual');
+      return true;
     }
   }
 

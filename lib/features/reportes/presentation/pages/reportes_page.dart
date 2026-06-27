@@ -12,15 +12,18 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/errors/error_handler.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_filter_tab.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../lotes/application/providers/lote_providers.dart';
+import '../../../lotes/domain/entities/lote.dart';
 import '../../application/providers/reportes_provider.dart';
 import '../../domain/enums/enums.dart';
 import '../widgets/reporte_card.dart';
@@ -51,35 +54,41 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(title: Text(S.of(context).reportPageTitle)),
       body: granja == null
-          ? _buildNoGranjaMessage()
-          : Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header con información de granja
-                        _buildGranjaHeader(granja.nombre),
-                        AppSpacing.gapXl,
+          ? FormTextScale(child: _buildNoGranjaMessage())
+          : FormTextScale(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header con información de granja
+                          _buildGranjaHeader(granja.nombre),
+                          AppSpacing.gapXl,
 
-                        // Selector de período
-                        _buildPeriodoSelector(periodoSeleccionado),
-                        AppSpacing.gapXl,
+                          // Selector de lote (siempre visible)
+                          _buildLoteSelector(),
+                          AppSpacing.gapXl,
 
-                        // Tipos de reportes
-                        _buildSeccionTitulo(S.of(context).reportSelectType),
-                        AppSpacing.gapMd,
-                        _buildReportesGrid(tipoSeleccionado),
-                        AppSpacing.gapBase,
-                      ],
+                          // Selector de período
+                          _buildPeriodoSelector(periodoSeleccionado),
+                          AppSpacing.gapXl,
+
+                          // Tipos de reportes
+                          _buildSeccionTitulo(S.of(context).reportSelectType),
+                          AppSpacing.gapMd,
+                          _buildReportesGrid(tipoSeleccionado),
+                          AppSpacing.gapBase,
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                // Botón fijo en la parte inferior
-                _buildGenerarButtonFixed(tipoSeleccionado),
-              ],
+                  // Botón fijo en la parte inferior
+                  _buildGenerarButtonFixed(tipoSeleccionado),
+                ],
+              ),
             ),
     );
   }
@@ -145,39 +154,15 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.2),
-                  borderRadius: AppRadius.allMd,
-                ),
-                child: const Icon(
-                  Icons.analytics_rounded,
-                  color: AppColors.white,
-                  size: 28,
-                ),
-              ),
-              AppSpacing.hGapBase,
-              Expanded(
-                child: Text(
-                  granjaNombre,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.picture_as_pdf_rounded,
-                color: AppColors.white.withValues(alpha: 0.7),
-                size: 32,
-              ),
-            ],
+          Text(
+            granjaNombre,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: AppColors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           AppSpacing.gapBase,
-          // Período de reporte mejorado
+          // Período de reporte
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
@@ -189,12 +174,6 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.date_range_rounded,
-                  color: AppColors.white.withValues(alpha: 0.9),
-                  size: 18,
-                ),
-                AppSpacing.hGapSm,
                 Expanded(
                   child: Text(
                     S
@@ -335,29 +314,166 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
     );
   }
 
+  /// Tipos de reporte disponibles en el grid (se ocultan salud e inventario).
+  static const List<TipoReporte> _tiposDisponibles = [
+    TipoReporte.produccionLote,
+    TipoReporte.mortalidad,
+    TipoReporte.consumo,
+    TipoReporte.peso,
+    TipoReporte.costos,
+    TipoReporte.ventas,
+    TipoReporte.rentabilidad,
+    TipoReporte.ejecutivo,
+  ];
+
   Widget _buildReportesGrid(TipoReporte tipoSeleccionado) {
-    return GridView.builder(
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppBreakpoints.of(context).gridColumns,
-        childAspectRatio: 1.4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: TipoReporte.values.length,
+      itemCount: _tiposDisponibles.length,
       itemBuilder: (context, index) {
-        final tipo = TipoReporte.values[index];
+        final tipo = _tiposDisponibles[index];
         final isSelected = tipo == tipoSeleccionado;
 
-        return ReporteCard(
-          tipo: tipo,
-          isSelected: isSelected,
-          onTap: () {
-            ref.read(tipoReporteSeleccionadoProvider.notifier).state = tipo;
-          },
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: ReporteCard(
+            tipo: tipo,
+            isSelected: isSelected,
+            onTap: () {
+              ref.read(tipoReporteSeleccionadoProvider.notifier).state = tipo;
+            },
+          ),
         );
       },
+    );
+  }
+
+  /// Selector del lote del que se saca el reporte (reportes por lote).
+  Widget _buildLoteSelector() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l = S.of(context);
+    final granja = ref.watch(granjaSeleccionadaProvider);
+    if (granja == null) return const SizedBox.shrink();
+
+    final lotesAsync = ref.watch(lotesStreamProvider(granja.id));
+    final loteId = ref.watch(loteReporteSeleccionadoProvider);
+
+    return lotesAsync.when(
+      data: (lotes) {
+        final lotesActivos = lotes
+            .where((lote) => lote.estado.estaOperativo)
+            .toList();
+
+        if (lotesActivos.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.base),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: AppRadius.allMd,
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+            child: Text(
+              l.reportNoActiveBatches,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+
+        // Si no hay lote elegido aún (o el guardado ya no existe en esta
+        // granja), seleccionar el primero por defecto.
+        final seleccionado =
+            lotesActivos.where((lote) => lote.id == loteId).firstOrNull ??
+            lotesActivos.first;
+        if (loteId != seleccionado.id) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref.read(loteReporteSeleccionadoProvider.notifier).state =
+                  seleccionado.id;
+            }
+          });
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSeccionTitulo(l.commonBatch),
+            AppSpacing.gapMd,
+            InkWell(
+              onTap: () => _mostrarSelectorLote(lotesActivos, seleccionado.id),
+              borderRadius: AppRadius.allMd,
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.base),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: AppRadius.allMd,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            seleccionado.nombre ?? seleccionado.codigo,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          AppSpacing.gapXxs,
+                          Text(
+                            l.historialBirdsUnit(seleccionado.avesActuales),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  void _mostrarSelectorLote(List<Lote> lotes, String seleccionadoId) {
+    final l = S.of(context);
+    showAppBottomSheet<void>(
+      context: context,
+      title: l.commonBatch,
+      isScrollControlled: true,
+      scrollable: true,
+      builder: (ctx) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        children: lotes.map((lote) {
+          return AppSheetOptionTile(
+            label: lote.nombre ?? lote.codigo,
+            subtitle: l.historialBirdsUnit(lote.avesActuales),
+            selected: lote.id == seleccionadoId,
+            onTap: () {
+              ref.read(loteReporteSeleccionadoProvider.notifier).state =
+                  lote.id;
+              Navigator.pop(ctx);
+            },
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -526,7 +642,7 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
             ventasPorProducto: ventasPorProducto,
           );
         case TipoReporte.produccionLote:
-          // Obtener el primer lote activo para reporte individual
+          // Reporte individual del lote elegido por el usuario.
           final lotes = await ref.read(datosLotesParaReporteProvider.future);
           if (lotes.isEmpty) {
             if (mounted) {
@@ -537,33 +653,166 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
             }
             return;
           }
+          final loteSeleccionadoId = ref.read(loteReporteSeleccionadoProvider);
+          final datosLote =
+              lotes
+                  .where((lote) => lote.loteId == loteSeleccionadoId)
+                  .firstOrNull ??
+              lotes.first;
           pdfBytes = await pdfService.generarReporteProduccionLote(
-            datos: lotes.first,
+            datos: datosLote,
             granjaNombre: granja.nombre,
             fechaInicio: fechaInicio,
             fechaFin: fechaFin,
             generadoPor: generadoPor,
           );
         case TipoReporte.ejecutivo:
-        case TipoReporte.rentabilidad:
-        case TipoReporte.mortalidad:
-        case TipoReporte.consumo:
-        case TipoReporte.peso:
-        case TipoReporte.salud:
-        case TipoReporte.inventario:
-          // Estos tipos usan el reporte ejecutivo como base
           final resumen = await ref.read(resumenEjecutivoProvider.future);
           final lotes = await ref.read(datosLotesParaReporteProvider.future);
-          if (resumen == null) {
+          if (resumen == null || lotes.isEmpty) {
             if (mounted) {
               AppSnackBar.warning(
                 context,
-                message: S.of(context).reportInsufficientData,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
               );
             }
             return;
           }
           pdfBytes = await pdfService.generarReporteEjecutivo(
+            resumen: resumen,
+            granjaNombre: granja.nombre,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            generadoPor: generadoPor,
+            lotesActivos: lotes,
+          );
+        case TipoReporte.mortalidad:
+          final resumen = await ref.read(resumenEjecutivoProvider.future);
+          final lotes = await ref.read(datosLotesParaReporteProvider.future);
+          if (resumen == null || lotes.isEmpty) {
+            if (mounted) {
+              AppSnackBar.warning(
+                context,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
+              );
+            }
+            return;
+          }
+          pdfBytes = await pdfService.generarReporteMortalidad(
+            resumen: resumen,
+            granjaNombre: granja.nombre,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            generadoPor: generadoPor,
+            lotesActivos: lotes,
+          );
+        case TipoReporte.consumo:
+          final resumen = await ref.read(resumenEjecutivoProvider.future);
+          final lotes = await ref.read(datosLotesParaReporteProvider.future);
+          if (resumen == null || lotes.isEmpty) {
+            if (mounted) {
+              AppSnackBar.warning(
+                context,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
+              );
+            }
+            return;
+          }
+          pdfBytes = await pdfService.generarReporteConsumo(
+            resumen: resumen,
+            granjaNombre: granja.nombre,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            generadoPor: generadoPor,
+            lotesActivos: lotes,
+          );
+        case TipoReporte.peso:
+          final resumen = await ref.read(resumenEjecutivoProvider.future);
+          final lotes = await ref.read(datosLotesParaReporteProvider.future);
+          if (resumen == null || lotes.isEmpty) {
+            if (mounted) {
+              AppSnackBar.warning(
+                context,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
+              );
+            }
+            return;
+          }
+          pdfBytes = await pdfService.generarReportePeso(
+            resumen: resumen,
+            granjaNombre: granja.nombre,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            generadoPor: generadoPor,
+            lotesActivos: lotes,
+          );
+        case TipoReporte.rentabilidad:
+          final resumen = await ref.read(resumenEjecutivoProvider.future);
+          final lotes = await ref.read(datosLotesParaReporteProvider.future);
+          if (resumen == null || lotes.isEmpty) {
+            if (mounted) {
+              AppSnackBar.warning(
+                context,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
+              );
+            }
+            return;
+          }
+          pdfBytes = await pdfService.generarReporteRentabilidad(
+            resumen: resumen,
+            granjaNombre: granja.nombre,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            generadoPor: generadoPor,
+            lotesActivos: lotes,
+          );
+        case TipoReporte.salud:
+          final resumen = await ref.read(resumenEjecutivoProvider.future);
+          final lotes = await ref.read(datosLotesParaReporteProvider.future);
+          if (resumen == null || lotes.isEmpty) {
+            if (mounted) {
+              AppSnackBar.warning(
+                context,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
+              );
+            }
+            return;
+          }
+          pdfBytes = await pdfService.generarReporteSalud(
+            resumen: resumen,
+            granjaNombre: granja.nombre,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            generadoPor: generadoPor,
+            lotesActivos: lotes,
+          );
+        case TipoReporte.inventario:
+          final resumen = await ref.read(resumenEjecutivoProvider.future);
+          final lotes = await ref.read(datosLotesParaReporteProvider.future);
+          if (resumen == null || lotes.isEmpty) {
+            if (mounted) {
+              AppSnackBar.warning(
+                context,
+                message: lotes.isEmpty
+                    ? S.of(context).reportNoActiveBatches
+                    : S.of(context).reportInsufficientData,
+              );
+            }
+            return;
+          }
+          pdfBytes = await pdfService.generarReporteInventario(
             resumen: resumen,
             granjaNombre: granja.nombre,
             fechaInicio: fechaInicio,

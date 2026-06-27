@@ -44,28 +44,6 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
     
-    // Obtiene el timestamp actual del servidor
-    function isValidTimestamp(field) {
-      return request.resource.data[field] == request.time;
-    }
-    
-    // Verifica que el tamaño del documento no exceda el límite (en bytes)
-    function isValidDocSize() {
-      return request.resource.size() < 1048576; // 1 MB
-    }
-    
-    // Verifica que un campo de texto no esté vacío
-    function isNotEmpty(field) {
-      return request.resource.data[field] is string && 
-        request.resource.data[field].size() > 0;
-    }
-    
-    // Verifica que un número sea positivo
-    function isPositive(field) {
-      return request.resource.data[field] is number && 
-        request.resource.data[field] > 0;
-    }
-    
     // =========================================================================
     // COLECCIÓN INTERNA: _app_status
     // =========================================================================
@@ -100,8 +78,31 @@ service cloud.firestore {
       
       // Subcolección: notificaciones del usuario
       match /notificaciones/{notifId} {
-        allow read: if isOwner(userId);
-        allow create: if isAuthenticated();
+        // Verifica que el CREADOR tenga acceso a la granja referida en la
+        // notificación entrante (propietario o colaborador activo). Permite
+        // que el sistema de alertas genere notificaciones para el equipo de
+        // la granja (owners/admins) desde el cliente.
+        // Verifica acceso a una granja (propietario o colaborador activo).
+        function hasAccessToGranjaId(granjaId) {
+          return isAuthenticated() && granjaId != null && (
+            (exists(/databases/$(database)/documents/granjas/$(granjaId)) &&
+             get(/databases/$(database)/documents/granjas/$(granjaId)).data.propietarioId == request.auth.uid) ||
+            (exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+             get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true)
+          );
+        }
+
+        // Lectura: el dueño de la subcolección (todas sus notificaciones), o
+        // un miembro de la granja referida. Esto último habilita la query de
+        // deduplicación de alertas (filtrada por granjaId) sin exponer las
+        // notificaciones personales (sin granjaId) de otros usuarios.
+        allow read: if isOwner(userId) ||
+          hasAccessToGranjaId(resource.data.granjaId);
+        // Creación: el propio usuario (auto-notificaciones), o un miembro de
+        // la granja referida (alertas para el equipo). Cierra el abuso de que
+        // cualquier autenticado escriba notificaciones a usuarios arbitrarios.
+        allow create: if isOwner(userId) ||
+          hasAccessToGranjaId(request.resource.data.granjaId);
         allow update, delete: if isOwner(userId);
       }
     }
@@ -365,13 +366,6 @@ service cloud.firestore {
           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
       }
       
-      // Función para verificar si el usuario es colaborador activo de la granja
-      function isActiveCollaborator(granjaId) {
-        return isAuthenticated() && 
-          exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
-          get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true;
-      }
-      
       // Función para verificar acceso a la granja (propietario o colaborador)
       function hasGranjaAccess() {
         return isAuthenticated() && (
@@ -415,12 +409,6 @@ service cloud.firestore {
         return isAuthenticated() && 
           exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
-      }
-      
-      function willBeGranjaOwnerForInvitation() {
-        return isAuthenticated() && 
-          exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
-          get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid;
       }
       
       // Función para verificar si usuario tiene acceso a la granja (propietario o colaborador)
@@ -509,9 +497,12 @@ service cloud.firestore {
           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true;
       }
       
-      // Lectura: permitir queries autenticadas (Firestore filtrará por los where clauses)
-      // Para get de documento individual, verificar propiedad o colaborador
-      allow list: if isAuthenticated();
+      // Lectura. `list` exige acceso por granja sobre CADA documento devuelto
+      // (resource.data.granjaId): así una query sin filtrar por una granja
+      // accesible falla, garantizando aislamiento entre granjas (un usuario no
+      // puede listar lotes de granjas ajenas). El cliente ya filtra por
+      // granjaId/galponId, por lo que no se ve afectado.
+      allow list: if isGranjaOwnerForLote() || isCollaboratorForLote() || isAdmin();
       allow get: if isGranjaOwnerForLote() || isGranjaOwnerThroughGalpon() || isCollaboratorForLote() || isAdmin();
       
       // Creación: propietario o colaborador con campos requeridos
@@ -592,12 +583,6 @@ service cloud.firestore {
           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid;
       }
       
-      function willBeGranjaOwnerForGalpon() {
-        return isAuthenticated() && 
-          exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
-          get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid;
-      }
-      
       // Función para verificar acceso a la granja (propietario o colaborador)
       function canAccessGalpon() {
         return isAuthenticated() && (
@@ -619,8 +604,9 @@ service cloud.firestore {
         );
       }
       
-      // Lectura: propietario, colaborador o admin
-      allow list: if isAuthenticated();
+      // Lectura: `list` exige acceso por granja sobre cada documento (aísla
+      // galpones de granjas ajenas). El cliente ya filtra por granjaId.
+      allow list: if canAccessGalpon() || isAdmin();
       allow get: if canAccessGalpon() || isAdmin();
       
       // Creación: con acceso a la granja y campos requeridos
@@ -729,7 +715,8 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja del ítem (aislamiento).
+      allow list: if canAccessInventarioItem() || isAdmin();
       allow get: if canAccessInventarioItem() || isAdmin();
       
       // Creación: con acceso a la granja y campos requeridos
@@ -772,7 +759,8 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja del movimiento (aislamiento).
+      allow list: if canAccessMovimiento() || isAdmin();
       allow get: if canAccessMovimiento() || isAdmin();
       
       // Creación: con acceso a la granja y campos requeridos
@@ -831,14 +819,16 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja del registro (aislamiento).
+      allow list: if canAccessSaludRegistro() || isAdmin();
       allow get: if canAccessSaludRegistro() || isAdmin();
       
       // Creación: con acceso a la granja
       allow create: if canCreateSaludRegistro();
       
       // Actualización: con acceso a la granja
-      allow update: if canAccessSaludRegistro();
+      allow update: if canAccessSaludRegistro() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId']);
       
       // Eliminación: con acceso a la granja o admin
       allow delete: if canAccessSaludRegistro() || isAdmin();
@@ -872,19 +862,43 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja del gasto (aislamiento).
+      allow list: if canAccessCostoGasto() || isAdmin();
       allow get: if canAccessCostoGasto() || isAdmin();
       
       // Creación: con acceso a la granja
       allow create: if canCreateCostoGasto();
       
-      // Actualización: con acceso a la granja
-      allow update: if canAccessCostoGasto();
-      
+      // Actualización: con acceso a la granja y sin reasignar el gasto a otra
+      // granja (granjaId inmutable evita moverlo fuera del aislamiento).
+      allow update: if canAccessCostoGasto() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId']);
+
       // Eliminación: con acceso a la granja o admin
       allow delete: if canAccessCostoGasto() || isAdmin();
     }
-    
+
+    // =========================================================================
+    // COLECCIÓN: ALERTAS_LOCKS (lock distribuido del scheduler de alertas)
+    // =========================================================================
+    // El docId ES el granjaId. Solo miembros activos de esa granja pueden
+    // leer/escribir el lock. Esto evita que el cálculo de alertas se ejecute
+    // de forma redundante en cada cliente (control de costo de lecturas).
+    match /alertas_locks/{granjaId} {
+      function canAccessLock() {
+        return isAuthenticated() && (
+          (exists(/databases/$(database)/documents/granjas/$(granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(granjaId)).data.propietarioId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+      // Solo se permite escribir el propio granjaId en el campo (consistencia).
+      allow read: if canAccessLock();
+      allow write: if canAccessLock() &&
+        request.resource.data.granjaId == granjaId;
+    }
+
     // =========================================================================
     // COLECCIÓN: VENTAS PRODUCTOS (colección raíz)
     // =========================================================================
@@ -913,14 +927,16 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja de la venta (aislamiento).
+      allow list: if canAccessVentaProducto() || isAdmin();
       allow get: if canAccessVentaProducto() || isAdmin();
       
       // Creación: con acceso a la granja
       allow create: if canCreateVentaProducto();
       
       // Actualización: con acceso a la granja
-      allow update: if canAccessVentaProducto();
+      allow update: if canAccessVentaProducto() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId']);
       
       // Eliminación: con acceso a la granja o admin
       allow delete: if canAccessVentaProducto() || isAdmin();
@@ -954,14 +970,16 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja del pedido (aislamiento).
+      allow list: if canAccessVentaPedido() || isAdmin();
       allow get: if canAccessVentaPedido() || isAdmin();
       
       // Creación: con acceso a la granja
       allow create: if canCreateVentaPedido();
       
       // Actualización: con acceso a la granja
-      allow update: if canAccessVentaPedido();
+      allow update: if canAccessVentaPedido() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId']);
       
       // Eliminación: con acceso a la granja o admin
       allow delete: if canAccessVentaPedido() || isAdmin();
@@ -1038,7 +1056,8 @@ service cloud.firestore {
       }
       
       // Lectura: queries autenticadas (Firestore filtra por granjaId o loteId)
-      allow list: if isAuthenticated();
+      // `list` restringido por acceso a la granja de la vacunación (aislamiento).
+      allow list: if canAccessVacunacion() || isAdmin();
       allow get: if canAccessVacunacion() || isAdmin();
       
       // Creación: con acceso a la granja y campos requeridos
@@ -1046,7 +1065,8 @@ service cloud.firestore {
         hasRequiredFields(['granjaId', 'loteId', 'nombreVacuna', 'fechaProgramada']);
       
       // Actualización: con acceso a la granja
-      allow update: if canAccessVacunacion();
+      allow update: if canAccessVacunacion() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['granjaId']);
       
       // Eliminación: con acceso a la granja o admin
       allow delete: if canAccessVacunacion() || isAdmin();

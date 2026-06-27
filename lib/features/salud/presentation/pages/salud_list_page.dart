@@ -21,6 +21,7 @@ import '../../../../core/routes/app_routes.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -399,49 +400,12 @@ class _SaludListPageState extends ConsumerState<SaludListPage> {
         builder: (context, setModalState) {
           final hayFiltros = tempEstadoFilter != EstadoSalud.todos;
 
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
+          return AppBottomSheetScaffold(
+            title: l.saludFilterRecords,
+            scrollable: true,
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      l.saludFilterRecords,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
                   // Contenido scrolleable
                   Flexible(
                     child: SingleChildScrollView(
@@ -504,7 +468,6 @@ class _SaludListPageState extends ConsumerState<SaludListPage> {
                   ),
                 ],
               ),
-            ),
           );
         },
       ),
@@ -815,7 +778,9 @@ class _SaludDetailSheet extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xxl),
+        ),
       ),
       child: SingleChildScrollView(
         child: Padding(

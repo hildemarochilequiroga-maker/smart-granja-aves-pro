@@ -296,7 +296,7 @@ ${granja.correo != null ? '✉️ ${granja.correo}' : ''}
     if (state is GranjaDeleted) {
       // Éxito: navegar de vuelta y mostrar confirmación
       if (context.mounted) {
-        context.go(AppRoutes.granjas);
+        context.go(AppRoutes.granjasHome);
 
         // Mostrar SnackBar después de navegar
         Future.delayed(const Duration(milliseconds: 300), () {

@@ -81,7 +81,7 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         color: theme.colorScheme.primary,
-        edgeOffset: 110,
+        edgeOffset: 132,
         child: CustomScrollView(
           slivers: [
             // Barra de búsqueda sticky
@@ -135,13 +135,6 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
                       hasFilters: true,
                       filterTitle: l.farmNoFarmsFound,
                       filterDescription: l.farmNoFarmsFoundHint,
-                      onClearFilters: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchQuery = '';
-                          _estadoFilter = null;
-                        });
-                      },
                     ),
                   );
                 }
@@ -152,7 +145,9 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
 
                 return SliverMainAxisGroup(
                   slivers: [
-                    // Botón Planificador Avícola
+                    // Botón "Planificador Avícola" oculto a pedido.
+                    // Implementación conservada (comentada) por si se reactiva:
+                    /*
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.symmetric(
@@ -173,6 +168,7 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
                         ),
                       ),
                     ),
+                    */
                     SliverPadding(
                       padding: EdgeInsets.symmetric(horizontal: listPadding),
                       sliver: SliverList(
@@ -188,6 +184,7 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
                             ),
                             child: GranjaListCard(
                               granja: granja,
+                              index: index,
                               onDetalles: () => _navegarADetalle(granja.id),
                               onEdit: () => _navegarAEditar(granja.id),
                               onCambiarEstado: () => _cambiarEstado(granja),
@@ -217,10 +214,10 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'granjas_list_fab',
         onPressed: () => context.push(AppRoutes.granjaCrear),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add, size: 26),
         label: Text(
           l.farmNewFarm,
-          style: theme.textTheme.labelLarge?.copyWith(
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -272,6 +269,9 @@ class _GranjasListPageState extends ConsumerState<GranjasListPage> {
 
   Future<void> _onRefresh() async {
     ref.invalidate(granjasStreamProvider);
+    // Esperar el primer dato fresco para que el indicador de refresco
+    // permanezca visible hasta que el stream reemita (evita parpadeo).
+    await ref.read(granjasStreamProvider.future);
   }
 
   void _navegarADetalle(String granjaId) {
@@ -374,10 +374,10 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<EstadoGranja?> onFilterChanged;
 
   @override
-  double get minExtent => 110;
+  double get minExtent => 132;
 
   @override
-  double get maxExtent => 110;
+  double get maxExtent => 132;
 
   @override
   Widget build(

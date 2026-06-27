@@ -5,8 +5,8 @@ library;
 import 'package:flutter/material.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -198,10 +198,6 @@ class _BasicInfoStepState extends ConsumerState<BasicInfoStep> {
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,
           ),
-          AppSpacing.gapBase,
-
-          // Card informativa
-          _buildInfoCard(),
         ],
       ),
     );
@@ -210,137 +206,15 @@ class _BasicInfoStepState extends ConsumerState<BasicInfoStep> {
   Widget _buildTipoGalponDropdown() {
     return Builder(
       builder: (context) {
-        final theme = Theme.of(context);
-        final labelColor = theme.colorScheme.onSurface.withValues(alpha: 0.8);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Label encima del campo (estilo Wialon)
-            Text(
-              '${S.of(context).shedTypeLabel} *',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: labelColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            AppSpacing.gapSm,
-            DropdownButtonFormField<TipoGalpon>(
-              initialValue: widget.tipoGalpon,
-              autovalidateMode: widget.autoValidate
-                  ? AutovalidateMode.always
-                  : AutovalidateMode.disabled,
-              decoration: InputDecoration(
-                hintText: S.of(context).shedSelectTypeHint,
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  fontWeight: FontWeight.normal,
-                ),
-                errorMaxLines: 2,
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.error,
-                    width: 1,
-                  ),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.error,
-                    width: 1.5,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                errorStyle: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                  height: 1.2,
-                ),
-              ),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w400,
-                color: theme.colorScheme.onSurface,
-              ),
-              isExpanded: true,
-              itemHeight: null,
-              menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
-              selectedItemBuilder: (BuildContext context) {
-                return TipoGalpon.values.map((tipo) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      tipo.localizedDisplayName(S.of(context)),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  );
-                }).toList();
-              },
-              items: TipoGalpon.values.map((tipo) {
-                return DropdownMenuItem(
-                  value: tipo,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          tipo.localizedDisplayName(S.of(context)),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                        Text(
-                          tipo.localizedDescripcion(S.of(context)),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-              onChanged: widget.onTipoGalponChanged,
-              validator: (value) {
-                if (value == null) {
-                  return S.of(context).shedSelectShedType;
-                }
-                return null;
-              },
-            ),
-          ],
+        return RegistroSelectorField<TipoGalpon>(
+          label: S.of(context).shedTypeLabel,
+          required: true,
+          value: widget.tipoGalpon,
+          hint: S.of(context).shedSelectTypeHint,
+          options: TipoGalpon.values,
+          labelOf: (tipo) => tipo.localizedDisplayName(S.of(context)),
+          subtitleOf: (tipo) => tipo.localizedDescripcion(S.of(context)),
+          onSelected: widget.onTipoGalponChanged,
         );
       },
     );
@@ -349,174 +223,14 @@ class _BasicInfoStepState extends ConsumerState<BasicInfoStep> {
   Widget _buildEstadoGalponDropdown() {
     return Builder(
       builder: (context) {
-        final theme = Theme.of(context);
-        final labelColor = theme.colorScheme.onSurface.withValues(alpha: 0.8);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Label encima del campo (estilo Wialon)
-            Text(
-              S.of(context).commonState,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: labelColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            AppSpacing.gapSm,
-            DropdownButtonFormField<EstadoGalpon>(
-              initialValue: widget.estadoGalpon,
-              decoration: InputDecoration(
-                hintText: S.of(context).shedSelectStateHint,
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  fontWeight: FontWeight.normal,
-                ),
-                errorMaxLines: 2,
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.error,
-                    width: 1,
-                  ),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allSm,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.error,
-                    width: 1.5,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                errorStyle: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                  height: 1.2,
-                ),
-              ),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w400,
-                color: theme.colorScheme.onSurface,
-              ),
-              isExpanded: true,
-              itemHeight: null,
-              menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
-              selectedItemBuilder: (BuildContext context) {
-                return EstadoGalpon.values.map((estado) {
-                  return Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: estado.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      AppSpacing.hGapMd,
-                      Text(
-                        estado.displayName,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  );
-                }).toList();
-              },
-              items: EstadoGalpon.values.map((estado) {
-                return DropdownMenuItem(
-                  value: estado,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: estado.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      AppSpacing.hGapMd,
-                      Expanded(
-                        child: Text(
-                          estado.displayName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: widget.onEstadoGalponChanged,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoCard() {
-    return Builder(
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.info.withValues(alpha: 0.08),
-            borderRadius: AppRadius.allSm,
-            border: Border.all(
-              color: AppColors.info.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.of(context).shedImportantInfo,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: AppColors.info,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              AppSpacing.gapXxs,
-              Text(
-                S.of(context).shedCodeAutoGenerated,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
+        return RegistroSelectorField<EstadoGalpon>(
+          label: S.of(context).commonState,
+          value: widget.estadoGalpon,
+          hint: S.of(context).shedSelectStateHint,
+          options: EstadoGalpon.values,
+          labelOf: (estado) => estado.displayName,
+          colorOf: (estado) => estado.color,
+          onSelected: widget.onEstadoGalponChanged,
         );
       },
     );

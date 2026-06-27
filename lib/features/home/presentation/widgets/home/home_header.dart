@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -170,7 +171,7 @@ class HomeHeader extends ConsumerWidget {
                 Icon(
                   Icons.unfold_more_rounded,
                   color: colorScheme.onSurfaceVariant,
-                  size: 28,
+                  size: 34,
                 ),
               ],
             ],
@@ -191,8 +192,17 @@ class HomeHeader extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: sheetColors.surface,
-      builder: (context) => Column(
+      backgroundColor: Colors.transparent,
+      builder: (context) => FormTextScale(
+        factor: 1.2,
+        child: Container(
+        decoration: BoxDecoration(
+          color: sheetColors.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xxl),
+          ),
+        ),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -200,11 +210,11 @@ class HomeHeader extends ConsumerWidget {
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: AppSpacing.md),
-              width: 36,
+              width: 40,
               height: 4,
               decoration: BoxDecoration(
                 color: sheetColors.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: AppRadius.allFull,
               ),
             ),
           ),
@@ -218,7 +228,7 @@ class HomeHeader extends ConsumerWidget {
             ),
             child: Text(
               S.of(context).homeSelectFarm,
-              style: sheetTheme.textTheme.titleMedium?.copyWith(
+              style: sheetTheme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -269,7 +279,7 @@ class HomeHeader extends ConsumerWidget {
                     Icon(
                       Icons.arrow_forward_ios_rounded,
                       color: sheetColors.onSurfaceVariant,
-                      size: 16,
+                      size: 19,
                     ),
                   ],
                 ),
@@ -363,7 +373,7 @@ class HomeHeader extends ConsumerWidget {
                             Icon(
                               Icons.check_rounded,
                               color: itemColors.onSurface,
-                              size: 20,
+                              size: 24,
                             ),
                         ],
                       ),
@@ -378,13 +388,18 @@ class HomeHeader extends ConsumerWidget {
           ),
         ],
       ),
+      ),
+      ),
     );
   }
 
   void _mostrarDialogoUnirseGranja(BuildContext context) {
-    showDialog(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => const AceptarInvitacionGranjaPage(),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AceptarInvitacionGranjaPage(),
     );
   }
 
@@ -426,14 +441,10 @@ class HomeHeader extends ConsumerWidget {
   Widget _buildNoGranjasMessage(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: AppRadius.allSm,
-      ),
-      padding: const EdgeInsets.all(AppSpacing.md),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             S.of(context).homeNoFarmsRegistered,
@@ -442,31 +453,14 @@ class HomeHeader extends ConsumerWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          // Planificador Avícola — antes de crear granja
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => context.push(AppRoutes.planificador),
-              icon: const Icon(Icons.auto_awesome, size: 20),
-              label: const Text('Planificador Avícola'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.success,
-                side: const BorderSide(color: AppColors.success),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.lg),
           AppButton.primary(
             label: S.of(context).farmNewFarm,
             icon: Icons.add_rounded,
             onPressed: () => context.push(AppRoutes.granjaCrear),
             expanded: true,
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
           Center(
             child: InkWell(
               onTap: () => _mostrarDialogoUnirseGranja(context),

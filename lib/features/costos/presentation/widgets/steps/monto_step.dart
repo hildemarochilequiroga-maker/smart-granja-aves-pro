@@ -1,29 +1,24 @@
 /// Step 2: Monto y Fecha del Gasto
-/// Captura del monto en soles y fecha del gasto
-/// Incluye selector de inventario para alimento/medicamento
+/// Captura del concepto, el monto y la fecha del gasto.
 library;
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/utils/formatters.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../inventario/domain/entities/entities.dart';
-import '../../../../inventario/domain/enums/enums.dart';
-import '../../../../inventario/presentation/widgets/widgets.dart';
 import '../../../domain/enums/tipo_gasto.dart';
 import '../costo_form_field.dart';
 
-/// Step de monto y fecha del gasto
-class MontoStep extends ConsumerStatefulWidget {
+/// Step de monto y fecha del gasto.
+class MontoStep extends StatelessWidget {
   const MontoStep({
     super.key,
     required this.conceptoController,
@@ -31,10 +26,12 @@ class MontoStep extends ConsumerStatefulWidget {
     required this.fecha,
     required this.onFechaChanged,
     this.autoValidate = false,
+    this.esCompraAves = false,
+    this.cantidadAves,
+    this.costoPorAveController,
+    this.onMontoTotalChanged,
+    this.onCostoPorAveChanged,
     this.tipoGasto,
-    this.granjaId,
-    this.itemInventarioSeleccionado,
-    this.onItemInventarioChanged,
   });
 
   final TextEditingController conceptoController;
@@ -42,38 +39,55 @@ class MontoStep extends ConsumerStatefulWidget {
   final DateTime fecha;
   final ValueChanged<DateTime> onFechaChanged;
   final bool autoValidate;
+
+  /// Si el gasto es de compra de aves: muestra el campo "costo por ave"
+  /// enlazado con el monto total usando [cantidadAves].
+  final bool esCompraAves;
+
+  /// Cantidad de aves del lote asignado (para enlazar total ↔ por ave).
+  final int? cantidadAves;
+
+  /// Controller del costo por ave (solo compra de aves).
+  final TextEditingController? costoPorAveController;
+
+  /// Llamado cuando el usuario edita el monto TOTAL (para recalcular por ave).
+  final VoidCallback? onMontoTotalChanged;
+
+  /// Llamado cuando el usuario edita el costo POR AVE (para recalcular total).
+  final VoidCallback? onCostoPorAveChanged;
+
+  /// Tipo de gasto seleccionado (para el hint dinámico del concepto).
   final TipoGasto? tipoGasto;
-  final String? granjaId;
-  final ItemInventario? itemInventarioSeleccionado;
-  final ValueChanged<ItemInventario?>? onItemInventarioChanged;
 
-  @override
-  ConsumerState<MontoStep> createState() => _MontoStepState();
-}
-
-class _MontoStepState extends ConsumerState<MontoStep> {
-  S get l => S.of(context);
+  static String _conceptoHint(TipoGasto? tipo) {
+    return switch (tipo) {
+      TipoGasto.compraAves => 'Ej: Compra de 500 pollitos Ross 308',
+      TipoGasto.alimento => 'Ej: Compra de alimento balanceado iniciador',
+      TipoGasto.medicamento => 'Ej: Vacuna Newcastle + Gumboro',
+      TipoGasto.cama => 'Ej: Viruta de pino para galpón 1',
+      TipoGasto.manoDeObra => 'Ej: Jornales semana del 01/06',
+      TipoGasto.energia => 'Ej: Factura eléctrica junio',
+      TipoGasto.agua => 'Ej: Consumo de agua junio',
+      TipoGasto.mantenimiento => 'Ej: Reparación de bebederos',
+      TipoGasto.transporte => 'Ej: Flete de aves al mercado',
+      TipoGasto.administrativo => 'Ej: Útiles de oficina',
+      TipoGasto.depreciacion => 'Ej: Depreciación mensual galpón',
+      TipoGasto.financiero => 'Ej: Intereses préstamo junio',
+      TipoGasto.otros => 'Ej: Gasto varios',
+      null => 'Ej: Compra de alimento balanceado',
+    };
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     unawaited(HapticFeedback.selectionClick());
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showRegistroDatePicker(
       context: context,
-      initialDate: widget.fecha,
+      initialDate: fecha,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(
-              context,
-            ).colorScheme.copyWith(primary: AppColors.primary),
-          ),
-          child: child!,
-        );
-      },
     );
-    if (picked != null && picked != widget.fecha) {
-      widget.onFechaChanged(picked);
+    if (picked != null && picked != fecha) {
+      onFechaChanged(picked);
     }
   }
 
@@ -106,15 +120,15 @@ class _MontoStepState extends ConsumerState<MontoStep> {
 
           // Campo concepto
           CostoFormField(
-            controller: widget.conceptoController,
+            controller: conceptoController,
             label: l.costoConceptLabel,
-            hint: l.costoConceptHint,
+            hint: _conceptoHint(tipoGasto),
             required: true,
             maxLines: 2,
             maxLength: 200,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.next,
-            autovalidateMode: widget.autoValidate
+            autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
             validator: FieldValidators.compose([
@@ -124,16 +138,10 @@ class _MontoStepState extends ConsumerState<MontoStep> {
           ),
           AppSpacing.gapBase,
 
-          // Selector de inventario (solo para alimento/medicamento)
-          if (_mostrarSelectorInventario) ...[
-            _buildInventarioSelector(theme),
-            AppSpacing.gapBase,
-          ],
-
-          // Campo de monto
+          // Campo de monto (total)
           CostoFormField(
-            controller: widget.montoController,
-            label: l.costoAmountLabel,
+            controller: montoController,
+            label: esCompraAves ? l.costoTotalPurchaseLabel : l.costoAmountLabel,
             hint: l.commonHintExample('0.00'),
             required: true,
             prefixText: Formatters.currencyPrefix,
@@ -142,7 +150,8 @@ class _MontoStepState extends ConsumerState<MontoStep> {
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],
             textInputAction: TextInputAction.done,
-            autovalidateMode: widget.autoValidate
+            onChanged: esCompraAves ? (_) => onMontoTotalChanged?.call() : null,
+            autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.onUserInteraction,
             validator: FieldValidators.positiveNumber(
@@ -150,6 +159,33 @@ class _MontoStepState extends ConsumerState<MontoStep> {
               invalidMessage: l.costoAmountInvalid,
             ),
           ),
+
+          // Campo costo por ave (solo compra de aves, enlazado con el total)
+          if (esCompraAves) ...[
+            AppSpacing.gapBase,
+            CostoFormField(
+              controller: costoPorAveController!,
+              label: l.costoPerBirdLabel,
+              hint: l.commonHintExample('0.00'),
+              prefixText: Formatters.currencyPrefix,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),
+              ],
+              textInputAction: TextInputAction.done,
+              onChanged: (_) => onCostoPorAveChanged?.call(),
+            ),
+            AppSpacing.gapSm,
+            Text(
+              cantidadAves != null && cantidadAves! > 0
+                  ? l.costoPurchaseBirdsBasis(cantidadAves.toString())
+                  : l.costoPurchaseNoBatch,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
           AppSpacing.gapXl,
 
           // Fecha del gasto
@@ -192,7 +228,7 @@ class _MontoStepState extends ConsumerState<MontoStep> {
                 children: [
                   Expanded(
                     child: Text(
-                      DateFormat('dd/MM/yyyy').format(widget.fecha),
+                      DateFormat('dd/MM/yyyy').format(fecha),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w400,
                       ),
@@ -212,118 +248,4 @@ class _MontoStepState extends ConsumerState<MontoStep> {
     );
   }
 
-  /// Determina si mostrar el selector de inventario
-  bool get _mostrarSelectorInventario {
-    if (widget.granjaId == null || widget.onItemInventarioChanged == null) {
-      return false;
-    }
-    return widget.tipoGasto == TipoGasto.alimento ||
-        widget.tipoGasto == TipoGasto.medicamento;
-  }
-
-  /// Obtiene el tipo de item según el tipo de gasto
-  TipoItem? get _tipoItemFiltro {
-    if (widget.tipoGasto == TipoGasto.alimento) return TipoItem.alimento;
-    if (widget.tipoGasto == TipoGasto.medicamento) return TipoItem.medicamento;
-    return null;
-  }
-
-  /// Construye el selector de inventario
-  Widget _buildInventarioSelector(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Info card
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.info.withValues(alpha: 0.08),
-            borderRadius: AppRadius.allSm,
-            border: Border.all(
-              color: AppColors.info.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.lightbulb_outline,
-                color: AppColors.info,
-                size: 20,
-              ),
-              AppSpacing.hGapSm,
-              Expanded(
-                child: Text(
-                  l.costoInventoryLinkInfo,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        AppSpacing.gapMd,
-
-        // Selector
-        InventarioSelector(
-          granjaId: widget.granjaId!,
-          tipoFiltro: _tipoItemFiltro,
-          itemSeleccionado: widget.itemInventarioSeleccionado,
-          onItemSelected: widget.onItemInventarioChanged!,
-          label: widget.tipoGasto == TipoGasto.alimento
-              ? l.costoLinkFood
-              : l.costoLinkMedicine,
-          hint: l.costoInventorySearchHint,
-        ),
-
-        // Mostrar info del item seleccionado
-        if (widget.itemInventarioSeleccionado != null) ...[
-          AppSpacing.gapSm,
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.08),
-              borderRadius: AppRadius.allSm,
-              border: Border.all(
-                color: AppColors.success.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 18,
-                ),
-                AppSpacing.hGapSm,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l.costoLinkedProduct,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        l.costoStockUpdateNote,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
 }

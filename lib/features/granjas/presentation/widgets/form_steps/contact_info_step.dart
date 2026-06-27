@@ -7,8 +7,6 @@ import 'package:flutter/services.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/value_objects/location_data.dart';
 import '../granja_form_field.dart';
@@ -151,45 +149,6 @@ class ContactInfoStep extends StatelessWidget {
             },
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) => _validateFiscalDoc(value, l),
-          ),
-          AppSpacing.gapXl,
-
-          // Card informativa
-          _buildInfoCard(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).farmContactDataTitle,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.info,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            S.of(context).farmContactDataHelp,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
           ),
         ],
       ),

@@ -33,7 +33,7 @@ import '../../../lotes/application/providers/lote_providers.dart';
 import '../../application/providers/ventas_provider.dart';
 import '../../domain/entities/venta_producto.dart';
 import '../../domain/enums/tipo_producto_venta.dart';
-import '../../domain/enums/estado_venta.dart';
+import '../widgets/venta_visuals.dart';
 
 /// Página de detalle de venta.
 class VentaDetailPage extends ConsumerWidget {
@@ -133,7 +133,6 @@ class _VentaDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l = S.of(context);
-    final tipoInfo = _getTipoInfo(venta.tipoProducto);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
@@ -169,11 +168,7 @@ class _VentaDetailView extends ConsumerWidget {
         child: Column(
           children: [
             // Header con tipo y monto
-            _buildHeaderCard(context, theme, tipoInfo),
-            const SizedBox(height: AppSpacing.base),
-
-            // Estado de la venta
-            _buildEstadoCard(context, theme),
+            _buildHeaderCard(context, theme),
             const SizedBox(height: AppSpacing.base),
 
             // Ubicación (Granja y Lote)
@@ -204,12 +199,10 @@ class _VentaDetailView extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderCard(
-    BuildContext context,
-    ThemeData theme,
-    _TipoInfo tipoInfo,
-  ) {
+  Widget _buildHeaderCard(BuildContext context, ThemeData theme) {
     final l = S.of(context);
+    final estadoColor = venta.estado.color;
+    final tipoColor = venta.tipoProducto.color;
     return Card(
       elevation: 0,
       color: theme.colorScheme.surface,
@@ -225,20 +218,18 @@ class _VentaDetailView extends ConsumerWidget {
           children: [
             Row(
               children: [
-                // Punto de color en lugar de icono
+                // Avatar con icono del tipo de producto
                 Container(
-                  width: 16,
-                  height: 16,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: tipoInfo.color,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: tipoInfo.color.withValues(alpha: 0.4),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: tipoColor.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.allMd,
+                  ),
+                  child: Icon(
+                    venta.tipoProducto.icon,
+                    color: tipoColor,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -260,6 +251,24 @@ class _VentaDetailView extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                // Badge de estado
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: estadoColor,
+                    borderRadius: AppRadius.allSm,
+                  ),
+                  child: Text(
+                    venta.estado.displayName,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -293,45 +302,6 @@ class _VentaDetailView extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEstadoCard(BuildContext context, ThemeData theme) {
-    final l = S.of(context);
-    final estadoColor = _getEstadoColor(venta.estado);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: estadoColor,
-        borderRadius: AppRadius.allMd,
-        boxShadow: [
-          BoxShadow(
-            color: estadoColor.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            l.commonStatus,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.white.withValues(alpha: 0.9),
-            ),
-          ),
-          Text(
-            venta.estado.displayName,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -811,29 +781,6 @@ class _VentaDetailView extends ConsumerWidget {
     );
   }
 
-  Color _getEstadoColor(EstadoVenta estado) {
-    switch (estado) {
-      case EstadoVenta.pendiente:
-        return AppColors.warning;
-      case EstadoVenta.confirmada:
-        return AppColors.info;
-      case EstadoVenta.enPreparacion:
-        return AppColors.info;
-      case EstadoVenta.listaParaDespacho:
-        return AppColors.success;
-      case EstadoVenta.enTransito:
-        return AppColors.purple;
-      case EstadoVenta.entregada:
-        return AppColors.success;
-      case EstadoVenta.facturada:
-        return AppColors.success;
-      case EstadoVenta.cancelada:
-        return AppColors.error;
-      case EstadoVenta.devuelta:
-        return AppColors.error;
-    }
-  }
-
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
@@ -863,27 +810,12 @@ class _VentaDetailView extends ConsumerWidget {
     );
   }
 
-  _TipoInfo _getTipoInfo(TipoProductoVenta tipo) {
-    switch (tipo) {
-      case TipoProductoVenta.avesVivas:
-        return _TipoInfo(Icons.pets_rounded, AppColors.warning);
-      case TipoProductoVenta.huevos:
-        return _TipoInfo(Icons.egg_rounded, AppColors.amber);
-      case TipoProductoVenta.pollinaza:
-        return _TipoInfo(Icons.grass_rounded, AppColors.brown);
-      case TipoProductoVenta.avesFaenadas:
-        return _TipoInfo(Icons.restaurant_rounded, AppColors.error);
-      case TipoProductoVenta.avesDescarte:
-        return _TipoInfo(Icons.low_priority_rounded, AppColors.outline);
-    }
-  }
-
   void _compartirVenta(BuildContext context, VentaProducto venta) {
     final l = S.of(context);
     final buffer = StringBuffer();
 
-    buffer.writeln('?? ${l.ventaReceiptTitle}');
-    buffer.writeln('????????????????????????');
+    buffer.writeln('🧾 ${l.ventaReceiptTitle}');
+    buffer.writeln('------------------------');
     buffer.writeln('');
     buffer.writeln(l.shareDateLine(_formatDate(venta.fechaVenta)));
     buffer.writeln(l.shareTypeLine(venta.tipoProducto.displayName));
@@ -935,7 +867,7 @@ class _VentaDetailView extends ConsumerWidget {
     buffer.writeln('');
     buffer.writeln(l.shareStatusLine(venta.estado.displayName));
     buffer.writeln('');
-    buffer.writeln('????????????????????????');
+    buffer.writeln('------------------------');
     buffer.writeln('Smart Granja Aves Pro');
 
     Share.share(
@@ -943,13 +875,6 @@ class _VentaDetailView extends ConsumerWidget {
       subject: l.shareSubjectSale(venta.tipoProducto.displayName),
     );
   }
-}
-
-class _TipoInfo {
-  final IconData icon;
-  final Color color;
-
-  _TipoInfo(this.icon, this.color);
 }
 
 class _InfoRow {

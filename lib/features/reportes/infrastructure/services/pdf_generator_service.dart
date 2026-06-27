@@ -1201,4 +1201,522 @@ class PdfGeneratorService {
       ],
     );
   }
+
+  /// Genera un PDF de reporte de mortalidad con análisis detallado.
+  Future<Uint8List> generarReporteMortalidad({
+    required ResumenEjecutivo resumen,
+    required String granjaNombre,
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    required String generadoPor,
+    required List<DatosProduccionLote> lotesActivos,
+  }) async {
+    final pdf = pw.Document(
+      title: ErrorMessages.format('PDF_TITLE_MORTALITY', {'farm': granjaNombre}),
+      author: ErrorMessages.get('PDF_AUTHOR'),
+    );
+
+    final mortalidadPromedio = lotesActivos.isNotEmpty
+        ? lotesActivos.fold<double>(0, (sum, lote) => sum + lote.porcentajeMortalidad) / lotesActivos.length.toDouble()
+        : 0.0;
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(
+          titulo: ErrorMessages.get('PDF_HEADER_MORTALITY'),
+          subtitulo: granjaNombre,
+          granjaNombre: granjaNombre,
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+        ),
+        footer: (context) => _buildFooter(
+          generadoPor: generadoPor,
+          pagina: context.pageNumber,
+          totalPaginas: context.pagesCount,
+        ),
+        build: (context) => [
+          _buildMortalidadSummary(mortalidadPromedio, lotesActivos),
+          pw.SizedBox(height: 20),
+          _buildTablaLotes(lotesActivos),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  /// Genera un PDF de reporte de consumo con análisis detallado.
+  Future<Uint8List> generarReporteConsumo({
+    required ResumenEjecutivo resumen,
+    required String granjaNombre,
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    required String generadoPor,
+    required List<DatosProduccionLote> lotesActivos,
+  }) async {
+    final pdf = pw.Document(
+      title: ErrorMessages.format('PDF_TITLE_CONSUMPTION', {
+        'farm': granjaNombre,
+      }),
+      author: ErrorMessages.get('PDF_AUTHOR'),
+    );
+
+    final consumoTotal = lotesActivos.fold<double>(0, (sum, lote) => sum + lote.consumoTotalKg);
+    final consumoPromedio = lotesActivos.isNotEmpty ? consumoTotal / lotesActivos.length.toDouble() : 0.0;
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(
+          titulo: ErrorMessages.get('PDF_HEADER_CONSUMPTION'),
+          subtitulo: granjaNombre,
+          granjaNombre: granjaNombre,
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+        ),
+        footer: (context) => _buildFooter(
+          generadoPor: generadoPor,
+          pagina: context.pageNumber,
+          totalPaginas: context.pagesCount,
+        ),
+        build: (context) => [
+          _buildConsumoSummary(consumoTotal, consumoPromedio),
+          pw.SizedBox(height: 20),
+          _buildTablaLotes(lotesActivos),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  /// Genera un PDF de reporte de peso con análisis detallado.
+  Future<Uint8List> generarReportePeso({
+    required ResumenEjecutivo resumen,
+    required String granjaNombre,
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    required String generadoPor,
+    required List<DatosProduccionLote> lotesActivos,
+  }) async {
+    final pdf = pw.Document(
+      title: ErrorMessages.format('PDF_TITLE_WEIGHT', {'farm': granjaNombre}),
+      author: ErrorMessages.get('PDF_AUTHOR'),
+    );
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(
+          titulo: ErrorMessages.get('PDF_HEADER_WEIGHT'),
+          subtitulo: granjaNombre,
+          granjaNombre: granjaNombre,
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+        ),
+        footer: (context) => _buildFooter(
+          generadoPor: generadoPor,
+          pagina: context.pageNumber,
+          totalPaginas: context.pagesCount,
+        ),
+        build: (context) => [
+          _buildPesoSummary(lotesActivos),
+          pw.SizedBox(height: 20),
+          _buildTablaLotes(lotesActivos),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  /// Genera un PDF de reporte de rentabilidad con análisis financiero.
+  Future<Uint8List> generarReporteRentabilidad({
+    required ResumenEjecutivo resumen,
+    required String granjaNombre,
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    required String generadoPor,
+    required List<DatosProduccionLote> lotesActivos,
+  }) async {
+    final pdf = pw.Document(
+      title: ErrorMessages.format('PDF_TITLE_PROFITABILITY', {
+        'farm': granjaNombre,
+      }),
+      author: ErrorMessages.get('PDF_AUTHOR'),
+    );
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(
+          titulo: ErrorMessages.get('PDF_HEADER_PROFITABILITY'),
+          subtitulo: granjaNombre,
+          granjaNombre: granjaNombre,
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+        ),
+        footer: (context) => _buildFooter(
+          generadoPor: generadoPor,
+          pagina: context.pageNumber,
+          totalPaginas: context.pagesCount,
+        ),
+        build: (context) => [
+          _buildRentabilidadSummary(resumen),
+          pw.SizedBox(height: 20),
+          _buildResumenFinancieroEjecutivo(resumen),
+          pw.SizedBox(height: 20),
+          _buildTablaLotes(lotesActivos),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  /// Genera un PDF de reporte de salud con análisis detallado.
+  Future<Uint8List> generarReporteSalud({
+    required ResumenEjecutivo resumen,
+    required String granjaNombre,
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    required String generadoPor,
+    required List<DatosProduccionLote> lotesActivos,
+  }) async {
+    final pdf = pw.Document(
+      title: ErrorMessages.format('PDF_TITLE_HEALTH', {'farm': granjaNombre}),
+      author: ErrorMessages.get('PDF_AUTHOR'),
+    );
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(
+          titulo: ErrorMessages.get('PDF_HEADER_HEALTH'),
+          subtitulo: granjaNombre,
+          granjaNombre: granjaNombre,
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+        ),
+        footer: (context) => _buildFooter(
+          generadoPor: generadoPor,
+          pagina: context.pageNumber,
+          totalPaginas: context.pagesCount,
+        ),
+        build: (context) => [
+          _buildSaludSummary(lotesActivos),
+          pw.SizedBox(height: 20),
+          _buildTablaLotes(lotesActivos),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  /// Genera un PDF de reporte de inventario con análisis detallado.
+  Future<Uint8List> generarReporteInventario({
+    required ResumenEjecutivo resumen,
+    required String granjaNombre,
+    required DateTime fechaInicio,
+    required DateTime fechaFin,
+    required String generadoPor,
+    required List<DatosProduccionLote> lotesActivos,
+  }) async {
+    final pdf = pw.Document(
+      title: ErrorMessages.format('PDF_TITLE_INVENTORY', {
+        'farm': granjaNombre,
+      }),
+      author: ErrorMessages.get('PDF_AUTHOR'),
+    );
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(
+          titulo: ErrorMessages.get('PDF_HEADER_INVENTORY'),
+          subtitulo: granjaNombre,
+          granjaNombre: granjaNombre,
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+        ),
+        footer: (context) => _buildFooter(
+          generadoPor: generadoPor,
+          pagina: context.pageNumber,
+          totalPaginas: context.pagesCount,
+        ),
+        build: (context) => [
+          _buildInventarioSummary(lotesActivos),
+          pw.SizedBox(height: 20),
+          _buildTablaLotes(lotesActivos),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  /// Resumen de mortalidad con KPIs principales.
+  pw.Widget _buildMortalidadSummary(double mortalidadPromedio, List<DatosProduccionLote> lotes) {
+    final mortalidadTotal = lotes.fold<int>(0, (sum, lote) => sum + lote.mortalidadTotal);
+    final supervivenciaPromedio = 100 - mortalidadPromedio;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          ErrorMessages.get('PDF_MORTALITY_SUMMARY'),
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_MORTALITY_AVG'),
+              '${_numberFormat.format(mortalidadPromedio)}%',
+              '',
+              _accentColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_SURVIVAL'),
+              '${_numberFormat.format(supervivenciaPromedio)}%',
+              '',
+              _primaryColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_TOTAL_DEATHS'),
+              '$mortalidadTotal',
+              '',
+              _secondaryColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Resumen de consumo de alimento.
+  pw.Widget _buildConsumoSummary(double consumoTotal, double consumoPromedio) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          ErrorMessages.get('PDF_CONSUMPTION_SUMMARY'),
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_CONSUMPTION_TOTAL'),
+              '${_numberFormat.format(consumoTotal)} kg',
+              '',
+              _primaryColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_CONSUMPTION_AVG'),
+              '${_numberFormat.format(consumoPromedio)} kg',
+              '',
+              _secondaryColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Resumen de peso y crecimiento.
+  pw.Widget _buildPesoSummary(List<DatosProduccionLote> lotes) {
+    final pesoPromedio = lotes.where((l) => l.pesoPromedioActual != null).isNotEmpty
+        ? lotes.where((l) => l.pesoPromedioActual != null).fold<double>(0, (sum, lote) => sum + (lote.pesoPromedioActual ?? 0)) /
+            lotes.where((l) => l.pesoPromedioActual != null).length
+        : 0;
+    final pesoObjetivoPromedio = lotes.where((l) => l.pesoPromedioObjetivo != null).isNotEmpty
+        ? lotes.where((l) => l.pesoPromedioObjetivo != null).fold<double>(0, (sum, lote) => sum + (lote.pesoPromedioObjetivo ?? 0)) /
+            lotes.where((l) => l.pesoPromedioObjetivo != null).length
+        : 0;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          ErrorMessages.get('PDF_WEIGHT_SUMMARY'),
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_WEIGHT_AVG_CURRENT'),
+              '${_numberFormat.format(pesoPromedio)} g',
+              '',
+              _primaryColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_WEIGHT_AVG_TARGET'),
+              '${_numberFormat.format(pesoObjetivoPromedio)} g',
+              '',
+              _secondaryColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Resumen de rentabilidad financiera.
+  ///
+  /// Usa los totales reales de la granja del [ResumenEjecutivo] (costos y
+  /// ventas agregados), no los campos por lote que no se rellenan.
+  pw.Widget _buildRentabilidadSummary(ResumenEjecutivo resumen) {
+    final ingresoTotal = resumen.ventasTotales;
+    final costoTotal = resumen.costosTotales;
+    final balance = resumen.utilidadNeta;
+    final margenGanancia = resumen.margenUtilidad;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          ErrorMessages.get('PDF_PROFITABILITY_SUMMARY'),
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_TOTAL_REVENUE'),
+              _currencyFormat.format(ingresoTotal),
+              '',
+              _primaryColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_TOTAL_COSTS_KPI'),
+              _currencyFormat.format(costoTotal),
+              '',
+              _accentColor,
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_BALANCE_KPI'),
+              _currencyFormat.format(balance),
+              '',
+              balance >= 0 ? _primaryColor : _accentColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_PROFIT_MARGIN_KPI'),
+              '${_numberFormat.format(margenGanancia)}%',
+              '',
+              _secondaryColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Resumen de salud (usa datos de mortalidad como indicador).
+  pw.Widget _buildSaludSummary(List<DatosProduccionLote> lotes) {
+    final mortalidadPromedio = lotes.isNotEmpty
+        ? lotes.fold<double>(0, (sum, lote) => sum + lote.porcentajeMortalidad) / lotes.length
+        : 0;
+    final lotesSaludables = lotes.where((l) => l.porcentajeMortalidad < 5).length;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          ErrorMessages.get('PDF_HEALTH_SUMMARY'),
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_HEALTHY_LOTS'),
+              '$lotesSaludables',
+              '',
+              _primaryColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_MORTALITY_AVG'),
+              '${_numberFormat.format(mortalidadPromedio)}%',
+              '',
+              mortalidadPromedio < 5 ? _primaryColor : _accentColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Resumen de inventario por lote.
+  pw.Widget _buildInventarioSummary(List<DatosProduccionLote> lotes) {
+    final cantidadTotal = lotes.fold<int>(0, (sum, lote) => sum + lote.cantidadActual);
+    final cantidadInicial = lotes.fold<int>(0, (sum, lote) => sum + lote.cantidadInicial);
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          ErrorMessages.get('PDF_INVENTORY_SUMMARY'),
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        pw.Row(
+          children: [
+            _buildKPICard(
+              ErrorMessages.get('PDF_INITIAL_QTY_TOTAL'),
+              '$cantidadInicial',
+              '',
+              _primaryColor,
+            ),
+            pw.SizedBox(width: 10),
+            _buildKPICard(
+              ErrorMessages.get('PDF_CURRENT_QTY_TOTAL'),
+              '$cantidadTotal',
+              '',
+              _secondaryColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }

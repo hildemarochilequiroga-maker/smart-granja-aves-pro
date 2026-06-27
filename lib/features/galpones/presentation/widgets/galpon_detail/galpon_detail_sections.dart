@@ -907,7 +907,7 @@ class _InfoRow extends StatelessWidget {
             color: color.withValues(alpha: 0.12),
             borderRadius: AppRadius.allSm,
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: Icon(icon, color: color, size: 23),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -991,7 +991,7 @@ class _ActionChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color),
+            Icon(icon, size: 21, color: color),
             const SizedBox(width: AppSpacing.sm),
             Text(
               label,

@@ -88,13 +88,6 @@ final obtenerRolUsuarioEnGranjaUseCaseProvider =
       );
     });
 
-final obtenerGranjaIdsDelUsuarioUseCaseProvider =
-    Provider<ObtenerGranjaIdsDelUsuarioUseCase>((ref) {
-      return ObtenerGranjaIdsDelUsuarioUseCase(
-        ref.watch(granjaUsuariosRepositoryProvider),
-      );
-    });
-
 // =============================================================================
 // PROVIDERS DE DATOS - USUARIOS DE UNA GRANJA
 // =============================================================================
@@ -161,37 +154,6 @@ final rolUsuarioActualEnGranjaProvider = FutureProvider.autoDispose
           return rol;
         },
       );
-    });
-
-// =============================================================================
-// PROVIDERS DE DATOS - GRANJAS DEL USUARIO ACTUAL
-// =============================================================================
-
-final granjasUsuarioActualProvider = FutureProvider.autoDispose<List<String>>((
-  ref,
-) async {
-  final currentUser = ref.watch(currentUserProvider);
-  if (currentUser == null) return [];
-
-  final useCase = ref.watch(obtenerGranjaIdsDelUsuarioUseCaseProvider);
-  final result = await useCase(
-    ObtenerGranjaIdsDelUsuarioParams(usuarioId: currentUser.id),
-  );
-
-  return result.fold((failure) => [], (granjas) => granjas);
-});
-
-// =============================================================================
-// PROVIDERS DE DATOS - GRANJAS DONDE PUEDE INVITAR
-// =============================================================================
-
-/// Provider que verifica si el usuario puede invitar en una granja específica
-final puedeInvitarEnGranjaProvider = FutureProvider.autoDispose
-    .family<bool, String>((ref, granjaId) async {
-      final rolAsync = await ref.watch(
-        rolUsuarioActualEnGranjaProvider(granjaId).future,
-      );
-      return rolAsync?.canInviteUsers ?? false;
     });
 
 // =============================================================================
@@ -503,48 +465,3 @@ class RemoverColaboradorParamsUI {
   final String usuarioId;
 }
 
-// =============================================================================
-// PROVIDERS DE ACCIONES - ABANDONAR GRANJA (usuario sale voluntariamente)
-// =============================================================================
-
-final abandonarGranjaProvider = FutureProvider.autoDispose
-    .family<void, AbandonarGranjaParamsUI>((ref, params) async {
-      final repository = ref.watch(granjaUsuariosRepositoryProvider);
-      final result = await repository.abandonarGranja(
-        granjaId: params.granjaId,
-        usuarioId: params.usuarioId,
-      );
-
-      return result.fold(
-        (failure) => throw Exception(failure.message),
-        (_) => null,
-      );
-    });
-
-class AbandonarGranjaParamsUI {
-  const AbandonarGranjaParamsUI({
-    required this.granjaId,
-    required this.usuarioId,
-  });
-
-  final String granjaId;
-  final String usuarioId;
-}
-
-// =============================================================================
-// PROVIDERS DE DATOS - INVITACIONES PENDIENTES
-// =============================================================================
-
-final invitacionesPendientesProvider =
-    FutureProvider.family<List<InvitacionGranja>, String>((
-      ref,
-      granjaId,
-    ) async {
-      final repository = ref.watch(invitacionesGranjaRepositoryProvider);
-      final result = await repository.obtenerInvitacionesPorGranja(
-        granjaId: granjaId,
-        soloValidas: true,
-      );
-
-      return result.fold((failure) => [], (invitaciones) => invitaciones);
-    });

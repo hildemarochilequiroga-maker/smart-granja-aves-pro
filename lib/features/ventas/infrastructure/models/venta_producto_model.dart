@@ -102,6 +102,36 @@ class VentaProductoModel {
     return data;
   }
 
+  /// Conjunto de claves de campos que dependen del tipo de producto o son
+  /// opcionales. Al actualizar, las que no apliquen al estado actual de la
+  /// venta deben borrarse con [FieldValue.delete] para evitar datos huérfanos
+  /// (p. ej. campos de aves al cambiar la venta a huevos).
+  static const _camposVariables = <String>{
+    // Aves
+    'cantidadAves', 'pesoPromedioKg', 'precioKg', 'pesajesJabas',
+    'pesoVivo', 'pesoFaenado', 'rendimientoCanal',
+    // Huevos
+    'huevosPorClasificacion', 'preciosPorDocena',
+    // Pollinaza
+    'cantidadPollinaza', 'unidadPollinaza', 'precioUnitarioPollinaza',
+    // Opcionales
+    'impuestoIVA', 'numeroFactura', 'fechaEntrega', 'direccionEntrega',
+    'transportista',
+  };
+
+  /// Payload para actualizar el documento (`update`).
+  ///
+  /// Toma el payload de [toFirestore] y, para cada campo variable u opcional
+  /// que no esté presente en el tipo actual, envía [FieldValue.delete] de modo
+  /// que `update` realmente lo elimine en lugar de conservar el valor anterior.
+  static Map<String, dynamic> toFirestoreUpdate(VentaProducto venta) {
+    final data = toFirestore(venta);
+    for (final campo in _camposVariables) {
+      data.putIfAbsent(campo, () => FieldValue.delete());
+    }
+    return data;
+  }
+
   /// Convierte un documento de Firestore a una entidad [VentaProducto]
   ///
   /// Lanza [StateError] si el documento no tiene datos.

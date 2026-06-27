@@ -18,6 +18,8 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../../application/providers/providers.dart';
@@ -274,8 +276,11 @@ ${lote.pesoPromedioActual != null ? '⚖️ ${l.batchShareWeight}: ${lote.pesoPr
     BuildContext context,
     Lote lote,
   ) async {
-    return showDialog<EstadoLote>(
+    return showModalBottomSheet<EstadoLote>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => _LoteCambiarEstadoDialog(lote: lote),
     );
   }
@@ -490,28 +495,23 @@ class _LoteCambiarEstadoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final estadosPermitidos = lote.estado.transicionesPermitidas;
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-      title: Text(
-        S.of(context).batchChangeStatus,
-        style: AppTextStyles.titleLarge.copyWith(
-          fontWeight: FontWeight.w600,
-          color: AppColors.onSurface,
-        ),
-        textAlign: TextAlign.center,
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Label estado actual
-          Text(
+    return AppBottomSheetScaffold(
+      title: S.of(context).batchChangeStatus,
+      scrollable: true,
+      child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  children: [
+                    // Label estado actual
+                    Text(
             S.of(context).batchCurrentStatus,
             style: AppTextStyles.labelMedium.copyWith(
               color: AppColors.onSurfaceVariant,
@@ -712,21 +712,22 @@ class _LoteCambiarEstadoDialog extends StatelessWidget {
               );
             }),
           ],
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.onSurfaceVariant,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.base,
-              vertical: AppSpacing.md,
-            ),
+                  ],
+                ),
+              ),
+              // Botón cerrar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: AppButton.primary(
+                  label: S.of(context).commonClose,
+                  onPressed: () => Navigator.pop(context),
+                  expanded: true,
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                ),
+              ),
+            ],
           ),
-          child: Text(S.of(context).commonCancel),
-        ),
-      ],
     );
   }
 }

@@ -175,7 +175,8 @@ class VacunacionNotifier extends StateNotifier<VacunacionState> {
 }
 
 // Data providers - unwrap Either
-final vacunacionByIdProvider = FutureProvider.family<Vacunacion?, String>((
+final vacunacionByIdProvider = FutureProvider.autoDispose
+    .family<Vacunacion?, String>((
   ref,
   id,
 ) async {
@@ -188,7 +189,7 @@ final vacunacionByIdProvider = FutureProvider.family<Vacunacion?, String>((
 });
 
 final vacunacionPorLoteProvider =
-    FutureProvider.family<List<Vacunacion>, String>((ref, loteId) async {
+    FutureProvider.autoDispose.family<List<Vacunacion>, String>((ref, loteId) async {
       final repository = ref.watch(vacunacionRepositoryProvider);
       final result = await repository.obtenerPorLote(loteId);
       return result.fold(
@@ -198,7 +199,7 @@ final vacunacionPorLoteProvider =
     });
 
 final vacunacionPendientesProvider =
-    FutureProvider.family<List<Vacunacion>, String>((ref, loteId) async {
+    FutureProvider.autoDispose.family<List<Vacunacion>, String>((ref, loteId) async {
       final repository = ref.watch(vacunacionRepositoryProvider);
       final result = await repository.obtenerPendientes(loteId);
       return result.fold(
@@ -208,7 +209,7 @@ final vacunacionPendientesProvider =
     });
 
 final vacunacionAplicadasProvider =
-    FutureProvider.family<List<Vacunacion>, String>((ref, loteId) async {
+    FutureProvider.autoDispose.family<List<Vacunacion>, String>((ref, loteId) async {
       final repository = ref.watch(vacunacionRepositoryProvider);
       final result = await repository.obtenerAplicadas(loteId);
       return result.fold(

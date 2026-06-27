@@ -217,7 +217,7 @@ class VentaRemoteDatasourceImpl implements VentaRemoteDatasource {
   @override
   Future<void> updateVentaProducto(VentaProducto venta) async {
     try {
-      final data = VentaProductoModel.toFirestore(venta);
+      final data = VentaProductoModel.toFirestoreUpdate(venta);
       await _productosCollection.doc(venta.id).update(data);
     } on Exception catch (e) {
       throw ServerException(

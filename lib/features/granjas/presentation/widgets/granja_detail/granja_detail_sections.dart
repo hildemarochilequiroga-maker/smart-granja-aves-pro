@@ -571,7 +571,7 @@ class GranjaItemCard extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               color: iconColor.withValues(alpha: 0.6),
-              size: 24,
+              size: 26,
             ),
           ],
         ),
@@ -608,7 +608,7 @@ class _InfoRow extends StatelessWidget {
             color: color.withValues(alpha: 0.12),
             borderRadius: AppRadius.allSm,
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: Icon(icon, color: color, size: 23),
         ),
         const SizedBox(width: 14),
         Expanded(

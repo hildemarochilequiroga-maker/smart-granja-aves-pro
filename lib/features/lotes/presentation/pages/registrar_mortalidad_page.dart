@@ -32,6 +32,7 @@ import '../widgets/mortalidad_form_steps/evento_info_step.dart';
 import '../widgets/mortalidad_form_steps/detalles_descripcion_step.dart';
 import '../widgets/mortalidad_form_steps/evidencia_fotografica_step.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 
 /// Página para registrar un evento de mortalidad con evidencia fotográfica.
 class RegistrarMortalidadPage extends ConsumerStatefulWidget {
@@ -58,7 +59,6 @@ class _RegistrarMortalidadPageState
   bool _isSaving = false;
   bool _autoValidate = false;
   bool _hasUnsavedChanges = false;
-  DateTime? _lastSaveTime;
 
   int _currentStep = 0;
   Timer? _autoSaveTimer;
@@ -162,7 +162,6 @@ class _RegistrarMortalidadPageState
         jsonEncode(draft),
       );
       _hasUnsavedChanges = false;
-      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
     } finally {
@@ -254,26 +253,19 @@ class _RegistrarMortalidadPageState
       child: Scaffold(
         backgroundColor: colorScheme.surfaceContainerLowest,
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                S.of(context).registerMortalityTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-              if (_lastSaveTime != null)
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  _isSaving
-                      ? S.of(context).batchSaving
-                      : S
-                            .of(context)
-                            .batchSavedTime(_formatSaveTime(_lastSaveTime!)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
-                  ),
+                  S.of(context).registerMortalityTitle,
+                  style: theme.textTheme.titleMedium,
                 ),
-            ],
+              ],
+            ),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
@@ -325,83 +317,85 @@ class _RegistrarMortalidadPageState
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _steps,
-              onStepTapped: (index) {
-                if (index < _currentStep) {
-                  setState(() {
-                    _currentStep = index;
-                    _autoValidate = false;
-                  });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _steps,
+                onStepTapped: (index) {
+                  if (index < _currentStep) {
+                    setState(() {
+                      _currentStep = index;
+                      _autoValidate = false;
+                    });
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+              ),
 
-            // Contenido de los pasos
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // Step 1: Información del Evento
-                    EventoInfoStep(
-                      cantidadController: _cantidadController,
-                      causaSeleccionada: _causaSeleccionada,
-                      fechaEvento: _fechaEvento,
-                      cantidadActual: cantidadActual,
-                      autoValidate: _autoValidate,
-                      onCausaChanged: (value) {
-                        setState(() {
-                          _causaSeleccionada = value;
-                          _hasUnsavedChanges = true;
-                        });
-                      },
-                      onFechaChanged: (value) {
-                        setState(() {
-                          _fechaEvento = value;
-                          _hasUnsavedChanges = true;
-                        });
-                      },
-                      fechaIngreso: widget.lote.fechaIngreso,
-                    ),
+              // Contenido de los pasos
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Step 1: Información del Evento
+                      EventoInfoStep(
+                        cantidadController: _cantidadController,
+                        causaSeleccionada: _causaSeleccionada,
+                        fechaEvento: _fechaEvento,
+                        cantidadActual: cantidadActual,
+                        autoValidate: _autoValidate,
+                        onCausaChanged: (value) {
+                          setState(() {
+                            _causaSeleccionada = value;
+                            _hasUnsavedChanges = true;
+                          });
+                        },
+                        onFechaChanged: (value) {
+                          setState(() {
+                            _fechaEvento = value;
+                            _hasUnsavedChanges = true;
+                          });
+                        },
+                        fechaIngreso: widget.lote.fechaIngreso,
+                      ),
 
-                    // Step 2: Detalles y Descripción
-                    DetallesDescripcionStep(
-                      descripcionController: _descripcionController,
-                      causaSeleccionada: _causaSeleccionada,
-                      autoValidate: _autoValidate,
-                    ),
+                      // Step 2: Detalles y Descripción
+                      DetallesDescripcionStep(
+                        descripcionController: _descripcionController,
+                        causaSeleccionada: _causaSeleccionada,
+                        autoValidate: _autoValidate,
+                      ),
 
-                    // Step 3: Evidencia Fotográfica
-                    EvidenciaFotograficaStep(
-                      fotosSeleccionadas: _fotosSeleccionadas,
-                      onPickImage: _pickImage,
-                      onRemovePhoto: (index) {
-                        setState(() {
-                          _fotosSeleccionadas.removeAt(index);
-                          _hasUnsavedChanges = true;
-                        });
-                      },
-                    ),
-                  ],
+                      // Step 3: Evidencia Fotográfica
+                      EvidenciaFotograficaStep(
+                        fotosSeleccionadas: _fotosSeleccionadas,
+                        onPickImage: _pickImage,
+                        onRemovePhoto: (index) {
+                          setState(() {
+                            _fotosSeleccionadas.removeAt(index);
+                            _hasUnsavedChanges = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );
@@ -541,21 +535,6 @@ class _RegistrarMortalidadPageState
     AppSnackBar.error(context, message: message);
   }
 
-  String _formatSaveTime(DateTime saveTime) {
-    final now = DateTime.now();
-    final difference = now.difference(saveTime);
-    final l = S.of(context);
-
-    if (difference.inSeconds < 10) {
-      return l.batchRightNow;
-    } else if (difference.inSeconds < 60) {
-      return l.batchSecondsAgo(difference.inSeconds);
-    } else if (difference.inMinutes < 60) {
-      return l.batchMinutesAgo(difference.inMinutes);
-    } else {
-      return l.batchHoursAgo(difference.inHours);
-    }
-  }
 
   Future<bool?> _showUnsavedChangesDialog() async {
     final l = S.of(context);
@@ -786,19 +765,11 @@ class _RegistrarMortalidadPageState
         throw Exception(errorValidacion);
       }
 
-      // Preparar el lote actualizado
-      final loteActualizado = widget.lote.copyWith(
-        cantidadActual: cantidadDisponible - cantidadARegistrar,
-        mortalidadAcumulada:
-            widget.lote.mortalidadAcumulada + cantidadARegistrar,
-      );
-
-      // Crear registro y actualizar lote en transacción atómica
+      // Crear registro y actualizar contadores del lote en transacción
+      // atómica (el datasource aplica deltas con FieldValue.increment, así
+      // que NO se precalcula el lote aquí: evita lost updates concurrentes).
       final datasource = ref.read(registroMortalidadDatasourceProvider);
-      await datasource.crearConActualizacionLote(
-        registro: registro,
-        loteActualizado: loteActualizado,
-      );
+      await datasource.crearConActualizacionLote(registro: registro);
 
       // Verificar si la mortalidad acumulada requiere notificación de alerta
       final alertasService = ref.read(alertasServiceProvider);

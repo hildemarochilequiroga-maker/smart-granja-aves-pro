@@ -172,7 +172,7 @@ class HomeKpisGrid extends ConsumerWidget {
             children: [
               Icon(
                 Icons.agriculture_outlined,
-                size: 48,
+                size: 58,
                 color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: AppSpacing.md),
@@ -304,7 +304,7 @@ class HomeKpisGrid extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+              const Icon(Icons.error_outline, color: AppColors.error, size: 24),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 S.of(context).commonError,

@@ -26,6 +26,7 @@ import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/storage/image_upload_service.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../application/services/registro_quick_cache_service.dart';
 import '../widgets/peso_form_steps/informacion_pesaje_step.dart';
 import '../widgets/peso_form_steps/rangos_peso_step.dart';
@@ -55,7 +56,6 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
   final List<XFile> _fotosSeleccionadas = [];
   bool _isUploadingPhotos = false;
   bool _isSaving = false;
-  DateTime? _lastSaveTime;
   bool _autoValidate = false;
   bool _hasUnsavedChanges = false;
 
@@ -186,7 +186,6 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
 
       if (!mounted) return;
       _hasUnsavedChanges = false;
-      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
     } finally {
@@ -366,17 +365,6 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
     }
   }
 
-  String _formatSaveTime(DateTime time) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
-    final l = S.of(context);
-
-    if (diff.inSeconds < 10) return l.batchRightNow;
-    if (diff.inSeconds < 60) return l.batchSecondsAgo(diff.inSeconds);
-    if (diff.inMinutes < 60) return l.batchMinutesAgo(diff.inMinutes);
-    return l.batchHoursAgo(diff.inHours);
-  }
-
   // ==================== UI ====================
 
   @override
@@ -394,28 +382,21 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
       child: Scaffold(
         backgroundColor: colorScheme.surfaceContainerLowest,
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                S.of(context).registerWeightTitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              if (_lastSaveTime != null)
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  _isSaving
-                      ? S.of(context).batchSaving
-                      : S
-                            .of(context)
-                            .batchSavedTime(_formatSaveTime(_lastSaveTime!)),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
+                  S.of(context).registerWeightTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
           leading: isProcessing
               ? null
@@ -451,88 +432,96 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _steps,
-              onStepTapped: (index) {
-                if (index < _currentStep) {
-                  setState(() {
-                    _currentStep = index;
-                    _autoValidate = false;
-                  });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _steps,
+                onStepTapped: (index) {
+                  if (index < _currentStep) {
+                    setState(() {
+                      _currentStep = index;
+                      _autoValidate = false;
+                    });
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+              ),
 
-            // Contenido de los pasos
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // Paso 1: Información del Pesaje
-                    InformacionPesajeStep(
-                      formKey: _formKey,
-                      pesoPromedioController: _pesoPromedioController,
-                      cantidadAvesController: _cantidadAvesController,
-                      fechaSeleccionada: _fechaSeleccionada,
-                      metodoSeleccionado: _metodoSeleccionado,
-                      onSeleccionarFecha: _seleccionarFecha,
-                      onMetodoChanged: (valor) {
-                        if (valor != null) {
+              // Contenido de los pasos
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Paso 1: Información del Pesaje
+                      InformacionPesajeStep(
+                        formKey: _formKey,
+                        pesoPromedioController: _pesoPromedioController,
+                        cantidadAvesController: _cantidadAvesController,
+                        fechaSeleccionada: _fechaSeleccionada,
+                        fechaIngreso: widget.lote.fechaIngreso,
+                        metodoSeleccionado: _metodoSeleccionado,
+                        onFechaChanged: (fecha) {
                           setState(() {
-                            _metodoSeleccionado = valor;
+                            _fechaSeleccionada = fecha;
                             _hasUnsavedChanges = true;
                           });
-                        }
-                      },
-                      onPesoChanged: () => setState(() {}),
-                      autoValidate: _autoValidate,
-                    ),
+                        },
+                        onMetodoChanged: (valor) {
+                          if (valor != null) {
+                            setState(() {
+                              _metodoSeleccionado = valor;
+                              _hasUnsavedChanges = true;
+                            });
+                          }
+                        },
+                        onPesoChanged: () => setState(() {}),
+                        autoValidate: _autoValidate,
+                      ),
 
-                    // Paso 2: Rangos de Peso
-                    RangosPesoStep(
-                      formKey: _formKey,
-                      pesoMinimoController: _pesoMinimoController,
-                      pesoMaximoController: _pesoMaximoController,
-                      observacionesController: _observacionesController,
-                      onPesoChanged: () => setState(() {}),
-                      autoValidate: _autoValidate,
-                    ),
+                      // Paso 2: Rangos de Peso
+                      RangosPesoStep(
+                        formKey: _formKey,
+                        pesoMinimoController: _pesoMinimoController,
+                        pesoMaximoController: _pesoMaximoController,
+                        observacionesController: _observacionesController,
+                        onPesoChanged: () => setState(() {}),
+                        autoValidate: _autoValidate,
+                      ),
 
-                    // Paso 3: Resumen y Fotos
-                    ObservacionesFotosStep(
-                      formKey: _formKey,
-                      imagenes: _fotosSeleccionadas
-                          .map((e) => File(e.path))
-                          .toList(),
-                      onPickImage: _pickImage,
-                      onEliminarFoto: _eliminarImagen,
-                      autoValidate: _autoValidate,
-                      pesoPromedio: _pesoPromedio,
-                      cantidadAves: _cantidadAves,
-                      pesoMinimo: _pesoMinimo,
-                      pesoMaximo: _pesoMaximo,
-                      edadDias: _edadDias,
-                    ),
-                  ],
+                      // Paso 3: Resumen y Fotos
+                      ObservacionesFotosStep(
+                        formKey: _formKey,
+                        imagenes: _fotosSeleccionadas
+                            .map((e) => File(e.path))
+                            .toList(),
+                        onPickImage: _pickImage,
+                        onEliminarFoto: _eliminarImagen,
+                        autoValidate: _autoValidate,
+                        pesoPromedio: _pesoPromedio,
+                        cantidadAves: _cantidadAves,
+                        pesoMinimo: _pesoMinimo,
+                        pesoMaximo: _pesoMaximo,
+                        edadDias: _edadDias,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );
@@ -765,22 +754,6 @@ class _RegistrarPesoPageState extends ConsumerState<RegistrarPesoPage> {
   }
 
   // Método para seleccionar fecha
-  Future<void> _seleccionarFecha() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _fechaSeleccionada,
-      firstDate: widget.lote.fechaIngreso,
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null && picked != _fechaSeleccionada) {
-      setState(() {
-        _fechaSeleccionada = picked;
-        _hasUnsavedChanges = true;
-      });
-    }
-  }
-
   // Método para seleccionar imagen
   Future<void> _pickImage(ImageSource source) async {
     try {

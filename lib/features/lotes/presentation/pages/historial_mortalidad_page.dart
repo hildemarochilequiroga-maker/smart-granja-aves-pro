@@ -13,11 +13,10 @@ import 'package:intl/intl.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/historial/historial_components.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_image.dart';
@@ -102,102 +101,104 @@ class HistorialMortalidadPageState
     );
 
     // Solo el body, sin Scaffold ni AppBar (el dashboard ya lo proporciona)
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      color: theme.colorScheme.primary,
-      child: CustomScrollView(
-        slivers: [
-          const SliverPadding(padding: EdgeInsets.only(top: 8)),
-          // Estadísticas con botón de gráficos integrado
-          SliverToBoxAdapter(
-            child: statsAsync.when(
-              data: (stats) => _buildEstadisticasSection(
-                stats,
-                theme,
-                widget.lote.cantidadInicial,
-              ),
-              loading: () => const HistorialStatsLoading(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // Indicador de filtros activos (debajo de estadísticas)
-          if (hayFiltrosActivos)
+    return FormTextScale(
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: theme.colorScheme.primary,
+        child: CustomScrollView(
+          slivers: [
+            const SliverPadding(padding: EdgeInsets.only(top: 8)),
+            // Estadísticas con botón de gráficos integrado
             SliverToBoxAdapter(
-              child: HistorialFiltrosActivosChip(
-                label: etiquetaFiltroActual,
-                onClear: _limpiarFiltros,
+              child: statsAsync.when(
+                data: (stats) => _buildEstadisticasSection(
+                  stats,
+                  theme,
+                  widget.lote.cantidadInicial,
+                ),
+                loading: () => const HistorialStatsLoading(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
             ),
 
-          // Divider visual
-          const SliverToBoxAdapter(child: AppSpacing.gapSm),
-          SliverToBoxAdapter(
-            child: HistorialRegistrosHeader(
-              title: S.of(context).historialNoEventsRecords,
-              ordenDesc: _ordenDesc,
-              onToggleOrden: () {
-                HapticFeedback.selectionClick();
-                setState(() => _ordenDesc = !_ordenDesc);
-              },
+            // Indicador de filtros activos (debajo de estadísticas)
+            if (hayFiltrosActivos)
+              SliverToBoxAdapter(
+                child: HistorialFiltrosActivosChip(
+                  label: etiquetaFiltroActual,
+                  onClear: _limpiarFiltros,
+                ),
+              ),
+
+            // Divider visual
+            const SliverToBoxAdapter(child: AppSpacing.gapSm),
+            SliverToBoxAdapter(
+              child: HistorialRegistrosHeader(
+                title: S.of(context).historialNoEventsRecords,
+                ordenDesc: _ordenDesc,
+                onToggleOrden: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _ordenDesc = !_ordenDesc);
+                },
+              ),
             ),
-          ),
 
-          // Lista de registros (lazy-loaded con SliverList)
-          registrosAsync.when(
-            data: (registros) {
-              final lista = _filtrarYOrdenar(registros);
+            // Lista de registros (lazy-loaded con SliverList)
+            registrosAsync.when(
+              data: (registros) {
+                final lista = _filtrarYOrdenar(registros);
 
-              if (lista.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: _buildEmptyState(theme, registros.isEmpty),
+                if (lista.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: _buildEmptyState(theme, registros.isEmpty),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Padding(
+                        key: ValueKey('mort_${lista[index].id}'),
+                        padding: EdgeInsets.only(
+                          bottom: index < lista.length - 1 ? 12 : 0,
+                        ),
+                        child: _buildAnimatedRegistroCard(
+                          lista[index],
+                          theme,
+                          index,
+                        ),
+                      ),
+                      childCount: lista.length,
+                    ),
+                  ),
                 );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Padding(
-                      key: ValueKey('mort_${lista[index].id}'),
-                      padding: EdgeInsets.only(
-                        bottom: index < lista.length - 1 ? 12 : 0,
-                      ),
-                      child: _buildAnimatedRegistroCard(
-                        lista[index],
-                        theme,
-                        index,
-                      ),
-                    ),
-                    childCount: lista.length,
-                  ),
-                ),
-              );
-            },
-            loading: () => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: List.generate(
-                    5,
-                    (index) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: SkeletonListCard(
-                        hasIcon: true,
-                        hasSubtitle: true,
-                        hasBadge: true,
-                        hasFooter: false,
+              },
+              loading: () => SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: List.generate(
+                      5,
+                      (index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: SkeletonListCard(
+                          hasIcon: true,
+                          hasSubtitle: true,
+                          hasBadge: true,
+                          hasFooter: false,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              error: (error, _) =>
+                  SliverToBoxAdapter(child: _buildErrorState(theme, error)),
             ),
-            error: (error, _) =>
-                SliverToBoxAdapter(child: _buildErrorState(theme, error)),
-          ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-        ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+          ],
+        ),
       ),
     );
   }
@@ -237,57 +238,31 @@ class HistorialMortalidadPageState
         ? (totalAves / cantidadInicialLote) * 100
         : 0.0;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Grid de estadísticas 2x2
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: totalEventos.toString(),
-                  subtitle: S.of(context).historialRecords,
-                  color: AppColors.info,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: HistorialStatCard(
-                  value: totalAves.toString(),
-                  subtitle: S.of(context).historialDeadBirds,
-                  color: AppColors.warning,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: promedio.toStringAsFixed(1),
-                  subtitle: S.of(context).historialPerEvent,
-                  color: AppColors.warning,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${tasa.toStringAsFixed(1)}%',
-                  subtitle: S.of(context).historialAccumulatedRate,
-                  color: tasa > 5 ? AppColors.error : AppColors.success,
-                  isHighlight: tasa > 5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Botón Ver Gráficos debajo de los KPIs
-          HistorialGraficosCard(onTap: _navegarAGraficos),
-        ],
-      ),
+    return HistorialStatsGrid(
+      onVerGraficos: _navegarAGraficos,
+      cards: [
+        HistorialStatCard(
+          value: totalEventos.toString(),
+          subtitle: S.of(context).historialRecords,
+          color: AppColors.info,
+        ),
+        HistorialStatCard(
+          value: totalAves.toString(),
+          subtitle: S.of(context).historialDeadBirds,
+          color: AppColors.warning,
+        ),
+        HistorialStatCard(
+          value: promedio.toStringAsFixed(1),
+          subtitle: S.of(context).historialPerEvent,
+          color: AppColors.warning,
+        ),
+        HistorialStatCard(
+          value: '${tasa.toStringAsFixed(1)}%',
+          subtitle: S.of(context).historialAccumulatedRate,
+          color: tasa > 5 ? AppColors.error : AppColors.success,
+          isHighlight: tasa > 5,
+        ),
+      ],
     );
   }
 
@@ -439,280 +414,67 @@ class HistorialMortalidadPageState
 
   /// Método público para mostrar el menú de filtros (accesible desde el dashboard)
   void showFilterMenu() {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    HistorialFiltrosBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final theme = Theme.of(context);
-
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      S.of(context).batchFilterRecords,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
-                  // Contenido scrolleable
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Sección: Período
-                          AppSectionHeader(
-                            title: S.of(context).batchTimePeriod,
-                            padding: EdgeInsets.zero,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchAllTime,
-                                  subtitle: S.of(context).batchNoTimeLimit,
-                                  isSelected: _filtro == 'todos',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = 'todos');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays7,
-                                  subtitle: S.of(context).batchLastWeek,
-                                  isSelected: _filtro == '7d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '7d');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays30,
-                                  subtitle: S.of(context).batchLastMonth,
-                                  isSelected: _filtro == '30d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '30d');
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: AppSpacing.xl),
-
-                          // Sección: Causa
-                          AppSectionHeader(
-                            title: S.of(context).historialFilterMortalityCause,
-                            padding: EdgeInsets.zero,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-
-                          // Opción "Todas las causas" - usa AspectRatio para igualar con el grid
-                          AspectRatio(
-                            aspectRatio:
-                                4.8, // El doble del grid (2.4 * 2) porque ocupa todo el ancho
-                            child: _buildCausaOption(
-                              theme: theme,
-                              label: S.of(context).historialAllCauses,
-                              isSelected: _causaFiltro == null,
-                              color: theme.colorScheme.primary,
-                              onTap: () {
-                                setModalState(() {});
-                                setState(() => _causaFiltro = null);
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Grid de causas 2 columnas
-                          GridView.count(
-                            crossAxisCount: AppBreakpoints.of(
-                              context,
-                            ).gridColumns,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 8,
-                            crossAxisSpacing: 8,
-                            childAspectRatio: 2.4,
-                            children: CausaMortalidad.values.map((causa) {
-                              return _buildCausaOption(
-                                theme: theme,
-                                label: causa.localizedName(S.of(context)),
-                                subtitle: causa.localizedDescripcion(
-                                  S.of(context),
-                                ),
-                                isSelected: _causaFiltro == causa,
-                                color: causa.color,
-                                onTap: () {
-                                  setModalState(() {});
-                                  setState(() => _causaFiltro = causa);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Botón aplicar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                    child: AppButton.primary(
-                      label: hayFiltrosActivos
-                          ? S.of(context).commonApplyFilters
-                          : S.of(context).commonClose,
-                      onPressed: () => Navigator.pop(context),
-                      expanded: true,
-                      backgroundColor: AppColors.warning,
-                      foregroundColor: AppColors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPeriodOption({
-    required ThemeData theme,
-    required String label,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return HistorialPeriodOption(
-      label: label,
-      subtitle: subtitle,
-      isSelected: isSelected,
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildCausaOption({
-    required ThemeData theme,
-    required String label,
-    String? subtitle,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.info.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-          borderRadius: AppRadius.allMd,
-          border: Border.all(
-            color: isSelected
-                ? AppColors.info.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: 1.5,
+      hasActiveFilters: () => hayFiltrosActivos,
+      sectionsBuilder: (setModalState) {
+        final theme = Theme.of(context);
+        return [
+          // Sección: Período
+          HistorialPeriodoFilterSection(
+            selected: _filtro,
+            onSelect: (value) {
+              setModalState(() {});
+              setState(() => _filtro = value);
+            },
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          // Sección: Causa
+          AppSectionHeader(
+            title: S.of(context).historialFilterMortalityCause,
+            padding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Opción "Todas las causas" - usa AspectRatio para igualar con el grid
+          AspectRatio(
+            aspectRatio:
+                4.8, // El doble del grid (2.4 * 2) porque ocupa todo el ancho
+            child: HistorialFiltroOption(
+              label: S.of(context).historialAllCauses,
+              isSelected: _causaFiltro == null,
+              color: theme.colorScheme.primary,
+              onTap: () {
+                setModalState(() {});
+                setState(() => _causaFiltro = null);
+              },
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.info
-                          : theme.colorScheme.onSurface,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // Causas a ancho completo (texto completo sin recortes)
+          Column(
+            children: [
+              for (final causa in CausaMortalidad.values)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: HistorialFiltroOption(
+                    label: causa.localizedName(S.of(context)),
+                    subtitle: causa.localizedDescripcion(S.of(context)),
+                    isSelected: _causaFiltro == causa,
+                    color: causa.color,
+                    onTap: () {
+                      setModalState(() {});
+                      setState(() => _causaFiltro = causa);
+                    },
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
+            ],
+          ),
+        ];
+      },
     );
   }
 
@@ -778,6 +540,7 @@ class HistorialMortalidadPageState
   Future<void> _onRefresh() async {
     ref.invalidate(registrosMortalidadStreamProvider(widget.lote.id));
     ref.invalidate(estadisticasMortalidadProvider(widget.lote.id));
+    await ref.read(registrosMortalidadStreamProvider(widget.lote.id).future);
   }
 
   void _navegarAGraficos() {
@@ -821,187 +584,189 @@ class _DetailSheet extends StatelessWidget {
     ).format(registro.fecha);
     final horaFormat = DateFormat('HH:mm', locale).format(registro.fecha);
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.paddingOf(context).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
+    return FormTextScale(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              MediaQuery.paddingOf(context).bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.lg),
 
-              // Header con cantidad y fecha
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fechaFormat,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                // Header con cantidad y fecha
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fechaFormat,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          horaFormat,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          const SizedBox(height: 2),
+                          Text(
+                            horaFormat,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: AppRadius.allSm,
+                      ),
+                      child: Text(
+                        l.historialBirdsUnit(registro.cantidad),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // Información en formato tabla
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: AppRadius.allSm,
-                    ),
-                    child: Text(
-                      l.historialBirdsUnit(registro.cantidad),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
+                  child: Column(
+                    children: [
+                      _buildTableRow(
+                        theme,
+                        l.detailCause,
+                        registro.causa.localizedName(S.of(context)),
+                        valueColor: causaColor,
                       ),
+                      _buildTableRow(
+                        theme,
+                        l.detailBirdAge,
+                        l.detailDaysWeek(
+                          registro.edadAvesDias.toString(),
+                          registro.semanasVida.toString(),
+                        ),
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailBirdsBeforeEvent,
+                        '${registro.cantidadAntesEvento}',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailImpact,
+                        '${registro.impactoPorcentual.toStringAsFixed(2)}%',
+                        valueColor: registro.impactoPorcentual > 2
+                            ? AppColors.error
+                            : AppColors.warning,
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailRegisteredBy,
+                        registro.nombreUsuario,
+                        isLast: !registro.descripcion.isNotEmpty,
+                      ),
+                      if (registro.descripcion.isNotEmpty)
+                        _buildTableRow(
+                          theme,
+                          l.detailDescription,
+                          registro.descripcion,
+                          isLast: true,
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Fotos de evidencia
+                if (registro.tieneEvidencia) ...[
+                  const SizedBox(height: AppSpacing.base),
+                  Text(
+                    l.detailPhotoEvidence,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: registro.fotosUrls.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(width: AppSpacing.sm),
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: AppRadius.allSm,
+                          child: AppImage(
+                            url: registro.fotosUrls[index],
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 200,
+                            memCacheHeight: 200,
+                            errorWidget: Container(
+                              width: 100,
+                              height: 100,
+                              color: AppColors.surfaceVariant,
+                              child: const Icon(
+                                Icons.broken_image_rounded,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
-              ),
 
-              const SizedBox(height: AppSpacing.lg),
-
-              // Información en formato tabla
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLowest,
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildTableRow(
-                      theme,
-                      l.detailCause,
-                      registro.causa.localizedName(S.of(context)),
-                      valueColor: causaColor,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBirdAge,
-                      l.detailDaysWeek(
-                        registro.edadAvesDias.toString(),
-                        registro.semanasVida.toString(),
-                      ),
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBirdsBeforeEvent,
-                      '${registro.cantidadAntesEvento}',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailImpact,
-                      '${registro.impactoPorcentual.toStringAsFixed(2)}%',
-                      valueColor: registro.impactoPorcentual > 2
-                          ? AppColors.error
-                          : AppColors.warning,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailRegisteredBy,
-                      registro.nombreUsuario,
-                      isLast: !registro.descripcion.isNotEmpty,
-                    ),
-                    if (registro.descripcion.isNotEmpty)
-                      _buildTableRow(
-                        theme,
-                        l.detailDescription,
-                        registro.descripcion,
-                        isLast: true,
-                      ),
-                  ],
-                ),
-              ),
-
-              // Fotos de evidencia
-              if (registro.tieneEvidencia) ...[
-                const SizedBox(height: AppSpacing.base),
-                Text(
-                  l.detailPhotoEvidence,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
                 const SizedBox(height: AppSpacing.sm),
-                SizedBox(
-                  height: 100,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: registro.fotosUrls.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(width: AppSpacing.sm),
-                    itemBuilder: (context, index) {
-                      return ClipRRect(
-                        borderRadius: AppRadius.allSm,
-                        child: AppImage(
-                          url: registro.fotosUrls[index],
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 200,
-                          memCacheHeight: 200,
-                          errorWidget: Container(
-                            width: 100,
-                            height: 100,
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(
-                              Icons.broken_image_rounded,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
               ],
-
-              const SizedBox(height: AppSpacing.sm),
-            ],
+            ),
           ),
         ),
       ),

@@ -27,6 +27,7 @@ import '../../domain/enums/estado_galpon.dart';
 import '../../domain/enums/tipo_galpon.dart';
 import '../../domain/usecases/crear_galpon.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/form_steps/basic_info_step.dart';
 import '../widgets/form_steps/environmental_step.dart';
 import '../widgets/form_steps/specifications_step.dart';
@@ -75,10 +76,9 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
   // Timer para autoguardado
   Timer? _autoSaveTimer;
   bool _isSaving = false;
-  DateTime? _lastSaveTime;
 
   // Definición de los pasos del formulario
-  late final List<FormStepInfo> _steps;
+  List<FormStepInfo> get _steps => _buildSteps(context);
 
   List<FormStepInfo> _buildSteps(BuildContext context) {
     final l = S.of(context);
@@ -159,7 +159,6 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
     await prefs.setString('galpon_draft_${widget.granjaId}', jsonEncode(draft));
     setState(() {
       _isSaving = false;
-      _lastSaveTime = DateTime.now();
     });
   }
 
@@ -243,22 +242,6 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
     }
   }
 
-  String _formatSaveTime(DateTime saveTime) {
-    final now = DateTime.now();
-    final difference = now.difference(saveTime);
-
-    final l = S.of(context);
-    if (difference.inSeconds < 10) {
-      return l.commonJustNow;
-    } else if (difference.inSeconds < 60) {
-      return l.commonSecondsAgo(difference.inSeconds);
-    } else if (difference.inMinutes < 60) {
-      return l.commonMinutesAgo(difference.inMinutes);
-    } else {
-      return l.commonHoursAgo(difference.inHours);
-    }
-  }
-
   bool _hasUnsavedChanges() {
     return _codigoController.text.isNotEmpty ||
         _nombreController.text.isNotEmpty ||
@@ -269,7 +252,6 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = S.of(context);
-    _steps = _buildSteps(context);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -278,21 +260,16 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l.shedNewShed),
-              if (_lastSaveTime != null)
-                Text(
-                  _isSaving
-                      ? l.commonSaving
-                      : l.commonSavedAt(_formatSaveTime(_lastSaveTime!)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
-                  ),
-                ),
-            ],
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l.shedNewShed),
+              ],
+            ),
           ),
           leading: IconButton(
             icon: const Icon(Icons.close),
@@ -321,64 +298,66 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _steps,
-              onStepTapped: _goToStep,
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _steps,
+                onStepTapped: _goToStep,
+              ),
 
-            // Contenido del formulario
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // Paso 1: Información básica
-                    BasicInfoStep(
-                      codigoController: _codigoController,
-                      nombreController: _nombreController,
-                      descripcionController: _descripcionController,
-                      tipoGalpon: _tipoGalpon,
-                      estadoGalpon: _estadoGalpon,
-                      onTipoGalponChanged: (v) =>
-                          setState(() => _tipoGalpon = v),
-                      onEstadoGalponChanged: (v) => setState(
-                        () => _estadoGalpon = v ?? EstadoGalpon.activo,
+              // Contenido del formulario
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Paso 1: Información básica
+                      BasicInfoStep(
+                        codigoController: _codigoController,
+                        nombreController: _nombreController,
+                        descripcionController: _descripcionController,
+                        tipoGalpon: _tipoGalpon,
+                        estadoGalpon: _estadoGalpon,
+                        onTipoGalponChanged: (v) =>
+                            setState(() => _tipoGalpon = v),
+                        onEstadoGalponChanged: (v) => setState(
+                          () => _estadoGalpon = v ?? EstadoGalpon.activo,
+                        ),
+                        granjaId: widget.granjaId,
+                        autoValidate: _autoValidatePerStep[0],
                       ),
-                      granjaId: widget.granjaId,
-                      autoValidate: _autoValidatePerStep[0],
-                    ),
-                    // Paso 2: Especificaciones
-                    SpecificationsStep(
-                      capacidadAvesController: _capacidadAvesController,
-                      areaM2Controller: _areaM2Controller,
-                      numeroBeberosController: _numeroBeberosController,
-                      numeroComerosController: _numeroComerosController,
-                      numeroNidalesController: _numeroNidalesController,
-                      autoValidate: _autoValidatePerStep[1],
-                    ),
-                    // Paso 3: Ambiente
-                    EnvironmentalStep(
-                      temperaturaMinController: _temperaturaMinController,
-                      temperaturaMaxController: _temperaturaMaxController,
-                      humedadMinController: _humedadMinController,
-                      humedadMaxController: _humedadMaxController,
-                      ventilacionMinController: _ventilacionMinController,
-                      ventilacionMaxController: _ventilacionMaxController,
-                    ),
-                  ],
+                      // Paso 2: Especificaciones
+                      SpecificationsStep(
+                        capacidadAvesController: _capacidadAvesController,
+                        areaM2Controller: _areaM2Controller,
+                        numeroBeberosController: _numeroBeberosController,
+                        numeroComerosController: _numeroComerosController,
+                        numeroNidalesController: _numeroNidalesController,
+                        autoValidate: _autoValidatePerStep[1],
+                      ),
+                      // Paso 3: Ambiente
+                      EnvironmentalStep(
+                        temperaturaMinController: _temperaturaMinController,
+                        temperaturaMaxController: _temperaturaMaxController,
+                        humedadMinController: _humedadMinController,
+                        humedadMaxController: _humedadMaxController,
+                        ventilacionMinController: _ventilacionMinController,
+                        ventilacionMaxController: _ventilacionMaxController,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );

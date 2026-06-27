@@ -40,8 +40,14 @@ class NotificacionesSchedulerState {
 }
 
 /// Provider del scheduler de notificaciones.
+///
+/// No usa `autoDispose`: es un servicio de fondo de larga duración controlado
+/// manualmente con `iniciar()`/`detener()` desde la Home vía `ref.read`. Con
+/// `autoDispose`, al no haber ningún watcher sostenido el notifier se destruiría
+/// tras arrancar y su `dispose()` cancelaría el Timer periódico, deteniendo el
+/// scheduler de forma silenciosa.
 final notificacionesSchedulerProvider =
-    StateNotifierProvider.autoDispose<
+    StateNotifierProvider<
       NotificacionesSchedulerNotifier,
       NotificacionesSchedulerState
     >((ref) {
@@ -58,8 +64,13 @@ class NotificacionesSchedulerNotifier
   Timer? _timer;
   final AlertasService _alertasService = AlertasService();
 
-  /// Intervalo de verificación (15 minutos).
-  static const _intervalo = Duration(minutes: 15);
+  /// Intervalo de verificación (30 minutos).
+  ///
+  /// El costo real de lecturas está acotado por el lock distribuido de
+  /// `AlertasService.ejecutarVerificacionesProgramadas`: aunque varios
+  /// clientes disparen el timer, solo uno por granja ejecuta las queries por
+  /// ventana. Un intervalo más amplio reduce además los intentos de lock.
+  static const _intervalo = Duration(minutes: 30);
 
   /// Inicia el scheduler.
   void iniciar() {

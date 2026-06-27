@@ -15,6 +15,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/application.dart';
@@ -71,7 +72,7 @@ class GranjaDetailPage extends ConsumerWidget {
             AppButton.primary(
               label: S.of(context).commonBack,
               icon: Icons.arrow_back,
-              onPressed: () => context.go(AppRoutes.granjas),
+              onPressed: () => context.go(AppRoutes.granjasHome),
             ),
           ],
         ),
@@ -94,13 +95,13 @@ class _GranjaDetailView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(l.commonDetails),
+        title: FormTextScale(child: Text(l.commonDetails)),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_outlined, size: 28),
             onPressed: () =>
                 context.push(AppRoutes.granjaEditarById(granja.id)),
             tooltip: l.farmEditTooltip,
@@ -109,7 +110,8 @@ class _GranjaDetailView extends ConsumerWidget {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
-      body: SingleChildScrollView(
+      body: FormTextScale(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.base),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,6 +139,7 @@ class _GranjaDetailView extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xxl),
           ],
         ),
+        ),
       ),
     );
   }
@@ -147,7 +150,11 @@ class _GranjaDetailView extends ConsumerWidget {
     ThemeData theme,
   ) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
+      icon: Icon(
+        Icons.more_vert,
+        size: 28,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
       shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
       color: theme.colorScheme.surface,
       elevation: 3,

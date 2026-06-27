@@ -1,12 +1,13 @@
 /// Widget indicador de progreso visual para formularios multi-step
 ///
-/// Muestra los pasos del formulario con estado visual (completado, actual, pendiente)
+/// Muestra los pasos del formulario como segmentos conectados tipo "pill":
+/// los pasos completados y el actual se rellenan en azul sólido con texto
+/// blanco; los pendientes quedan con borde gris y texto gris.
 library;
 
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
 
 /// Información de un paso del formulario
 class FormStepInfo {
@@ -22,7 +23,8 @@ class FormStepInfo {
   final String? description;
 }
 
-/// Widget que muestra un indicador de progreso horizontal para formularios multi-step
+/// Widget que muestra un indicador de progreso horizontal para formularios
+/// multi-step con el estilo de segmentos pill conectados.
 class FormProgressIndicator extends StatelessWidget {
   const FormProgressIndicator({
     super.key,
@@ -40,111 +42,87 @@ class FormProgressIndicator extends StatelessWidget {
   /// Callback opcional al tocar un paso
   final ValueChanged<int>? onStepTapped;
 
+  /// Radio externo del contenedor pill.
+  static const double _radius = 10;
+
+  /// Alto de la barra de segmentos.
+  static const double _height = 44;
+
+  /// Azul índigo del diseño de referencia para los segmentos activos.
+  static const Color _activeColor = Color(0xFF2E3192);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+      color: theme.colorScheme.surface,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_radius),
+        child: Container(
+          height: _height,
+          // Borde gris exterior (visible sobre todo en los segmentos pendientes).
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_radius),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(steps.length * 2 - 1, (index) {
-          if (index.isOdd) {
-            // Conector entre pasos
-            final stepIndex = index ~/ 2;
-            final isCompleted = stepIndex < currentStep;
-            return Expanded(
-              child: Container(
-                height: 2,
-                margin: const EdgeInsets.only(top: 15, left: 4, right: 4),
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? AppColors.primary
-                      : theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              ),
-            );
-          }
+          child: Row(
+            children: List.generate(steps.length, (index) {
+              final isActive = index <= currentStep;
+              final step = steps[index];
+              final isFirst = index == 0;
+              final isLast = index == steps.length - 1;
 
-          // Paso
-          final stepIndex = index ~/ 2;
-          final isCompleted = stepIndex < currentStep;
-          final isCurrent = stepIndex == currentStep;
-          final step = steps[stepIndex];
-
-          return GestureDetector(
-            onTap: onStepTapped != null ? () => onStepTapped!(stepIndex) : null,
-            behavior: HitTestBehavior.opaque,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
+              return Expanded(
+                child: GestureDetector(
+                  onTap: onStepTapped != null
+                      ? () => onStepTapped!(index)
+                      : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCompleted
-                          ? AppColors.primary
-                          : isCurrent
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : theme.colorScheme.surfaceContainerHighest,
-                      border: isCurrent
-                          ? Border.all(color: AppColors.primary, width: 2)
-                          : null,
+                      color: isActive ? _activeColor : Colors.transparent,
+                      // Divisor blanco delgado entre segmentos activos.
+                      border: Border(
+                        left: (!isFirst && isActive)
+                            ? const BorderSide(
+                                color: AppColors.white,
+                                width: 1.5,
+                              )
+                            : BorderSide.none,
+                      ),
+                      borderRadius: BorderRadius.horizontal(
+                        left: isFirst
+                            ? const Radius.circular(_radius)
+                            : Radius.zero,
+                        right: isLast
+                            ? const Radius.circular(_radius)
+                            : Radius.zero,
+                      ),
                     ),
-                    child: Center(
-                      child: isCompleted
-                          ? const Icon(
-                              Icons.check,
-                              size: 18,
-                              color: AppColors.onPrimary,
-                            )
-                          : Text(
-                              '${stepIndex + 1}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: isCurrent
-                                    ? AppColors.primaryDark
-                                    : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: isCurrent
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        step.label,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: isActive
+                              ? AppColors.white
+                              : theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                  AppSpacing.gapXxs,
-                  Text(
-                    step.label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: isCurrent || isCompleted
-                          ? AppColors.primaryDark
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: isCurrent
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: 10,
-                    ),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }

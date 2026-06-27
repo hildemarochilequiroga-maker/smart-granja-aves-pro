@@ -118,18 +118,22 @@ class ActividadReciente {
 // PROVIDER DE ACTIVIDADES RECIENTES
 // =============================================================================
 
-/// Provider simplificado que combina streams usando un enfoque más eficiente.
-/// Usa async* generator para emitir inmediatamente y luego refrescar periódicamente.
-/// autoDispose: se cancela al salir del Home, evitando memory leak del Stream.periodic.
-final actividadesRecientesSimpleProvider = StreamProvider.autoDispose
+/// Provider de actividades recientes del Home.
+///
+/// Carga única bajo demanda (NO hace polling): cada lectura ejecuta ~14 queries
+/// en paralelo, así que un `Stream.periodic` multiplicaba ese costo por cada
+/// usuario con el Home abierto. Ahora se refresca solo cuando el Home se monta
+/// o el usuario hace pull-to-refresh (vía `ref.invalidate`). autoDispose libera
+/// el resultado al salir del Home.
+final actividadesRecientesSimpleProvider = FutureProvider.autoDispose
     .family<List<ActividadReciente>, String>((ref, granjaId) {
-      return _actividadesRecientesStream(granjaId);
+      return _fetchActividadesRecientes(granjaId);
     });
 
-/// Stream generator que emite inmediatamente y luego refresca cada 5 segundos.
-Stream<List<ActividadReciente>> _actividadesRecientesStream(
+/// Obtiene las actividades recientes de la granja en una sola pasada.
+Future<List<ActividadReciente>> _fetchActividadesRecientes(
   String granjaId,
-) async* {
+) async {
   final firestore = FirebaseFirestore.instance;
 
   // Función para obtener actividades
@@ -751,13 +755,7 @@ Stream<List<ActividadReciente>> _actividadesRecientesStream(
     return actividadesEnriquecidas.take(15).toList();
   }
 
-  // Emitir inmediatamente la primera vez
-  yield await fetchActividades();
-
-  // Luego refrescar cada 60 segundos (14 queries por ciclo — 5s era demasiado agresivo)
-  await for (final _ in Stream.periodic(const Duration(seconds: 60))) {
-    yield await fetchActividades();
-  }
+  return fetchActividades();
 }
 
 // =============================================================================

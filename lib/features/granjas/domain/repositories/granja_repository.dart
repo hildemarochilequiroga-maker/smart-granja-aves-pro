@@ -19,9 +19,6 @@ abstract class GranjaRepository {
   /// Obtiene una granja por su ID
   Future<Either<Failure, Granja?>> obtenerPorId(String id);
 
-  /// Obtiene todas las granjas del usuario actual
-  Future<Either<Failure, List<Granja>>> obtenerTodas();
-
   /// Obtiene todas las granjas de un usuario específico
   Future<Either<Failure, List<Granja>>> obtenerPorUsuario(String usuarioId);
 
@@ -47,13 +44,6 @@ abstract class GranjaRepository {
     String usuarioId,
     String nombre,
   );
-
-  /// Obtiene granjas cercanas a unas coordenadas (radio en km)
-  Future<Either<Failure, List<Granja>>> obtenerCercanas({
-    required double latitud,
-    required double longitud,
-    required double radioKm,
-  });
 
   /// Verifica si existe una granja con un RUC específico
   Future<Either<Failure, bool>> existeConRuc(String ruc);

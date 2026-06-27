@@ -10,6 +10,7 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,6 +110,9 @@ class GalponDetailHandlers {
     // Mostrar selector de lotes disponibles
     final loteSeleccionado = await showModalBottomSheet<Lote>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => _LoteSelectorSheet(granjaId: galpon.granjaId),
     );
 
@@ -291,40 +295,20 @@ class _LoteSelectorSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final lotesAsync = ref.watch(lotesStreamProvider(granjaId));
 
-    return Container(
+    return AppBottomSheetScaffold(
+      title: S.of(context).shedSelectBatch,
+      subtitle: S.of(context).shedSelectBatchForAssign,
+      scrollable: true,
+      child: ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.6,
       ),
-      padding: const EdgeInsets.all(16),
+      child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          AppSpacing.gapBase,
-          Text(
-            S.of(context).shedSelectBatch,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          AppSpacing.gapSm,
-          Text(
-            S.of(context).shedSelectBatchForAssign,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          AppSpacing.gapBase,
           Flexible(
             child: lotesAsync.when(
               data: (lotes) {
@@ -417,6 +401,8 @@ class _LoteSelectorSheet extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+      ),
       ),
     );
   }

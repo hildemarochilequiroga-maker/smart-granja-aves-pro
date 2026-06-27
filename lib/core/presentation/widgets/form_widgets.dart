@@ -42,6 +42,23 @@ enum InfoCardType {
     InfoCardType.error => Icons.error_outline,
     InfoCardType.success => Icons.check_circle_outline,
   };
+
+  /// Color del icono de estado sobre el fondo oscuro de [FormInfoCard].
+  /// Tonos brillantes para contraste sobre el panel oscuro del diseño.
+  Color get accentOnDark => switch (this) {
+    InfoCardType.info => const Color(0xFF3B9EDE),
+    InfoCardType.warning => const Color(0xFFE6B33E),
+    InfoCardType.error => const Color(0xFFE05656),
+    InfoCardType.success => const Color(0xFF3BB273),
+  };
+
+  /// Icono circular relleno usado en [FormInfoCard] (estilo del diseño).
+  IconData get filledIcon => switch (this) {
+    InfoCardType.info => Icons.info,
+    InfoCardType.warning => Icons.warning_amber_rounded,
+    InfoCardType.error => Icons.error,
+    InfoCardType.success => Icons.check_circle,
+  };
 }
 
 // ============================================================================
@@ -99,6 +116,25 @@ class RegistroFormField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Label superior (estilo consistente con crear_granja / AppFormField)
+        Text(
+          required ? '$label *' : label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildField(theme),
+      ],
+    );
+  }
+
+  Widget _buildField(ThemeData theme) {
     return TextFormField(
       controller: controller,
       initialValue: controller == null ? initialValue : null,
@@ -117,28 +153,33 @@ class RegistroFormField extends StatelessWidget {
       focusNode: focusNode,
       style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
-        labelText: required ? '$label *' : label,
         hintText: hint,
         suffixText: suffixText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        // Diseño idéntico al campo selector (causa/método/tipo):
+        // mismo radio, borde y padding.
         border: OutlineInputBorder(
-          borderRadius: AppRadius.allMd,
-          borderSide: BorderSide(color: theme.colorScheme.outline),
+          borderRadius: AppRadius.allSm,
+          borderSide: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.4),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.allMd,
-          borderSide: BorderSide(color: theme.colorScheme.outline),
+          borderRadius: AppRadius.allSm,
+          borderSide: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.4),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.allMd,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderRadius: AppRadius.allSm,
+          borderSide: const BorderSide(color: AppColors.info, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.allMd,
+          borderRadius: AppRadius.allSm,
           borderSide: BorderSide(color: theme.colorScheme.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.allMd,
+          borderRadius: AppRadius.allSm,
           borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
         ),
         filled: true,
@@ -147,7 +188,7 @@ class RegistroFormField extends StatelessWidget {
             : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 16,
         ),
       ),
     );
@@ -189,6 +230,25 @@ class RegistroDropdownField<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Label superior (estilo consistente con crear_granja / AppFormField)
+        Text(
+          required ? '$label *' : label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildDropdown(theme, context),
+      ],
+    );
+  }
+
+  Widget _buildDropdown(ThemeData theme, BuildContext context) {
     return DropdownButtonFormField<T>(
       // ignore: deprecated_member_use
       value: value,
@@ -201,7 +261,6 @@ class RegistroDropdownField<T> extends StatelessWidget {
       itemHeight: null,
       menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
       decoration: InputDecoration(
-        labelText: required ? '$label *' : label,
         hintText: hint,
         border: OutlineInputBorder(
           borderRadius: AppRadius.allMd,
@@ -275,35 +334,57 @@ class FormInfoRow extends StatelessWidget {
 // FORM INFO CARD
 // ============================================================================
 
-/// Card informativa para formularios (más prominente que FormInfoRow)
+/// Card informativa estandarizada del proyecto.
+///
+/// Panel oscuro con icono de estado a la izquierda (success/info/warning/
+/// error), título y subtítulo, y una "X" opcional para descartar. El diseño
+/// es fijo (mismo aspecto en claro y oscuro) para mantener consistencia en
+/// todas las cards informativas/de atención del proyecto.
 class FormInfoCard extends StatelessWidget {
   const FormInfoCard({
     super.key,
     required this.title,
     required this.description,
     required this.type,
+    this.onDismiss,
   });
 
   final String title;
   final String description;
   final InfoCardType type;
 
+  /// Si se provee, muestra la "X" para descartar la card.
+  final VoidCallback? onDismiss;
+
+  /// Fondo oscuro del panel (estilo del diseño de referencia).
+  static const Color _panelColor = Color(0xFF1C1C1E);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = type.accentOnDark;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
       decoration: BoxDecoration(
-        color: type.backgroundColor,
-        borderRadius: AppRadius.allMd,
-        border: Border.all(color: type.color.withValues(alpha: 0.3)),
+        color: _panelColor,
+        borderRadius: AppRadius.allLg,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(type.icon, size: 22, color: type.color),
+          // Icono de estado (círculo outline con icono relleno).
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: accent, width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: Icon(type.filledIcon, size: 15, color: accent),
+          ),
           AppSpacing.hGapMd,
           Expanded(
             child: Column(
@@ -312,20 +393,34 @@ class FormInfoCard extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: type.color,
-                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                AppSpacing.gapXxs,
+                AppSpacing.gapXs,
                 Text(
                   description,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: type.color.withValues(alpha: 0.8),
+                    color: AppColors.white.withValues(alpha: 0.6),
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
+          // "X" opcional para descartar.
+          if (onDismiss != null) ...[
+            AppSpacing.hGapSm,
+            GestureDetector(
+              onTap: onDismiss,
+              behavior: HitTestBehavior.opaque,
+              child: Icon(
+                Icons.close,
+                size: 18,
+                color: AppColors.white.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
         ],
       ),
     );

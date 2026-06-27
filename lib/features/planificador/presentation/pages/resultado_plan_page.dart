@@ -452,21 +452,19 @@ class _SheetWrapper extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Handle
           Container(
-            margin: const EdgeInsets.only(top: 10),
+            margin: const EdgeInsets.only(top: 12),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+              color: Theme.of(context).colorScheme.outlineVariant,
+              borderRadius: BorderRadius.circular(100),
             ),
           ),
           // Header
@@ -486,7 +484,7 @@ class _SheetWrapper extends StatelessWidget {
                 Expanded(
                   child: Text(
                     titulo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),

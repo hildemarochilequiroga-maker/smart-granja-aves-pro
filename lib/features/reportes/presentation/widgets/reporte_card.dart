@@ -28,9 +28,7 @@ class ReporteCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Material(
-      color: isSelected
-          ? AppColors.success.withValues(alpha: 0.1)
-          : colorScheme.surface,
+      color: colorScheme.surface,
       borderRadius: AppRadius.allMd,
       child: InkWell(
         onTap: onTap,
@@ -46,62 +44,52 @@ class ReporteCard extends StatelessWidget {
               width: isSelected ? 2 : 1,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
             children: [
               Icon(
                 _getIcon(tipo),
-                size: 28,
+                size: 24,
                 color: isSelected
                     ? AppColors.success
                     : colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                tipo.displayName,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? AppColors.success : colorScheme.onSurface,
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tipo.displayName,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? AppColors.success : colorScheme.onSurface,
+                      ),
+                    ),
+                    if (!tipo.isImplemented) ...[
+                      const SizedBox(height: AppSpacing.xxxs),
+                      Text(
+                        S.of(context).commonComingSoon,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.warningDark,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xxxs),
-              if (!tipo.isImplemented)
+              if (isSelected)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xxxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.2),
-                    borderRadius: AppRadius.allSm,
-                  ),
-                  child: Text(
-                    S.of(context).commonComingSoon,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.warningDark,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                )
-              else if (isSelected)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xxxs,
-                  ),
-                  decoration: BoxDecoration(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
                     color: AppColors.success,
-                    borderRadius: AppRadius.allSm,
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    S.of(context).commonSelected,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: const Icon(
+                    Icons.check,
+                    size: 16,
+                    color: AppColors.white,
                   ),
                 ),
             ],

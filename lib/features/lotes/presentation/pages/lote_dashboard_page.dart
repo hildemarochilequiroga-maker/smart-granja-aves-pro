@@ -9,7 +9,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -19,11 +18,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/formatters.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
+import '../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_progress_bar.dart';
 import '../../application/providers/providers.dart';
 import '../../domain/entities/lote.dart';
-import '../../domain/enums/enums.dart';
 import '../widgets/dashboard/mortalidad_tab_widget.dart';
 import '../widgets/dashboard/peso_tab_widget.dart';
 import '../widgets/dashboard/consumo_tab_widget.dart';
@@ -133,104 +134,250 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
       default: // Mortalidad, Peso, Consumo, Producción — fondo de color, texto blanco
         appBarForeground = AppColors.white;
     }
-    return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: _getAppBarColor(),
-        elevation: 0,
-        foregroundColor: appBarForeground,
-        iconTheme: IconThemeData(color: appBarForeground),
-        title: Text(
-          _getAppBarTitle(),
-          style: AppTextStyles.titleMedium.copyWith(
-            color: appBarForeground,
-            fontWeight: FontWeight.w600,
+    return PopScope(
+      // En un historial, el back del sistema vuelve al resumen (no sale).
+      canPop: _currentIndex == 2,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentIndex != 2) {
+          setState(() => _currentIndex = 2);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          toolbarHeight: 64,
+          backgroundColor: _getAppBarColor(),
+          elevation: 0,
+          foregroundColor: appBarForeground,
+          iconTheme: IconThemeData(color: appBarForeground),
+          // En un historial: volver al resumen. En el resumen: salir de la página.
+          leading: _currentIndex != 2
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => setState(() => _currentIndex = 2),
+                )
+              : null,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Text(
+              _getAppBarTitle(),
+              style: AppTextStyles.titleMedium.copyWith(
+                color: appBarForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
+          actions: _buildAppBarActions(),
         ),
-        actions: _buildAppBarActions(),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            // 0: Mortalidad
+            MortalidadTabWidget(lote: widget.lote, pageKey: _mortalidadKey),
+            // 1: Peso
+            PesoTabWidget(lote: widget.lote, pageKey: _pesoKey),
+            // 2: Dashboard (Centro)
+            _buildDashboardView(),
+            // 3: Consumo
+            ConsumoTabWidget(lote: widget.lote, pageKey: _consumoKey),
+            // 4: Producción (solo aves de postura)
+            if (widget.lote.tipoAve.esPostura)
+              ProduccionTabWidget(lote: widget.lote, pageKey: _produccionKey),
+          ],
+        ),
+        floatingActionButton: widget.lote.estaActivo && _currentIndex != 2
+            ? FormTextScale(factor: 1.25, child: _buildFAB())
+            : null,
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          // 0: Mortalidad
-          MortalidadTabWidget(lote: widget.lote, pageKey: _mortalidadKey),
-          // 1: Peso
-          PesoTabWidget(lote: widget.lote, pageKey: _pesoKey),
-          // 2: Dashboard (Centro)
-          _buildDashboardView(),
-          // 3: Consumo
-          ConsumoTabWidget(lote: widget.lote, pageKey: _consumoKey),
-          // 4: Producción (solo aves de postura)
-          if (widget.lote.tipoAve.esPostura)
-            ProduccionTabWidget(lote: widget.lote, pageKey: _produccionKey),
-        ],
-      ),
-      bottomNavigationBar: _DashboardNavigationBar(
-        currentIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        showProduccion: widget.lote.tipoAve.esPostura,
-      ),
-      floatingActionButton: widget.lote.estaActivo && _currentIndex != 2
-          ? _buildFAB()
-          : null,
     );
   }
 
   Widget _buildDashboardView() {
     final theme = Theme.of(context);
-    final cantidadActual = widget.lote.avesDisponibles;
     final mortalidadTotal = widget.lote.mortalidadAcumulada;
-    final tasaMortalidad =
-        (mortalidadTotal / widget.lote.cantidadInicial * 100);
     final edad = widget.lote.edadActualDias;
-
-    // Calcular métricas adicionales
-    final ica = widget.lote.indiceConversionAlimenticia;
-    final gananciaDiaria = widget.lote.gananciaPesoPromedioDiariaGramos;
-    final totalBajas =
-        widget.lote.mortalidadAcumulada +
-        widget.lote.descartesAcumulados +
-        widget.lote.ventasAcumuladas;
 
     // Detectar alertas
     final alertas = _buildAlertas();
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(loteByIdProvider(widget.lote.id));
-      },
-      child: ListView(
-        padding: const EdgeInsets.only(top: 8, bottom: 100),
-        children: [
-          // ================================================================
-          // CARD PRINCIPAL - Información General del Lote
-          // ================================================================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: AppRadius.allMd,
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Header con tipo de ave y estado
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
+    return FormTextScale(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(loteByIdProvider(widget.lote.id));
+        },
+        child: ListView(
+          padding: const EdgeInsets.only(top: 8, bottom: 16),
+          children: [
+            // ================================================================
+            // CARD PRINCIPAL - Información General del Lote
+            // ================================================================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: AppRadius.allMd,
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.05,
+                      ),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Header con tipo de ave y estado
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.lote.tipoAve.localizedDisplayName(
+                                    S.of(context),
+                                  ),
+                                  style: AppTextStyles.titleMedium.copyWith(
+                                    color: AppColors.onPrimary.withValues(
+                                      alpha: 0.95,
+                                    ),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xxs),
+                                Text(
+                                  '${_formatEdad(edad)} (${S.of(context).batchAgeDaysValue(edad.toString())})',
+                                  style: AppTextStyles.headlineSmall.copyWith(
+                                    color: AppColors.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getEstadoColor(widget.lote.estado),
+                              borderRadius: AppRadius.allSm,
+                            ),
+                            child: Text(
+                              widget.lote.estado.localizedDisplayName(
+                                S.of(context),
+                              ),
+                              style: AppTextStyles.titleSmall.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+
+                    // Divider
+                    Divider(color: theme.colorScheme.outlineVariant, height: 1),
+
+                    // Stats de aves: Ingreso, Aves ingresadas
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoColumnSimple(
+                              theme,
+                              label: S.of(context).batchEntryLabel,
+                              value: DateFormat(
+                                'dd/MM/yy',
+                              ).format(widget.lote.fechaIngreso),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                          Expanded(
+                            child: _buildInfoColumnSimple(
+                              theme,
+                              label: S.of(context).batchEnteredBirds,
+                              value: '${widget.lote.cantidadInicial}',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ================================================================
+            // CARD - Costo por ave (acumulado por ave viva, a hoy)
+            // ================================================================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: _CostoPorAveCard(
+                lote: widget.lote,
+                granjaId: widget.granjaId,
+              ),
+            ),
+
+            // ================================================================
+            // SECCIÓN DE ALERTAS (si hay)
+            // ================================================================
+            if (alertas.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: FormInfoCard(
+                  type: InfoCardType.warning,
+                  title: S.of(context).loteAttention,
+                  description: alertas.join('\n'),
+                ),
+              ),
+            ],
+
+            // Cards "Guía de manejo" y "Guía diaria" ocultas a pedido.
+            // Implementación conservada (comentada) por si se reactivan:
+            /*
+            // ================================================================
+            // BOTÓN GUÍAS DE MANEJO
+            // ================================================================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Card(
+                elevation: 2,
+                shadowColor: AppColors.amber.withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.allMd,
+                  side: const BorderSide(color: AppColors.amber, width: 1.2),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => context.push(
+                    AppRoutes.loteGuiasManejoById(
+                      widget.granjaId,
+                      widget.lote.id,
+                    ),
+                    extra: widget.lote,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
                         Expanded(
@@ -238,523 +385,189 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.lote.tipoAve.localizedDisplayName(
-                                  S.of(context),
-                                ),
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: AppColors.onPrimary.withValues(
-                                    alpha: 0.9,
-                                  ),
+                                S.of(context).guiasManejoBotonLabel,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
-                              const SizedBox(height: AppSpacing.xxs),
+                              const SizedBox(height: 2),
                               Text(
-                                '${_formatEdad(edad)} (${S.of(context).batchAgeDaysValue(edad.toString())})',
-                                style: AppTextStyles.headlineSmall.copyWith(
-                                  color: AppColors.onPrimary,
-                                  fontWeight: FontWeight.bold,
+                                S.of(context).guiasManejoSubtitle,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getEstadoColor(widget.lote.estado),
-                            borderRadius: AppRadius.allSm,
-                          ),
-                          child: Text(
-                            widget.lote.estado.localizedDisplayName(
-                              S.of(context),
-                            ),
-                            style: AppTextStyles.labelMedium.copyWith(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ],
                     ),
                   ),
+                ),
+              ),
+            ),
 
-                  // Barra de progreso del ciclo
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              S.of(context).loteProgressCycle,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            Text(
-                              '${(edad / 45 * 100).clamp(0, 100).toStringAsFixed(0)}%',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: AppColors.info,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        AppProgressBar(
-                          value: edad / 45,
-                          color: edad >= 45
-                              ? AppColors.warning
-                              : AppColors.info,
-                          backgroundColor: AppColors.info.withValues(
-                            alpha: 0.15,
-                          ),
-                          height: 8,
-                          borderRadius: AppRadius.allXs,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          edad < 45
-                              ? S
-                                    .of(context)
-                                    .loteDayOfCycle(
-                                      edad.toString(),
-                                      (45 - edad).toString(),
-                                    )
-                              : edad == 45
-                              ? S.of(context).loteCycleCompleted
-                              : S
-                                    .of(context)
-                                    .loteExtraDays(
-                                      edad.toString(),
-                                      (edad - 45).toString(),
-                                    ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: edad > 45
-                                ? AppColors.warning
-                                : theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+            // ================================================================
+            // BOTÓN GUÍA DIARIA INTERACTIVA
+            // ================================================================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Card(
+                elevation: 2,
+                shadowColor: AppColors.success.withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.allMd,
+                  side: const BorderSide(color: AppColors.success, width: 1.2),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => context.push(
+                    AppRoutes.loteGuiaDiariaById(
+                      widget.granjaId,
+                      widget.lote.id,
                     ),
+                    extra: widget.lote,
                   ),
-
-                  // Divider
-                  Divider(color: theme.colorScheme.outlineVariant, height: 1),
-
-                  // Stats de aves: Ingreso, Vivas, Bajas
-                  Padding(
-                    padding: const EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
                         Expanded(
-                          child: _buildInfoColumnSimple(
-                            theme,
-                            label: S.of(context).batchEntryLabel,
-                            value: DateFormat(
-                              'dd/MM/yy',
-                            ).format(widget.lote.fechaIngreso),
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: theme.colorScheme.outlineVariant,
-                        ),
-                        Expanded(
-                          child: _buildInfoColumnSimple(
-                            theme,
-                            label: S.of(context).batchLiveBirds,
-                            value: '$cantidadActual',
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: theme.colorScheme.outlineVariant,
-                        ),
-                        Expanded(
-                          child: _buildInfoColumnSimple(
-                            theme,
-                            label: S.of(context).batchTotalLosses,
-                            value: '$totalBajas',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ================================================================
-          // SECCIÓN DE ALERTAS (si hay)
-          // ================================================================
-          if (alertas.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.08),
-                  borderRadius: AppRadius.allMd,
-                  border: Border.all(
-                    color: AppColors.warning.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          color: AppColors.warning,
-                          size: 20,
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          S.of(context).loteAttention,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.warning,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ...alertas.map(
-                      (alerta) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '• ',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                alerta,
-                                style: theme.textTheme.bodySmall?.copyWith(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                S.of(context).guiaDiariaBotonLabel,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.onSurface,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 2),
+                              Text(
+                                S.of(context).guiaDiariaBotonSubtitle,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
+            */
+            // ================================================================
+            // ACCESOS A HISTORIALES (botones con métrica resumida)
+            // ================================================================
+            _buildAccesoHistorialCard(
+              theme: theme,
+              title: S.of(context).mortalityTitle,
+              value: '$mortalidadTotal ${S.of(context).historialDeadBirds}',
+              color: AppColors.error,
+              onTap: () => setState(() => _currentIndex = 0),
+            ),
+            _buildAccesoHistorialCard(
+              theme: theme,
+              title: S.of(context).weightTitle,
+              value: widget.lote.pesoPromedioActual != null
+                  ? '${(widget.lote.pesoPromedioActual! * 1000).toStringAsFixed(0)} g'
+                  : '-- g',
+              color: AppColors.warning,
+              onTap: () => setState(() => _currentIndex = 1),
+            ),
+            _buildAccesoHistorialCard(
+              theme: theme,
+              title: S.of(context).batchConsumption,
+              value: widget.lote.consumoAcumuladoKg != null
+                  ? '${widget.lote.consumoAcumuladoKg!.toStringAsFixed(1)} kg ${S.of(context).batchTotalAccumulated}'
+                  : '-- kg',
+              color: AppColors.success,
+              onTap: () => setState(() => _currentIndex = 3),
+            ),
+            if (widget.lote.tipoAve.esPostura)
+              _buildAccesoHistorialCard(
+                theme: theme,
+                title: S.of(context).batchProduction,
+                value:
+                    '${widget.lote.huevosProducidos ?? 0} ${S.of(context).batchTotalEggs}',
+                color: AppColors.info,
+                onTap: () => setState(() => _currentIndex = 4),
+              ),
           ],
-
-          // ================================================================
-          // BOTÓN GUÍAS DE MANEJO
-          // ================================================================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Card(
-              elevation: 2,
-              shadowColor: AppColors.amber.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadius.allMd,
-                side: const BorderSide(color: AppColors.amber, width: 1.2),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.push(
-                  AppRoutes.loteGuiasManejoById(
-                    widget.granjaId,
-                    widget.lote.id,
-                  ),
-                  extra: widget.lote,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              S.of(context).guiasManejoBotonLabel,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              S.of(context).guiasManejoSubtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ================================================================
-          // BOTÓN GUÍA DIARIA INTERACTIVA
-          // ================================================================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Card(
-              elevation: 2,
-              shadowColor: AppColors.success.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadius.allMd,
-                side: const BorderSide(color: AppColors.success, width: 1.2),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.push(
-                  AppRoutes.loteGuiaDiariaById(widget.granjaId, widget.lote.id),
-                  extra: widget.lote,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              S.of(context).guiaDiariaBotonLabel,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              S.of(context).guiaDiariaBotonSubtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ================================================================
-          // BOTÓN VETERINARIO VIRTUAL IA
-          // ================================================================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Card(
-              elevation: 2,
-              shadowColor: Colors.teal.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadius.allMd,
-                side: const BorderSide(color: Colors.teal, width: 1.2),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.push(
-                  AppRoutes.veterinarioVirtual,
-                  extra: widget.lote,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              S.of(context).vetVirtualBotonLabel,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              S.of(context).vetVirtualSubtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ================================================================
-          // TÍTULO DE KPIs
-          // ================================================================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              S.of(context).loteKeyIndicators,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-
-          // ================================================================
-          // KPIs - UNA POR FILA (sin iconos, estructura clara)
-          // ================================================================
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                // Mortalidad
-                _buildKPICard(
-                  theme: theme,
-                  title: S.of(context).mortalityTitle,
-                  mainValue: '${tasaMortalidad.toStringAsFixed(1)}%',
-                  mainLabel: S.of(context).batchInitialFlock,
-                  secondaryValue: '$mortalidadTotal',
-                  secondaryLabel: S.of(context).batchBirdsLost,
-                  referenceValue:
-                      '${widget.lote.tipoAve.mortalidadEsperada.toStringAsFixed(0)}%',
-                  referenceLabel: S.of(context).batchExpected,
-                  accentColor: AppColors.error,
-                  status: _getMortalidadTrend(tasaMortalidad),
-                  statusColor: _getMortalidadTrendColor(tasaMortalidad),
-                  isAlert:
-                      tasaMortalidad > widget.lote.tipoAve.mortalidadEsperada,
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Peso Promedio
-                _buildKPICard(
-                  theme: theme,
-                  title: S.of(context).batchAvgWeight,
-                  mainValue: widget.lote.pesoPromedioActual != null
-                      ? '${(widget.lote.pesoPromedioActual! * 1000).toStringAsFixed(0)} g'
-                      : '-- g',
-                  mainLabel: S.of(context).batchCurrentWeight,
-                  secondaryValue: gananciaDiaria != null
-                      ? '${gananciaDiaria.toStringAsFixed(1)} g'
-                      : '-- g',
-                  secondaryLabel: S.of(context).batchDailyGain,
-                  referenceValue:
-                      '${(widget.lote.pesoPromedioObjetivo ?? widget.lote.tipoAve.pesoPromedioVenta * 1000).toStringAsFixed(0)} g',
-                  referenceLabel: S.of(context).batchGoal,
-                  accentColor: AppColors.warning,
-                  status: _getPesoTrend(),
-                  statusColor: _getPesoTrendColor(),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Consumo de Alimento
-                _buildKPICard(
-                  theme: theme,
-                  title: S.of(context).batchFeedConsumption,
-                  mainValue: widget.lote.consumoAcumuladoKg != null
-                      ? '${widget.lote.consumoAcumuladoKg!.toStringAsFixed(1)} kg'
-                      : '-- kg',
-                  mainLabel: S.of(context).batchTotalAccumulated,
-                  secondaryValue:
-                      widget.lote.consumoAcumuladoKg != null &&
-                          cantidadActual > 0
-                      ? '${(widget.lote.consumoAcumuladoKg! / cantidadActual * 1000).toStringAsFixed(0)} g'
-                      : '-- g',
-                  secondaryLabel: S.of(context).batchPerBird,
-                  referenceValue:
-                      '${widget.lote.tipoAve.consumoDiarioEsperadoG.toStringAsFixed(0)} g',
-                  referenceLabel: S.of(context).batchDailyExpectedPerBird,
-                  accentColor: AppColors.success,
-                  status: _getConsumoTrend(cantidadActual),
-                  statusColor: _getConsumoTrendColor(cantidadActual),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Conversión Alimenticia (ICA)
-                _buildKPICard(
-                  theme: theme,
-                  title: S.of(context).batchFeedConversionICA,
-                  mainValue: ica != null ? ica.toStringAsFixed(2) : '--',
-                  mainLabel: S.of(context).batchCurrentIndex,
-                  secondaryValue: S.of(context).loteFeedKg,
-                  secondaryLabel: S.of(context).batchPerKgWeight,
-                  referenceValue: '1.6 - 1.8',
-                  referenceLabel: S.of(context).batchOptimalRange,
-                  accentColor: AppColors.deepPurple,
-                  status: _getICATrend(ica),
-                  statusColor: _getICATrendColor(ica),
-                ),
-
-                // Producción de huevos (solo para postura)
-                if (widget.lote.tipoAve.esPostura) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  _buildKPICard(
-                    theme: theme,
-                    title: S.of(context).batchEggProduction,
-                    mainValue: '${widget.lote.huevosProducidos ?? 0}',
-                    mainLabel: S.of(context).batchTotalEggs,
-                    secondaryValue: cantidadActual > 0
-                        ? ((widget.lote.huevosProducidos ?? 0) / cantidadActual)
-                              .toStringAsFixed(1)
-                        : '--',
-                    secondaryLabel: S.of(context).batchEggsPerBird,
-                    referenceValue:
-                        '${widget.lote.tipoAve.posturaEsperada.toStringAsFixed(0)}%',
-                    referenceLabel: S.of(context).batchExpectedLaying,
-                    accentColor: AppColors.info,
-                    status: _getProduccionTrend(cantidadActual),
-                    statusColor: _getProduccionTrendColor(cantidadActual),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: AppSpacing.md),
-        ],
+        ),
       ),
     );
   }
 
   // ==================== HELPERS PARA DASHBOARD ====================
+
+  /// Card de acceso a un historial con su métrica resumida.
+  Widget _buildAccesoHistorialCard({
+    required ThemeData theme,
+    required String title,
+    required String value,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Card(
+        elevation: 2,
+        shadowColor: color.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.allMd,
+          side: BorderSide(color: color, width: 1.2),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        value,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: color),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   /// Construye la columna de información simple (sin icono)
   Widget _buildInfoColumnSimple(
@@ -789,189 +602,6 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Construye una tarjeta de KPI limpia sin icono
-  Widget _buildKPICard({
-    required ThemeData theme,
-    required String title,
-    required String mainValue,
-    required String mainLabel,
-    required String secondaryValue,
-    required String secondaryLabel,
-    required String referenceValue,
-    required String referenceLabel,
-    required Color accentColor,
-    String? status,
-    Color? statusColor,
-    bool isAlert = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isAlert
-            ? accentColor.withValues(alpha: 0.06)
-            : theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: Border.all(
-          color: isAlert
-              ? accentColor.withValues(alpha: 0.25)
-              : theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Título + Estado
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              if (status != null && statusColor != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: AppRadius.allSm,
-                  ),
-                  child: Text(
-                    status,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          // Valores en fila - centrados y misma altura
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Valor principal
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        mainValue,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: accentColor,
-                          fontSize: 20,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        mainLabel,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 11,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                // Separador
-                Container(
-                  width: 1,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.4,
-                  ),
-                ),
-                // Valor secundario
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        secondaryValue,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: accentColor,
-                          fontSize: 20,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        secondaryLabel,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 11,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                // Separador
-                Container(
-                  width: 1,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.4,
-                  ),
-                ),
-                // Referencia
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        referenceValue,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: accentColor,
-                          fontSize: 20,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        referenceLabel,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 11,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1031,47 +661,6 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
     return alertas;
   }
 
-  // ==================== TRENDS PARA ICA Y GANANCIA ====================
-
-  /// Obtiene el indicador de tendencia para el ICA.
-  String? _getICATrend(double? ica) {
-    if (ica == null) return null;
-
-    // Límites según tipo de ave
-    double icaOptimo;
-    switch (widget.lote.tipoAve) {
-      case TipoAve.polloEngorde:
-        icaOptimo = 1.8;
-        break;
-      default:
-        icaOptimo = 2.3;
-    }
-
-    if (ica <= icaOptimo) return S.of(context).loteTrendOptimal;
-    if (ica <= icaOptimo * 1.1) return S.of(context).loteTrendNormal;
-    if (ica <= icaOptimo * 1.2) return S.of(context).loteTrendAlto;
-    return S.of(context).loteTrendCritical;
-  }
-
-  /// Obtiene el color para el indicador de ICA.
-  Color? _getICATrendColor(double? ica) {
-    if (ica == null) return null;
-
-    double icaOptimo;
-    switch (widget.lote.tipoAve) {
-      case TipoAve.polloEngorde:
-        icaOptimo = 1.8;
-        break;
-      default:
-        icaOptimo = 2.3;
-    }
-
-    if (ica <= icaOptimo) return AppColors.success;
-    if (ica <= icaOptimo * 1.1) return AppColors.teal;
-    if (ica <= icaOptimo * 1.2) return AppColors.warning;
-    return AppColors.error;
-  }
-
   String _formatEdad(int dias) {
     if (dias < 7) return S.of(context).loteFormatDays(dias.toString());
     if (dias < 30) {
@@ -1100,142 +689,6 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
     return meses == 1
         ? S.of(context).loteFormatMonth(meses.toString())
         : S.of(context).loteFormatMonths(meses.toString());
-  }
-
-  // ==================== MÉTODOS PARA INDICADORES DE KPIs ====================
-
-  /// Obtiene el indicador de tendencia para la mortalidad.
-  String _getMortalidadTrend(double tasaMortalidad) {
-    final esperada = widget.lote.tipoAve.mortalidadEsperada;
-    if (tasaMortalidad <= esperada * 0.5) {
-      return S.of(context).loteTrendExcellent;
-    }
-    if (tasaMortalidad <= esperada) return S.of(context).loteTrendNormal;
-    if (tasaMortalidad <= esperada * 1.5) {
-      return S.of(context).loteTrendElevated;
-    }
-    return S.of(context).loteTrendCritica;
-  }
-
-  /// Obtiene el color para el indicador de mortalidad.
-  Color _getMortalidadTrendColor(double tasaMortalidad) {
-    final esperada = widget.lote.tipoAve.mortalidadEsperada;
-    if (tasaMortalidad <= esperada * 0.5) return AppColors.success;
-    if (tasaMortalidad <= esperada) return AppColors.teal;
-    if (tasaMortalidad <= esperada * 1.5) return AppColors.warning;
-    return AppColors.error;
-  }
-
-  /// Obtiene el indicador de tendencia para el peso.
-  String? _getPesoTrend() {
-    final pesoActual = widget.lote.pesoPromedioActual;
-    if (pesoActual == null) return null;
-
-    final pesoObjetivo =
-        widget.lote.pesoPromedioObjetivo ??
-        widget.lote.tipoAve.pesoPromedioVenta;
-    final porcentaje = (pesoActual / pesoObjetivo) * 100;
-
-    if (porcentaje >= 95 && porcentaje <= 105) {
-      return S.of(context).loteTrendOptimal;
-    }
-    if (porcentaje >= 85) return S.of(context).loteTrendAcceptable;
-    if (porcentaje < 85) return S.of(context).loteTrendBajo;
-    return S.of(context).loteTrendAlto;
-  }
-
-  /// Obtiene el color para el indicador de peso.
-  Color? _getPesoTrendColor() {
-    final pesoActual = widget.lote.pesoPromedioActual;
-    if (pesoActual == null) return null;
-
-    final pesoObjetivo =
-        widget.lote.pesoPromedioObjetivo ??
-        widget.lote.tipoAve.pesoPromedioVenta;
-    final porcentaje = (pesoActual / pesoObjetivo) * 100;
-
-    if (porcentaje >= 95 && porcentaje <= 105) return AppColors.success;
-    if (porcentaje >= 85) return AppColors.info;
-    if (porcentaje < 85) return AppColors.error;
-    return AppColors.warning; // Alto
-  }
-
-  /// Obtiene el indicador de tendencia para el consumo.
-  String? _getConsumoTrend(int cantidadActual) {
-    final consumoAcumulado = widget.lote.consumoAcumuladoKg;
-    if (consumoAcumulado == null || cantidadActual <= 0) return null;
-
-    final edad = widget.lote.edadActualDias;
-    if (edad <= 0) return null;
-
-    // Consumo diario promedio por ave (g)
-    final consumoDiarioPorAve =
-        (consumoAcumulado / cantidadActual / edad) * 1000;
-    final consumoEsperado = widget.lote.tipoAve.consumoDiarioEsperadoG;
-
-    final porcentaje = (consumoDiarioPorAve / consumoEsperado) * 100;
-
-    if (porcentaje >= 90 && porcentaje <= 110) {
-      return S.of(context).loteTrendNormal;
-    }
-    if (porcentaje < 90) return S.of(context).loteTrendBajo;
-    return S.of(context).loteTrendAlto;
-  }
-
-  /// Obtiene el color para el indicador de consumo.
-  Color? _getConsumoTrendColor(int cantidadActual) {
-    final consumoAcumulado = widget.lote.consumoAcumuladoKg;
-    if (consumoAcumulado == null || cantidadActual <= 0) return null;
-
-    final edad = widget.lote.edadActualDias;
-    if (edad <= 0) return null;
-
-    final consumoDiarioPorAve =
-        (consumoAcumulado / cantidadActual / edad) * 1000;
-    final consumoEsperado = widget.lote.tipoAve.consumoDiarioEsperadoG;
-    final porcentaje = (consumoDiarioPorAve / consumoEsperado) * 100;
-
-    if (porcentaje >= 90 && porcentaje <= 110) return AppColors.success;
-    if (porcentaje < 90) {
-      return AppColors.info; // Bajo consumo puede ser preocupante
-    }
-    return AppColors.warning; // Alto consumo
-  }
-
-  /// Obtiene el indicador de tendencia para la producción.
-  String? _getProduccionTrend(int cantidadActual) {
-    final huevos = widget.lote.huevosProducidos;
-    if (huevos == null || cantidadActual <= 0) return null;
-
-    final posturaActual = (huevos / cantidadActual) * 100;
-    final posturaEsperada = widget.lote.tipoAve.posturaEsperada;
-
-    if (posturaEsperada <= 0) return null;
-
-    final porcentaje = (posturaActual / posturaEsperada) * 100;
-
-    if (porcentaje >= 90) return S.of(context).loteTrendExcellent;
-    if (porcentaje >= 75) return S.of(context).loteTrendBuena;
-    if (porcentaje >= 50) return S.of(context).loteTrendRegular;
-    return S.of(context).loteTrendBaja;
-  }
-
-  /// Obtiene el color para el indicador de producción.
-  Color? _getProduccionTrendColor(int cantidadActual) {
-    final huevos = widget.lote.huevosProducidos;
-    if (huevos == null || cantidadActual <= 0) return null;
-
-    final posturaActual = (huevos / cantidadActual) * 100;
-    final posturaEsperada = widget.lote.tipoAve.posturaEsperada;
-
-    if (posturaEsperada <= 0) return null;
-
-    final porcentaje = (posturaActual / posturaEsperada) * 100;
-
-    if (porcentaje >= 90) return AppColors.success;
-    if (porcentaje >= 75) return AppColors.teal;
-    if (porcentaje >= 50) return AppColors.warning;
-    return AppColors.error;
   }
 
   Widget _buildFAB() {
@@ -1400,7 +853,7 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
       case 1:
         return S.of(context).weightTitle;
       case 2:
-        return widget.lote.nombre ?? widget.lote.codigo;
+        return S.of(context).loteDashSummary;
       case 3:
         return S.of(context).batchConsumption;
       case 4:
@@ -1433,6 +886,7 @@ class _LoteDashboardViewState extends ConsumerState<_LoteDashboardView> {
   void _showRegistrarMenu(BuildContext context, Lote lote, String granjaId) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) => _RegistrarMenuSheet(lote: lote, granjaId: granjaId),
     );
   }
@@ -1448,23 +902,16 @@ class _RegistrarMenuSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
+    return AppBottomSheetScaffold(
+      title: S.of(context).loteRegister,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            S.of(context).loteRegister,
-            style: AppTextStyles.titleLarge.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          ListTile(
-            leading: const Icon(Icons.scale, color: AppColors.warning),
-            title: Text(S.of(context).weightTitle),
-            subtitle: Text(S.of(context).historialRegisterFirstWeighing),
+          AppSheetOptionTile(
+            icon: Icons.scale,
+            color: AppColors.warning,
+            label: S.of(context).weightTitle,
+            subtitle: S.of(context).historialRegisterFirstWeighing,
             onTap: () {
               context.pop();
               context.push(
@@ -1473,10 +920,11 @@ class _RegistrarMenuSheet extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.restaurant, color: AppColors.success),
-            title: Text(S.of(context).batchConsumption),
-            subtitle: Text(S.of(context).batchFormConsumptionSubtitle),
+          AppSheetOptionTile(
+            icon: Icons.restaurant,
+            color: AppColors.success,
+            label: S.of(context).batchConsumption,
+            subtitle: S.of(context).batchFormConsumptionSubtitle,
             onTap: () {
               context.pop();
               context.push(
@@ -1485,10 +933,11 @@ class _RegistrarMenuSheet extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.warning_amber, color: AppColors.error),
-            title: Text(S.of(context).mortalityTitle),
-            subtitle: Text(S.of(context).mortalityRegister),
+          AppSheetOptionTile(
+            icon: Icons.warning_amber,
+            color: AppColors.error,
+            label: S.of(context).mortalityTitle,
+            subtitle: S.of(context).mortalityRegister,
             onTap: () {
               context.pop();
               context.push(
@@ -1498,10 +947,11 @@ class _RegistrarMenuSheet extends StatelessWidget {
             },
           ),
           if (lote.tipoAve.esPostura)
-            ListTile(
-              leading: const Icon(Icons.egg, color: AppColors.info),
-              title: Text(S.of(context).batchProduction),
-              subtitle: Text(S.of(context).batchFormProductionInfoSubtitle),
+            AppSheetOptionTile(
+              icon: Icons.egg,
+              color: AppColors.info,
+              label: S.of(context).batchProduction,
+              subtitle: S.of(context).batchFormProductionInfoSubtitle,
               onTap: () {
                 context.pop();
                 context.push(
@@ -1510,226 +960,98 @@ class _RegistrarMenuSheet extends StatelessWidget {
                 );
               },
             ),
+          const SizedBox(height: AppSpacing.md),
         ],
       ),
     );
   }
 }
 
-// ==================== NAVIGATION BAR PERSONALIZADO ====================
+/// Card de resumen del costo por ave del lote (versión compacta).
+///
+/// Muestra solo el costo por ave (sin iconos ni desglose) y, al tocarla, abre
+/// [CostoPorAvePage] con el desglose detallado. Consume [costoPorAveProvider].
+class _CostoPorAveCard extends ConsumerWidget {
+  const _CostoPorAveCard({required this.lote, required this.granjaId});
 
-/// Destinos de navegación del dashboard del lote.
-enum _DashboardDestination {
-  mortalidad(
-    icon: Icons.warning_amber_outlined,
-    selectedIcon: Icons.warning_amber,
-    labelKey: 'mortalityTitle',
-  ),
-  peso(
-    icon: Icons.scale_outlined,
-    selectedIcon: Icons.scale,
-    labelKey: 'weightTitle',
-  ),
-  resumen(
-    icon: Icons.dashboard_outlined,
-    selectedIcon: Icons.dashboard,
-    labelKey: 'resumen',
-  ),
-  consumo(
-    icon: Icons.restaurant_outlined,
-    selectedIcon: Icons.restaurant,
-    labelKey: 'batchConsumption',
-  ),
-  produccion(
-    icon: Icons.egg_outlined,
-    selectedIcon: Icons.egg,
-    labelKey: 'batchProduction',
-  );
-
-  const _DashboardDestination({
-    required this.icon,
-    required this.selectedIcon,
-    required this.labelKey,
-  });
-
-  final IconData icon;
-  final IconData selectedIcon;
-  final String labelKey;
-
-  String label(BuildContext context) {
-    switch (this) {
-      case _DashboardDestination.mortalidad:
-        return S.of(context).mortalityTitle;
-      case _DashboardDestination.peso:
-        return S.of(context).weightTitle;
-      case _DashboardDestination.resumen:
-        return S.of(context).loteDashSummary;
-      case _DashboardDestination.consumo:
-        return S.of(context).batchConsumption;
-      case _DashboardDestination.produccion:
-        return S.of(context).batchProduction;
-    }
-  }
-}
-
-/// Navigation Bar personalizado para el dashboard del lote.
-class _DashboardNavigationBar extends StatelessWidget {
-  const _DashboardNavigationBar({
-    required this.currentIndex,
-    required this.onDestinationSelected,
-    required this.showProduccion,
-  });
-
-  final int currentIndex;
-  final ValueChanged<int> onDestinationSelected;
-  final bool showProduccion;
+  final Lote lote;
+  final String granjaId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final costoAsync = ref.watch(
+      costoPorAveProvider(CostoPorAveParams(loteId: lote.id)),
+    );
 
-    // Filtrar destinos según showProduccion
-    final destinations = showProduccion
-        ? _DashboardDestination.values
-        : _DashboardDestination.values
-              .where((d) => d != _DashboardDestination.produccion)
-              .toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding > 0 ? 0 : 4, top: 4),
-          child: SizedBox(
-            height: 56,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: destinations.asMap().entries.map((entry) {
-                final index = entry.key;
-                final destination = entry.value;
-                return Expanded(
-                  child: _DashboardNavigationItem(
-                    destination: destination,
-                    isSelected: currentIndex == index,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      onDestinationSelected(index);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+    return Material(
+      color: theme.colorScheme.surface,
+      borderRadius: AppRadius.allMd,
+      child: InkWell(
+        borderRadius: AppRadius.allMd,
+        onTap: () => context.push(
+          AppRoutes.loteCostoPorAveById(granjaId, lote.id),
+          extra: lote,
         ),
-      ),
-    );
-  }
-}
-
-/// Item individual de navegación del dashboard.
-class _DashboardNavigationItem extends StatefulWidget {
-  const _DashboardNavigationItem({
-    required this.destination,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final _DashboardDestination destination;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  State<_DashboardNavigationItem> createState() =>
-      _DashboardNavigationItemState();
-}
-
-class _DashboardNavigationItemState extends State<_DashboardNavigationItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.92,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // Color negro oscuro para seleccionado, gris para no seleccionado
-    final selectedColor = theme.colorScheme.onSurface;
-    final unselectedColor = theme.colorScheme.onSurfaceVariant;
-
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.allMd,
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              // Icono
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  widget.isSelected
-                      ? widget.destination.selectedIcon
-                      : widget.destination.icon,
-                  key: ValueKey(widget.isSelected),
-                  color: widget.isSelected ? selectedColor : unselectedColor,
-                  size: 24,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      S.of(context).batchCostPerBird,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    costoAsync.when(
+                      data: (costo) => Text(
+                        costo.sinDatosDeCosto
+                            ? S.of(context).batchNoCostData
+                            : Formatters.currencyValue(costo.costoPorAveViva),
+                        style: costo.sinDatosDeCosto
+                            ? theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              )
+                            : theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                      ),
+                      loading: () => Text(
+                        '—',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      error: (_, __) => Text(
+                        S.of(context).commonErrorLoading,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xxxs),
-              // Label
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: theme.textTheme.labelSmall!.copyWith(
-                  fontSize: 12,
-                  color: widget.isSelected ? selectedColor : unselectedColor,
-                  fontWeight: widget.isSelected
-                      ? FontWeight.w600
-                      : FontWeight.w400,
-                ),
-                child: Text(
-                  widget.destination.label(context),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
           ),

@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 
@@ -96,13 +95,6 @@ class ObservacionesFotosProduccionStep extends StatelessWidget {
             autovalidateMode: autoValidate
                 ? AutovalidateMode.always
                 : AutovalidateMode.disabled,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Info card
-          FormInfoRow(
-            text: S.of(context).batchFormPhotoHelpText,
-            type: InfoCardType.info,
           ),
           const SizedBox(height: AppSpacing.xl),
 
@@ -213,50 +205,34 @@ class ObservacionesFotosProduccionStep extends StatelessWidget {
   }
 
   Widget _buildMetricsCard(BuildContext context, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHighest
+            : theme.colorScheme.surfaceContainerLow,
+        borderRadius: AppRadius.allMd,
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.analytics_outlined,
-                color: AppColors.info,
-                size: 18,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                S.of(context).batchFormProductionSummary,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: AppColors.info,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
           _buildMetricRow(
             theme,
             S.of(context).batchFormLayingPercentage,
             '${_porcentajePostura.toStringAsFixed(1)}%',
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 12),
           _buildMetricRow(
             theme,
             S.of(context).batchFormUtilization,
             '${_porcentajeAprovechamiento.toStringAsFixed(1)}%',
           ),
           if (pesoPromedioCalculado != null && pesoPromedioCalculado! > 0) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 12),
             _buildMetricRow(
               theme,
               S.of(context).batchFormWeight,
@@ -274,14 +250,15 @@ class ObservacionesFotosProduccionStep extends StatelessWidget {
       children: [
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(
+          style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         Text(
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ],

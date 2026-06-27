@@ -10,6 +10,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_widgets.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -577,87 +578,48 @@ class _ItemDetalleInventarioPageState
   }
 
   Widget _buildAlertasCard(ThemeData theme, ItemInventario item) {
+    final cards = <Widget>[
+      if (item.agotado)
+        FormInfoCard(
+          type: InfoCardType.error,
+          title: l.invAlertStockDepleted,
+          description: l.invAlerts,
+        ),
+      if (item.stockBajo && !item.agotado)
+        FormInfoCard(
+          type: InfoCardType.warning,
+          title: l.invLowStock,
+          description: S
+              .of(context)
+              .invStockBajoMinimo(
+                item.stockMinimo.toString(),
+                item.unidad.simbolo,
+              ),
+        ),
+      if (item.vencido)
+        FormInfoCard(
+          type: InfoCardType.error,
+          title: l.invAlertProductExpired,
+          description: l.invAlerts,
+        ),
+      if (item.proximoVencer && !item.vencido)
+        FormInfoCard(
+          type: InfoCardType.warning,
+          title: l.homeExpiringSoon,
+          description: S
+              .of(context)
+              .invExpiresInDays(item.diasParaVencer.toString()),
+        ),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.warning_amber,
-                color: AppColors.warning,
-                size: 20,
-              ),
-              AppSpacing.hGapSm,
-              Text(
-                l.invAlerts,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Card(
-          elevation: 0,
-          color: AppColors.warning.withValues(alpha: 0.1),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (item.agotado)
-                  _buildAlertItem(
-                    l.invAlertStockDepleted,
-                    Icons.error,
-                    AppColors.error,
-                  ),
-                if (item.stockBajo && !item.agotado)
-                  _buildAlertItem(
-                    S
-                        .of(context)
-                        .invStockBajoMinimo(
-                          item.stockMinimo.toString(),
-                          item.unidad.simbolo,
-                        ),
-                    Icons.trending_down,
-                    AppColors.warning,
-                  ),
-                if (item.vencido)
-                  _buildAlertItem(
-                    l.invAlertProductExpired,
-                    Icons.event_busy,
-                    AppColors.error,
-                  ),
-                if (item.proximoVencer && !item.vencido)
-                  _buildAlertItem(
-                    S
-                        .of(context)
-                        .invExpiresInDays(item.diasParaVencer.toString()),
-                    Icons.event,
-                    AppColors.warning,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAlertItem(String text, IconData icon, Color color) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          AppSpacing.hGapSm,
-          Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: color)),
+        for (int i = 0; i < cards.length; i++) ...[
+          if (i > 0) AppSpacing.gapSm,
+          cards[i],
         ],
-      ),
+      ],
     );
   }
 

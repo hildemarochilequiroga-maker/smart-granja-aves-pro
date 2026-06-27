@@ -209,34 +209,3 @@ class ObtenerRolUsuarioParams {
   final String granjaId;
   final String usuarioId;
 }
-
-// =============================================================================
-// USE CASE: OBTENER GRANJAS DEL USUARIO
-// =============================================================================
-
-class ObtenerGranjaIdsDelUsuarioUseCase
-    implements UseCase<List<String>, ObtenerGranjaIdsDelUsuarioParams> {
-  const ObtenerGranjaIdsDelUsuarioUseCase(this._repository);
-
-  final GranjaUsuariosRepository _repository;
-
-  @override
-  Future<Either<Failure, List<String>>> call(
-    ObtenerGranjaIdsDelUsuarioParams params,
-  ) {
-    return _repository.obtenerGranjasPorUsuario(
-      usuarioId: params.usuarioId,
-      soloActivas: params.soloActivas,
-    );
-  }
-}
-
-class ObtenerGranjaIdsDelUsuarioParams {
-  const ObtenerGranjaIdsDelUsuarioParams({
-    required this.usuarioId,
-    this.soloActivas = true,
-  });
-
-  final String usuarioId;
-  final bool soloActivas;
-}

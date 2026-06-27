@@ -90,7 +90,7 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         color: theme.colorScheme.primary,
-        edgeOffset: 110,
+        edgeOffset: 132,
         child: CustomScrollView(
           slivers: [
             // Barra de búsqueda sticky
@@ -106,7 +106,7 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
                   _searchDebounce = Timer(
                     const Duration(milliseconds: 300),
                     () {
-                      setState(() => _searchQuery = value);
+                      if (mounted) setState(() => _searchQuery = value);
                     },
                   );
                 },
@@ -146,7 +146,6 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
                       hasFilters: hasFilters,
                       filterTitle: S.of(context).shedNoShedsFound,
                       filterDescription: S.of(context).commonAdjustFilters,
-                      onClearFilters: _clearFilters,
                     ),
                   );
                 }
@@ -171,6 +170,7 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
                         ),
                         child: GalponListCard(
                           galpon: galpon,
+                          index: index,
                           onTap: () => _navigateToDetail(galpon.id),
                           onEditar: () => _navigateToEdit(galpon.id),
                           onCambiarEstado: () =>
@@ -201,10 +201,10 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
         child: FloatingActionButton.extended(
           heroTag: 'galpones_list_fab',
           onPressed: _navigateToCreate,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add, size: 26),
           label: Text(
             S.of(context).shedNewShed,
-            style: theme.textTheme.labelLarge?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -239,16 +239,11 @@ class _GalponesListPageState extends ConsumerState<GalponesListPage> {
     return filtered;
   }
 
-  void _clearFilters() {
-    _searchController.clear();
-    setState(() {
-      _searchQuery = '';
-      _estadoFilter = null;
-    });
-  }
-
   Future<void> _onRefresh() async {
     ref.invalidate(galponesStreamProvider(widget.granjaId));
+    // Esperar el primer dato fresco para que el indicador de refresco
+    // permanezca visible hasta que el stream reemita (evita parpadeo).
+    await ref.read(galponesStreamProvider(widget.granjaId).future);
   }
 
   /// Muestra diálogo para cambiar estado.
@@ -363,10 +358,10 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<EstadoGalpon?> onFilterChanged;
 
   @override
-  double get minExtent => 110;
+  double get minExtent => 132;
 
   @override
-  double get maxExtent => 110;
+  double get maxExtent => 132;
 
   @override
   Widget build(

@@ -3,12 +3,11 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../salud/domain/enums/causa_mortalidad.dart';
 
@@ -87,150 +86,30 @@ class EventoInfoStep extends StatelessWidget {
           ),
           AppSpacing.gapBase,
 
-          // Card informativa con datos del lote
-          FormInfoCard(
-            title: S.of(context).batchAttention,
-            description: S.of(context).batchRemainingBirds(cantidadActual),
-            type: InfoCardType.info,
-          ),
-          AppSpacing.gapBase,
-
           // Causa de la mortalidad
-          RegistroDropdownField<CausaMortalidad>(
+          RegistroSelectorField<CausaMortalidad>(
             label: S.of(context).batchFormCause,
             value: causaSeleccionada,
-            hint: S.of(context).batchFormCauseHint,
             required: true,
-            autovalidateMode: autoValidate
-                ? AutovalidateMode.always
-                : AutovalidateMode.onUserInteraction,
-            selectedItemBuilder: (context) {
-              return CausaMortalidad.values.map((causa) {
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _getCausaColor(causa),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      AppSpacing.hGapSm,
-                      Text(causa.localizedName(S.of(context))),
-                    ],
-                  ),
-                );
-              }).toList();
-            },
-            items: CausaMortalidad.values.map((causa) {
-              return DropdownMenuItem(
-                value: causa,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _getCausaColor(causa),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              causa.localizedName(S.of(context)),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              causa.localizedDescripcion(S.of(context)),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: onCausaChanged,
+            hint: S.of(context).batchFormCauseHint,
+            options: CausaMortalidad.values,
+            labelOf: (causa) => causa.localizedName(S.of(context)),
+            subtitleOf: (causa) => causa.localizedDescripcion(S.of(context)),
+            colorOf: _getCausaColor,
+            onSelected: onCausaChanged,
           ),
           AppSpacing.gapBase,
 
           // Fecha del evento
-          _buildFechaField(context, theme),
+          RegistroDateField(
+            label: S.of(context).batchFormDate,
+            value: fechaEvento,
+            firstDate: fechaIngreso,
+            lastDate: DateTime.now(),
+            onChanged: onFechaChanged,
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFechaField(BuildContext context, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          S.of(context).batchFormDate,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        AppSpacing.gapSm,
-        GestureDetector(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: fechaEvento,
-              firstDate: fechaIngreso,
-              lastDate: DateTime.now(),
-              locale: const Locale('es', 'ES'),
-            );
-            if (picked != null) {
-              onFechaChanged(picked);
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: AppRadius.allSm,
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  DateFormat('dd/MM/yyyy').format(fechaEvento),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                Icon(
-                  Icons.calendar_today_outlined,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 

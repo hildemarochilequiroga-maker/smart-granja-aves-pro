@@ -399,6 +399,16 @@
       ]
     },
     {
+      "collectionGroup": "notificaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "dedupeKey", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "logs",
       "queryScope": "COLLECTION",
       "fields": [

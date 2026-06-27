@@ -156,9 +156,9 @@ class InventarioRepositoryImpl implements InventarioRepository {
     }
 
     final stockAnterior = item.stockActual;
-    final stockNuevo = stockAnterior + cantidad;
 
-    // Crear movimiento
+    // Crear movimiento (stockAnterior/stockNuevo definitivos los fija la
+    // transacción del datasource al re-leer el stock del servidor).
     final movimiento = MovimientoInventario.entrada(
       id: _uuid.v4(),
       itemId: itemId,
@@ -176,10 +176,11 @@ class InventarioRepositoryImpl implements InventarioRepository {
       referenciaTipo: referenciaTipo,
     );
 
-    // Actualizar stock + guardar movimiento atómicamente
-    return _datasource.registrarMovimientoYActualizarStock(
-      movimiento,
-      stockNuevo,
+    // Entrada: incremento relativo seguro ante concurrencia.
+    return _datasource.registrarMovimientoConDelta(
+      movimiento: movimiento,
+      delta: cantidad,
+      permitirNegativo: true,
     );
   }
 
@@ -204,7 +205,9 @@ class InventarioRepositoryImpl implements InventarioRepository {
 
     final stockAnterior = item.stockActual;
 
-    // Validar stock suficiente
+    // Validación previa (feedback rápido). La validación AUTORITATIVA ocurre
+    // dentro de la transacción del datasource para evitar sobreventa cuando
+    // dos salidas concurrentes leen el mismo stock.
     if (stockAnterior < cantidad) {
       throw ItemInventarioException(
         ErrorMessages.format('ERR_INSUFFICIENT_STOCK', {
@@ -214,9 +217,7 @@ class InventarioRepositoryImpl implements InventarioRepository {
       );
     }
 
-    final stockNuevo = (stockAnterior - cantidad).clamp(0.0, double.infinity);
-
-    // Crear movimiento
+    // Crear movimiento (stock real lo fija la transacción).
     final movimiento = MovimientoInventario.salida(
       id: _uuid.v4(),
       itemId: itemId,
@@ -232,11 +233,21 @@ class InventarioRepositoryImpl implements InventarioRepository {
       observaciones: observaciones,
     );
 
-    // Actualizar stock + guardar movimiento atómicamente
-    return _datasource.registrarMovimientoYActualizarStock(
-      movimiento,
-      stockNuevo,
-    );
+    // Salida: decremento relativo seguro; la tx aborta si quedaría negativo.
+    try {
+      return await _datasource.registrarMovimientoConDelta(
+        movimiento: movimiento,
+        delta: -cantidad,
+        permitirNegativo: false,
+      );
+    } on StockInsuficienteException catch (e) {
+      throw ItemInventarioException(
+        ErrorMessages.format('ERR_INSUFFICIENT_STOCK', {
+          'stock': '${e.stockDisponible}',
+          'unit': item.unidad.simbolo,
+        }),
+      );
+    }
   }
 
   @override
@@ -276,10 +287,10 @@ class InventarioRepositoryImpl implements InventarioRepository {
       fechaRegistro: DateTime.now(),
     );
 
-    // Actualizar stock + guardar movimiento atómicamente
-    return _datasource.registrarMovimientoYActualizarStock(
-      movimiento,
-      nuevoStock,
+    // Ajuste a valor absoluto: la tx registra el stockAnterior real observado.
+    return _datasource.registrarMovimientoConDelta(
+      movimiento: movimiento,
+      stockAbsoluto: nuevoStock,
     );
   }
 

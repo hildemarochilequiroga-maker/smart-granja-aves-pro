@@ -78,16 +78,16 @@ class LoteDetallesStep extends ConsumerWidget {
 
           // Observaciones
           _buildObservacionesField(context, theme),
-          AppSpacing.gapXl,
-
-          // Nota informativa
-          _buildNotaInformativa(context, theme),
         ],
       ),
     );
   }
 
-  Widget _buildCantidadInicialField(BuildContext context, ThemeData theme, WidgetRef ref) {
+  Widget _buildCantidadInicialField(
+    BuildContext context,
+    ThemeData theme,
+    WidgetRef ref,
+  ) {
     return LoteFormField(
       controller: cantidadInicialController,
       label: '${S.of(context).batchFormInitialCount} *',
@@ -105,7 +105,11 @@ class LoteDetallesStep extends ConsumerWidget {
     );
   }
 
-  Widget _buildCapacidadInfo(BuildContext context, ThemeData theme, WidgetRef ref) {
+  Widget _buildCapacidadInfo(
+    BuildContext context,
+    ThemeData theme,
+    WidgetRef ref,
+  ) {
     final galponAsync = ref.watch(galponByIdProvider(galponId!));
 
     return galponAsync.when(
@@ -154,18 +158,21 @@ class LoteDetallesStep extends ConsumerWidget {
                   ),
                   AppSpacing.gapSm,
                   _buildCapacidadRow(
-                    context, theme,
+                    context,
+                    theme,
                     S.of(context).batchFormMaxCapacity,
                     '$capacidadMaxima ${S.of(context).batchBirdsLabel}',
                   ),
                   if (avesEnGalpon > 0)
                     _buildCapacidadRow(
-                      context, theme,
+                      context,
+                      theme,
                       S.of(context).batchFormCurrentBirds,
                       '$avesEnGalpon ${S.of(context).batchBirdsLabel}',
                     ),
                   _buildCapacidadRow(
-                    context, theme,
+                    context,
+                    theme,
                     S.of(context).batchFormAvailable,
                     '$disponible ${S.of(context).batchBirdsLabel}',
                     highlight: true,
@@ -195,7 +202,8 @@ class LoteDetallesStep extends ConsumerWidget {
   }
 
   Widget _buildCapacidadRow(
-    BuildContext context, ThemeData theme,
+    BuildContext context,
+    ThemeData theme,
     String label,
     String value, {
     bool highlight = false,
@@ -303,38 +311,4 @@ class LoteDetallesStep extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotaInformativa(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).batchAttention,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.info,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            S.of(context).batchFormAgeInfoNote,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

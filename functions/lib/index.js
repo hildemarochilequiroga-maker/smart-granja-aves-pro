@@ -39,7 +39,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onColaboradorAgregado = exports.onInvitacionCreada = exports.onMortalidadRegistrada = exports.verificarVencimientos = exports.onInventarioUpdate = void 0;
+exports.verificarAlertasPeriodicas = exports.onColaboradorAgregado = exports.onInvitacionCreada = exports.onMortalidadRegistrada = exports.verificarVencimientos = exports.onInventarioUpdate = void 0;
+exports.getDestinatariosGranja = getDestinatariosGranja;
 const admin = __importStar(require("firebase-admin"));
 const firebase_functions_1 = require("firebase-functions");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -660,5 +661,63 @@ async function crearNotificacionYEnviarPush(usuarioId, notificacion) {
     catch (error) {
         firebase_functions_1.logger.error(`Error enviando notificación a ${usuarioId}:`, error);
     }
+}
+// =============================================================================
+// SCHEDULED: Verificación periódica de alertas (consolidada, server-side)
+// =============================================================================
+//
+// Solución definitiva al costo del scheduler client-side: estas verificaciones
+// corren UNA vez por granja en el servidor, en vez de en cada dispositivo de
+// cada usuario. Mientras esta function esté activa, el cliente puede dejar de
+// ejecutar `AlertasService.ejecutarVerificacionesProgramadas` (el lock
+// distribuido del cliente es solo un puente hasta que esto se despliegue).
+//
+// ⚠️ NOTA DE CONSISTENCIA DE MODELO: las functions existentes
+// (`verificarVencimientos`, stock bajo) leen destinatarios desde
+// `granjas/{id}/colaboradores`, pero la app escribe los colaboradores en la
+// colección TOP-LEVEL `granja_usuarios` (docId `{granjaId}_{usuarioId}`).
+// Antes de portar las 7 verificaciones aquí, unificar la fuente de
+// destinatarios a `granja_usuarios` para no enviar notificaciones a nadie.
+// Ver helper `getDestinatariosGranja` abajo (ya usa la fuente correcta).
+//
+// TODO(server-side): portar desde Dart (AlertasService) las verificaciones
+// que aún no tienen function dedicada: lotes próximos a cierre, lotes sin
+// registros, vacunaciones programadas, inspecciones pendientes y entregas
+// programadas. Cada una: query por granja + dedupe + crearNotificacionYEnviarPush.
+exports.verificarAlertasPeriodicas = (0, scheduler_1.onSchedule)({ schedule: "every 30 minutes", timeZone: "America/Bogota" }, async (event) => {
+    const scheduleKey = `schedule_alertas_${event.scheduleTime}`;
+    if (await isAlreadyProcessed(scheduleKey)) {
+        firebase_functions_1.logger.info(`Ejecución periódica duplicada ignorada: ${scheduleKey}`);
+        return;
+    }
+    firebase_functions_1.logger.info("🕐 Iniciando verificación periódica de alertas...");
+    const granjas = await db.collection("granjas").get();
+    for (const granjaDoc of granjas.docs) {
+        const granjaId = granjaDoc.id;
+        try {
+            // TODO: invocar aquí las verificaciones portadas (ver TODO de arriba).
+            // De momento es un esqueleto idempotente listo para extender sin
+            // cambiar el wiring del scheduler ni el schedule.
+            void granjaId;
+        }
+        catch (error) {
+            firebase_functions_1.logger.error(`Error verificando alertas de ${granjaId}:`, error);
+        }
+    }
+    firebase_functions_1.logger.info("✅ Verificación periódica de alertas completada");
+});
+/**
+ * Obtiene los usuarioIds destinatarios (owner/admin/manager activos) de una
+ * granja desde la colección correcta `granja_usuarios`. Usar esto en lugar de
+ * `granjas/{id}/colaboradores` para que las notificaciones server-side lleguen.
+ */
+async function getDestinatariosGranja(granjaId, roles = ["owner", "admin", "manager"]) {
+    const snap = await db
+        .collection("granja_usuarios")
+        .where("granjaId", "==", granjaId)
+        .where("activo", "==", true)
+        .where("rol", "in", roles)
+        .get();
+    return snap.docs.map((d) => d.data().usuarioId);
 }
 //# sourceMappingURL=index.js.map

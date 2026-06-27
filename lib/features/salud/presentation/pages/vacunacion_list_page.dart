@@ -21,6 +21,7 @@ import '../../../../core/errors/error_handler.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
@@ -425,49 +426,12 @@ class _VacunacionListPageState extends ConsumerState<VacunacionListPage> {
         builder: (context, setModalState) {
           final hayFiltros = tempEstadoFilter != EstadoVacunacion.todos;
 
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
+          return AppBottomSheetScaffold(
+            title: S.of(context).vacFilterTitle,
+            scrollable: true,
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      S.of(context).vacFilterTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
                   // Contenido
                   Padding(
                     padding: const EdgeInsets.all(20),
@@ -588,7 +552,6 @@ class _VacunacionListPageState extends ConsumerState<VacunacionListPage> {
                   ),
                 ],
               ),
-            ),
           );
         },
       ),
@@ -930,7 +893,7 @@ class _VacunacionDetailSheet extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Padding(

@@ -21,6 +21,7 @@ import '../../application/providers/providers.dart';
 import '../../domain/entities/lote.dart';
 import '../../domain/enums/enums.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/lote_form_steps/lote_form_steps.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
@@ -62,10 +63,12 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
   // Timer para autoguardado
   Timer? _autoSaveTimer;
   bool _isSaving = false;
-  DateTime? _lastSaveTime;
 
   // Definición de los pasos del formulario
-  late final List<FormStepInfo> _steps;
+  List<FormStepInfo> get _steps => [
+    FormStepInfo(label: S.of(context).batchBasicStep),
+    FormStepInfo(label: S.of(context).batchDetailsStep),
+  ];
 
   @override
   void initState() {
@@ -140,23 +143,7 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
     );
     setState(() {
       _isSaving = false;
-      _lastSaveTime = DateTime.now();
     });
-  }
-
-  String _formatSaveTime(DateTime saveTime, S l) {
-    final now = DateTime.now();
-    final difference = now.difference(saveTime);
-
-    if (difference.inSeconds < 10) {
-      return l.batchRightNow;
-    } else if (difference.inSeconds < 60) {
-      return l.batchSecondsAgo(difference.inSeconds);
-    } else if (difference.inMinutes < 60) {
-      return l.batchMinutesAgo(difference.inMinutes);
-    } else {
-      return l.batchHoursAgo(difference.inHours);
-    }
   }
 
   Future<void> _loadDraft() async {
@@ -234,13 +221,7 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l = S.of(context);
-
-    _steps = [
-      FormStepInfo(label: l.batchBasicStep),
-      FormStepInfo(label: l.batchDetailsStep),
-    ];
 
     return PopScope(
       canPop: false,
@@ -250,21 +231,16 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l.batchNewBatch),
-              if (_lastSaveTime != null)
-                Text(
-                  _isSaving
-                      ? l.batchSaving
-                      : l.batchSavedTime(_formatSaveTime(_lastSaveTime!, l)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
-                  ),
-                ),
-            ],
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l.batchNewBatch),
+              ],
+            ),
           ),
           leading: IconButton(
             icon: const Icon(Icons.close),
@@ -293,59 +269,61 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _steps,
-              onStepTapped: _goToStep,
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _steps,
+                onStepTapped: _goToStep,
+              ),
 
-            // Contenido del formulario
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    LoteBasicInfoStep(
-                      granjaId: widget.granjaId,
-                      codigoController: _codigoController,
-                      cantidadInicialController: _cantidadInicialController,
-                      edadIngresoController: _edadIngresoController,
-                      selectedTipoAve: _selectedTipoAve,
-                      fechaIngreso: _selectedFechaIngreso,
-                      galponId: _selectedGalponId,
-                      onTipoAveChanged: (value) {
-                        setState(() => _selectedTipoAve = value);
-                      },
-                      onFechaIngresoChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedFechaIngreso = value);
-                        }
-                      },
-                      autoValidate: _autoValidatePerStep[0],
-                      isEditing: false,
-                    ),
-                    LoteDetallesStep(
-                      granjaId: widget.granjaId,
-                      cantidadInicialController: _cantidadInicialController,
-                      edadIngresoController: _edadIngresoController,
-                      observacionesController: _observacionesController,
-                      galponId: _selectedGalponId,
-                      autoValidate: _autoValidatePerStep[1],
-                      isEditing: false,
-                    ),
-                  ],
+              // Contenido del formulario
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      LoteBasicInfoStep(
+                        granjaId: widget.granjaId,
+                        codigoController: _codigoController,
+                        cantidadInicialController: _cantidadInicialController,
+                        edadIngresoController: _edadIngresoController,
+                        selectedTipoAve: _selectedTipoAve,
+                        fechaIngreso: _selectedFechaIngreso,
+                        galponId: _selectedGalponId,
+                        onTipoAveChanged: (value) {
+                          setState(() => _selectedTipoAve = value);
+                        },
+                        onFechaIngresoChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedFechaIngreso = value);
+                          }
+                        },
+                        autoValidate: _autoValidatePerStep[0],
+                        isEditing: false,
+                      ),
+                      LoteDetallesStep(
+                        granjaId: widget.granjaId,
+                        cantidadInicialController: _cantidadInicialController,
+                        edadIngresoController: _edadIngresoController,
+                        observacionesController: _observacionesController,
+                        galponId: _selectedGalponId,
+                        autoValidate: _autoValidatePerStep[1],
+                        isEditing: false,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );

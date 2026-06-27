@@ -4,9 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/field_validators.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../granja_form_field.dart';
@@ -99,46 +97,6 @@ class BasicInfoStep extends StatelessWidget {
             maxLength: 500,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,
-          ),
-          AppSpacing.gapXl,
-
-          // Card informativa
-          _buildInfoCard(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final l = S.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l.commonImportantInfo,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.info,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            l.farmInfoUsedToIdentify,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
           ),
         ],
       ),

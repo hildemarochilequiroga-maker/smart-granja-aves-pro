@@ -95,14 +95,13 @@ enum TipoReporte {
   }
 
   /// Indica si el tipo de reporte tiene generación PDF dedicada.
-  /// Los tipos no implementados generan el mismo reporte ejecutivo.
-  bool get isImplemented => switch (this) {
-    TipoReporte.costos ||
-    TipoReporte.ventas ||
-    TipoReporte.produccionLote ||
-    TipoReporte.ejecutivo => true,
-    _ => false,
-  };
+  ///
+  /// Todos los tipos cuentan con un generador PDF especializado y completo.
+  bool get isImplemented => true;
+
+  /// Indica si el reporte se genera para un lote individual (requiere que el
+  /// usuario elija de qué lote se saca el reporte).
+  bool get requiereLote => this == TipoReporte.produccionLote;
 
   /// Icono asociado al tipo de reporte (como String de IconData code point).
   int get iconCode {

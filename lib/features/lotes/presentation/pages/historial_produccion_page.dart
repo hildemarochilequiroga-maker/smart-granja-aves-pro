@@ -14,11 +14,10 @@ import 'package:intl/intl.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/historial/historial_components.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_image.dart';
@@ -72,97 +71,99 @@ class HistorialProduccionPageState
     );
 
     // Solo el body, sin Scaffold ni AppBar (el dashboard ya lo proporciona)
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      color: theme.colorScheme.primary,
-      child: CustomScrollView(
-        slivers: [
-          const SliverPadding(padding: EdgeInsets.only(top: 8)),
-          // Estadísticas con tarjeta de gráficos
-          SliverToBoxAdapter(
-            child: statsAsync.when(
-              data: (stats) => _buildEstadisticasSection(stats, theme),
-              loading: () => const HistorialStatsLoading(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // Indicador de filtros activos (debajo de estadísticas)
-          if (hayFiltrosActivos)
+    return FormTextScale(
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: theme.colorScheme.primary,
+        child: CustomScrollView(
+          slivers: [
+            const SliverPadding(padding: EdgeInsets.only(top: 8)),
+            // Estadísticas con tarjeta de gráficos
             SliverToBoxAdapter(
-              child: HistorialFiltrosActivosChip(
-                label: etiquetaFiltroActual,
-                onClear: _limpiarFiltros,
+              child: statsAsync.when(
+                data: (stats) => _buildEstadisticasSection(stats, theme),
+                loading: () => const HistorialStatsLoading(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
             ),
 
-          // Divider visual
-          const SliverToBoxAdapter(child: AppSpacing.gapSm),
-          SliverToBoxAdapter(
-            child: HistorialRegistrosHeader(
-              title: S.of(context).batchProductionHistory,
-              ordenDesc: _ordenDesc,
-              onToggleOrden: () {
-                HapticFeedback.selectionClick();
-                setState(() => _ordenDesc = !_ordenDesc);
-              },
+            // Indicador de filtros activos (debajo de estadísticas)
+            if (hayFiltrosActivos)
+              SliverToBoxAdapter(
+                child: HistorialFiltrosActivosChip(
+                  label: etiquetaFiltroActual,
+                  onClear: _limpiarFiltros,
+                ),
+              ),
+
+            // Divider visual
+            const SliverToBoxAdapter(child: AppSpacing.gapSm),
+            SliverToBoxAdapter(
+              child: HistorialRegistrosHeader(
+                title: S.of(context).batchProductionHistory,
+                ordenDesc: _ordenDesc,
+                onToggleOrden: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _ordenDesc = !_ordenDesc);
+                },
+              ),
             ),
-          ),
 
-          // Lista de registros (lazy-loaded con SliverList)
-          registrosAsync.when(
-            data: (registros) {
-              final lista = _filtrarYOrdenar(registros);
+            // Lista de registros (lazy-loaded con SliverList)
+            registrosAsync.when(
+              data: (registros) {
+                final lista = _filtrarYOrdenar(registros);
 
-              if (lista.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: _buildEmptyState(theme, registros.isEmpty),
+                if (lista.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: _buildEmptyState(theme, registros.isEmpty),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index < lista.length - 1 ? 12 : 0,
+                        ),
+                        child: _buildAnimatedRegistroCard(
+                          lista[index],
+                          theme,
+                          index,
+                        ),
+                      ),
+                      childCount: lista.length,
+                    ),
+                  ),
                 );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index < lista.length - 1 ? 12 : 0,
-                      ),
-                      child: _buildAnimatedRegistroCard(
-                        lista[index],
-                        theme,
-                        index,
-                      ),
-                    ),
-                    childCount: lista.length,
-                  ),
-                ),
-              );
-            },
-            loading: () => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: List.generate(
-                    5,
-                    (index) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: SkeletonListCard(
-                        hasIcon: true,
-                        hasSubtitle: true,
-                        hasBadge: true,
-                        hasFooter: false,
+              },
+              loading: () => SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: List.generate(
+                      5,
+                      (index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: SkeletonListCard(
+                          hasIcon: true,
+                          hasSubtitle: true,
+                          hasBadge: true,
+                          hasFooter: false,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              error: (error, _) =>
+                  SliverToBoxAdapter(child: _buildErrorState(theme, error)),
             ),
-            error: (error, _) =>
-                SliverToBoxAdapter(child: _buildErrorState(theme, error)),
-          ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-        ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+          ],
+        ),
       ),
     );
   }
@@ -196,56 +197,30 @@ class HistorialProduccionPageState
     final totalRegistros = stats['totalRegistros'] as int? ?? 0;
     final promedioDiario = stats['promedioDiario'] as double? ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Grid de estadísticas 2x2
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: _formatNumber(totalHuevos),
-                  subtitle: S.of(context).historialTotalEggs,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              AppSpacing.hGapMd,
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${promedioPostura.toStringAsFixed(1)}%',
-                  subtitle: S.of(context).historialAvgPosture,
-                  color: _colorPostura(promedioPostura),
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapMd,
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: totalRegistros.toString(),
-                  subtitle: S.of(context).historialRecords,
-                  color: theme.colorScheme.secondary,
-                ),
-              ),
-              AppSpacing.hGapMd,
-              Expanded(
-                child: HistorialStatCard(
-                  value: promedioDiario.toStringAsFixed(0),
-                  subtitle: S.of(context).historialDailyAvg,
-                  color: theme.colorScheme.tertiary,
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapMd,
-          // Botón Ver Gráficos debajo de los KPIs
-          HistorialGraficosCard(onTap: _navegarAGraficos),
-        ],
-      ),
+    return HistorialStatsGrid(
+      onVerGraficos: _navegarAGraficos,
+      cards: [
+        HistorialStatCard(
+          value: _formatNumber(totalHuevos),
+          subtitle: S.of(context).historialTotalEggs,
+          color: theme.colorScheme.primary,
+        ),
+        HistorialStatCard(
+          value: '${promedioPostura.toStringAsFixed(1)}%',
+          subtitle: S.of(context).historialAvgPosture,
+          color: _colorPostura(promedioPostura),
+        ),
+        HistorialStatCard(
+          value: totalRegistros.toString(),
+          subtitle: S.of(context).historialRecords,
+          color: theme.colorScheme.secondary,
+        ),
+        HistorialStatCard(
+          value: promedioDiario.toStringAsFixed(0),
+          subtitle: S.of(context).historialDailyAvg,
+          color: theme.colorScheme.tertiary,
+        ),
+      ],
     );
   }
 
@@ -420,278 +395,78 @@ class HistorialProduccionPageState
 
   /// Método público para mostrar el menú de filtros (accesible desde el dashboard)
   void showFilterMenu() {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    HistorialFiltrosBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final theme = Theme.of(context);
-
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      S.of(context).batchFilterRecords,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
-                  // Contenido
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Período
-                          AppSectionHeader(
-                            title: S.of(context).batchTimePeriod,
-                            padding: EdgeInsets.zero,
-                          ),
-                          AppSpacing.gapMd,
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchAllTime,
-                                  subtitle: S.of(context).batchNoTimeLimit,
-                                  icon: Icons.all_inclusive_rounded,
-                                  isSelected: _filtro == 'todos',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = 'todos');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays7,
-                                  subtitle: S.of(context).batchLastWeek,
-                                  icon: Icons.today_rounded,
-                                  isSelected: _filtro == '7d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '7d');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays30,
-                                  subtitle: S.of(context).batchLastMonth,
-                                  icon: Icons.date_range_rounded,
-                                  isSelected: _filtro == '30d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '30d');
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          AppSpacing.gapXl,
-
-                          // Rango de postura
-                          AppSectionHeader(
-                            title: S.of(context).historialPostureRange,
-                            padding: EdgeInsets.zero,
-                          ),
-                          AppSpacing.gapMd,
-                          AspectRatio(
-                            aspectRatio: 4.8,
-                            child: _buildPosturaOption(
-                              theme: theme,
-                              label: S.of(context).historialAllPostures,
-                              isSelected: _filtroPostura == 'todos',
-                              color: theme.colorScheme.primary,
-                              onTap: () {
-                                setModalState(() {});
-                                setState(() => _filtroPostura = 'todos');
-                              },
-                            ),
-                          ),
-                          AppSpacing.gapSm,
-                          GridView.count(
-                            crossAxisCount: AppBreakpoints.of(
-                              context,
-                            ).gridColumns,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 8,
-                            crossAxisSpacing: 8,
-                            childAspectRatio: 3.2,
-                            children: [
-                              _buildPosturaOption(
-                                theme: theme,
-                                label: S.of(context).historialHighPosture,
-                                isSelected: _filtroPostura == 'alta',
-                                color: AppColors.success,
-                                onTap: () {
-                                  setModalState(() {});
-                                  setState(() => _filtroPostura = 'alta');
-                                },
-                              ),
-                              _buildPosturaOption(
-                                theme: theme,
-                                label: S.of(context).historialMediumPosture,
-                                isSelected: _filtroPostura == 'media',
-                                color: AppColors.warning,
-                                onTap: () {
-                                  setModalState(() {});
-                                  setState(() => _filtroPostura = 'media');
-                                },
-                              ),
-                              _buildPosturaOption(
-                                theme: theme,
-                                label: S.of(context).historialLowPosture,
-                                isSelected: _filtroPostura == 'baja',
-                                color: AppColors.error,
-                                onTap: () {
-                                  setModalState(() {});
-                                  setState(() => _filtroPostura = 'baja');
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Botón aplicar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                    child: AppButton.primary(
-                      label: hayFiltrosActivos
-                          ? S.of(context).commonApplyFilters
-                          : S.of(context).commonClose,
-                      onPressed: () => Navigator.pop(context),
-                      expanded: true,
-                      backgroundColor: AppColors.warning,
-                      foregroundColor: AppColors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPeriodOption({
-    required ThemeData theme,
-    required String label,
-    required String subtitle,
-    IconData? icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return HistorialPeriodOption(
-      label: label,
-      subtitle: subtitle,
-      isSelected: isSelected,
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildPosturaOption({
-    required ThemeData theme,
-    required String label,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-          borderRadius: AppRadius.allMd,
-          border: Border.all(
-            color: isSelected
-                ? color.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: 1.5,
+      hasActiveFilters: () => hayFiltrosActivos,
+      sectionsBuilder: (setModalState) {
+        final theme = Theme.of(context);
+        return [
+          // Período
+          HistorialPeriodoFilterSection(
+            selected: _filtro,
+            onSelect: (value) {
+              setModalState(() {});
+              setState(() => _filtro = value);
+            },
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: isSelected ? color : color.withValues(alpha: 0.4),
-                shape: BoxShape.circle,
-              ),
+
+          AppSpacing.gapXl,
+
+          // Rango de postura
+          AppSectionHeader(
+            title: S.of(context).historialPostureRange,
+            padding: EdgeInsets.zero,
+          ),
+          AppSpacing.gapMd,
+          AspectRatio(
+            aspectRatio: 4.8,
+            child: HistorialFiltroOption(
+              label: S.of(context).historialAllPostures,
+              isSelected: _filtroPostura == 'todos',
+              color: theme.colorScheme.primary,
+              onTap: () {
+                setModalState(() {});
+                setState(() => _filtroPostura = 'todos');
+              },
             ),
-            AppSpacing.hGapSm,
-            Flexible(
-              child: Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? color : theme.colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
+          ),
+          AppSpacing.gapSm,
+          // Posturas a ancho completo (texto completo sin recortes)
+          Column(
+            children: [
+              HistorialFiltroOption(
+                label: S.of(context).historialHighPosture,
+                isSelected: _filtroPostura == 'alta',
+                color: AppColors.success,
+                onTap: () {
+                  setModalState(() {});
+                  setState(() => _filtroPostura = 'alta');
+                },
               ),
-            ),
-          ],
-        ),
-      ),
+              AppSpacing.gapSm,
+              HistorialFiltroOption(
+                label: S.of(context).historialMediumPosture,
+                isSelected: _filtroPostura == 'media',
+                color: AppColors.warning,
+                onTap: () {
+                  setModalState(() {});
+                  setState(() => _filtroPostura = 'media');
+                },
+              ),
+              AppSpacing.gapSm,
+              HistorialFiltroOption(
+                label: S.of(context).historialLowPosture,
+                isSelected: _filtroPostura == 'baja',
+                color: AppColors.error,
+                onTap: () {
+                  setModalState(() {});
+                  setState(() => _filtroPostura = 'baja');
+                },
+              ),
+            ],
+          ),
+        ];
+      },
     );
   }
 
@@ -760,6 +535,7 @@ class HistorialProduccionPageState
   Future<void> _onRefresh() async {
     ref.invalidate(registrosProduccionStreamProvider(widget.lote.id));
     ref.invalidate(registrosProduccionStatsProvider(widget.lote.id));
+    await ref.read(registrosProduccionStreamProvider(widget.lote.id).future);
   }
 
   void _navegarAGraficos() {
@@ -810,182 +586,89 @@ class _DetailSheet extends StatelessWidget {
     final horaFormat = DateFormat('HH:mm', locale).format(registro.fecha);
     final semanasVida = (registro.edadDias / 7).ceil();
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.paddingOf(context).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              AppSpacing.gapLg,
-
-              // Header con huevos y fecha
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fechaFormat,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          horaFormat,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+    return FormTextScale(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              MediaQuery.paddingOf(context).bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.info,
-                      borderRadius: AppRadius.allSm,
-                    ),
-                    child: Text(
-                      l.historialEggsUnit(registro.huevosRecolectados),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              AppSpacing.gapLg,
-
-              // Información en formato tabla
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLowest,
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                child: Column(
+                AppSpacing.gapLg,
+
+                // Header con huevos y fecha
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTableRow(
-                      theme,
-                      l.detailPosturePercentage,
-                      '${registro.porcentajePostura.toStringAsFixed(1)}%',
-                      valueColor: posturaColor,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBirdAge,
-                      l.detailDaysWeek(
-                        registro.edadDias.toString(),
-                        semanasVida.toString(),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fechaFormat,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            horaFormat,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBirdCount,
-                      '${registro.cantidadAvesActual}',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailGoodEggs,
-                      '${registro.huevosBuenos} (${registro.porcentajeBuenos.toStringAsFixed(1)}%)',
-                      valueColor: AppColors.success,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBrokenEggs,
-                      '${registro.huevosRotos ?? 0}',
-                      valueColor: (registro.huevosRotos ?? 0) > 0
-                          ? AppColors.error
-                          : null,
-                    ),
-                    if (registro.huevosSucios != null)
-                      _buildTableRow(
-                        theme,
-                        l.detailDirtyEggs,
-                        '${registro.huevosSucios}',
-                        valueColor: AppColors.warning,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                    if (registro.huevosDobleYema != null)
-                      _buildTableRow(
-                        theme,
-                        l.detailDoubleYolkEggs,
-                        '${registro.huevosDobleYema}',
+                      decoration: BoxDecoration(
+                        color: AppColors.info,
+                        borderRadius: AppRadius.allSm,
                       ),
-                    if (registro.pesoPromedioHuevoGramos != null)
-                      _buildTableRow(
-                        theme,
-                        l.detailAvgEggWeight,
-                        '${registro.pesoPromedioHuevoGramos!.toStringAsFixed(1)} g',
+                      child: Text(
+                        l.historialEggsUnit(registro.huevosRecolectados),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    _buildTableRow(
-                      theme,
-                      l.detailRegisteredBy,
-                      registro.nombreUsuario,
-                      isLast:
-                          !(registro.observaciones?.isNotEmpty ?? false) &&
-                          !registro.tieneClasificacionCompleta,
                     ),
-                    if (registro.observaciones?.isNotEmpty ?? false)
-                      _buildTableRow(
-                        theme,
-                        l.detailObservations,
-                        registro.observaciones!,
-                        isLast: !registro.tieneClasificacionCompleta,
-                      ),
                   ],
                 ),
-              ),
 
-              // Clasificación por tamaño
-              if (registro.tieneClasificacionCompleta) ...[
-                AppSpacing.gapBase,
-                Text(
-                  l.detailSizeClassification,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                AppSpacing.gapSm,
+                AppSpacing.gapLg,
+
+                // Información en formato tabla
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerLowest,
                     border: Border.all(
@@ -994,82 +677,177 @@ class _DetailSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  child: Column(
                     children: [
-                      _buildSizeChip(
-                        'P',
-                        registro.huevosPequenos ?? 0,
-                        AppColors.info,
+                      _buildTableRow(
                         theme,
+                        l.detailPosturePercentage,
+                        '${registro.porcentajePostura.toStringAsFixed(1)}%',
+                        valueColor: posturaColor,
                       ),
-                      _buildSizeChip(
-                        'M',
-                        registro.huevosMedianos ?? 0,
-                        AppColors.success,
+                      _buildTableRow(
                         theme,
+                        l.detailBirdAge,
+                        l.detailDaysWeek(
+                          registro.edadDias.toString(),
+                          semanasVida.toString(),
+                        ),
                       ),
-                      _buildSizeChip(
-                        'G',
-                        registro.huevosGrandes ?? 0,
-                        AppColors.warning,
+                      _buildTableRow(
                         theme,
+                        l.detailBirdCount,
+                        '${registro.cantidadAvesActual}',
                       ),
-                      _buildSizeChip(
-                        'XG',
-                        registro.huevosExtraGrandes ?? 0,
-                        AppColors.error,
+                      _buildTableRow(
                         theme,
+                        l.detailGoodEggs,
+                        '${registro.huevosBuenos} (${registro.porcentajeBuenos.toStringAsFixed(1)}%)',
+                        valueColor: AppColors.success,
                       ),
+                      _buildTableRow(
+                        theme,
+                        l.detailBrokenEggs,
+                        '${registro.huevosRotos ?? 0}',
+                        valueColor: (registro.huevosRotos ?? 0) > 0
+                            ? AppColors.error
+                            : null,
+                      ),
+                      if (registro.huevosSucios != null)
+                        _buildTableRow(
+                          theme,
+                          l.detailDirtyEggs,
+                          '${registro.huevosSucios}',
+                          valueColor: AppColors.warning,
+                        ),
+                      if (registro.huevosDobleYema != null)
+                        _buildTableRow(
+                          theme,
+                          l.detailDoubleYolkEggs,
+                          '${registro.huevosDobleYema}',
+                        ),
+                      if (registro.pesoPromedioHuevoGramos != null)
+                        _buildTableRow(
+                          theme,
+                          l.detailAvgEggWeight,
+                          '${registro.pesoPromedioHuevoGramos!.toStringAsFixed(1)} g',
+                        ),
+                      _buildTableRow(
+                        theme,
+                        l.detailRegisteredBy,
+                        registro.nombreUsuario,
+                        isLast:
+                            !(registro.observaciones?.isNotEmpty ?? false) &&
+                            !registro.tieneClasificacionCompleta,
+                      ),
+                      if (registro.observaciones?.isNotEmpty ?? false)
+                        _buildTableRow(
+                          theme,
+                          l.detailObservations,
+                          registro.observaciones!,
+                          isLast: !registro.tieneClasificacionCompleta,
+                        ),
                     ],
                   ),
                 ),
-              ],
 
-              // Fotos de evidencia
-              if (registro.fotosUrls.isNotEmpty) ...[
-                AppSpacing.gapBase,
-                Text(
-                  l.detailPhotoEvidence,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+                // Clasificación por tamaño
+                if (registro.tieneClasificacionCompleta) ...[
+                  AppSpacing.gapBase,
+                  Text(
+                    l.detailSizeClassification,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                AppSpacing.gapSm,
-                SizedBox(
-                  height: 100,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: registro.fotosUrls.length,
-                    separatorBuilder: (_, __) => AppSpacing.hGapSm,
-                    itemBuilder: (context, index) {
-                      return ClipRRect(
-                        borderRadius: AppRadius.allSm,
-                        child: AppImage(
-                          url: registro.fotosUrls[index],
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 200,
-                          memCacheHeight: 200,
-                          errorWidget: Container(
+                  AppSpacing.gapSm,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerLowest,
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildSizeChip(
+                          'P',
+                          registro.huevosPequenos ?? 0,
+                          AppColors.info,
+                          theme,
+                        ),
+                        _buildSizeChip(
+                          'M',
+                          registro.huevosMedianos ?? 0,
+                          AppColors.success,
+                          theme,
+                        ),
+                        _buildSizeChip(
+                          'G',
+                          registro.huevosGrandes ?? 0,
+                          AppColors.warning,
+                          theme,
+                        ),
+                        _buildSizeChip(
+                          'XG',
+                          registro.huevosExtraGrandes ?? 0,
+                          AppColors.error,
+                          theme,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Fotos de evidencia
+                if (registro.fotosUrls.isNotEmpty) ...[
+                  AppSpacing.gapBase,
+                  Text(
+                    l.detailPhotoEvidence,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  AppSpacing.gapSm,
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: registro.fotosUrls.length,
+                      separatorBuilder: (_, __) => AppSpacing.hGapSm,
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: AppRadius.allSm,
+                          child: AppImage(
+                            url: registro.fotosUrls[index],
                             width: 100,
                             height: 100,
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(
-                              Icons.broken_image_rounded,
-                              color: AppColors.onSurfaceVariant,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 200,
+                            memCacheHeight: 200,
+                            errorWidget: Container(
+                              width: 100,
+                              height: 100,
+                              color: AppColors.surfaceVariant,
+                              child: const Icon(
+                                Icons.broken_image_rounded,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
 
-              AppSpacing.gapSm,
-            ],
+                AppSpacing.gapSm,
+              ],
+            ),
           ),
         ),
       ),

@@ -369,6 +369,9 @@ class _ItemInspeccionCard extends StatelessWidget {
       showDragHandle: true,
       backgroundColor: theme.colorScheme.surface,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
+      ),
       builder: (sheetContext) {
         final l = S.of(sheetContext);
         return SafeArea(
@@ -381,7 +384,7 @@ class _ItemInspeccionCard extends StatelessWidget {
               children: [
                 Text(
                   item.descripcion,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),

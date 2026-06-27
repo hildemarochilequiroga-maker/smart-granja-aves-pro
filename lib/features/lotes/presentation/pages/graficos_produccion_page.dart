@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/providers/registro_providers.dart';
@@ -28,7 +29,21 @@ class GraficosProduccionPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(S.of(context).batchChartsProduction),
+        toolbarHeight: 64,
+        iconTheme: IconThemeData(size: 28, color: theme.colorScheme.onSurface),
+        actionsIconTheme: IconThemeData(
+          size: 28,
+          color: theme.colorScheme.onSurface,
+        ),
+        title: FormTextScale(
+          factor: 1.4,
+          child: Text(
+            S.of(context).commonCharts,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -861,38 +876,43 @@ class GraficosProduccionPage extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  S.of(context).historialNoProductionData,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
+    return FormTextScale(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    S.of(context).historialNoProductionData,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  S.of(context).historialChartsAppearProduction,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    S.of(context).historialChartsAppearProduction,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppButton.secondary(
-                  label: S.of(context).batchBackToHistory,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.xl),
+                  AppButton.primary(
+                    label: S.of(context).batchBackToHistory,
+                    onPressed: () => Navigator.of(context).pop(),
+                    backgroundColor: AppColors.error,
+                    foregroundColor: AppColors.white,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

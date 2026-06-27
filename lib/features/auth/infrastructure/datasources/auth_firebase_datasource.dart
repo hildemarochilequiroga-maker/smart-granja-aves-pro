@@ -585,15 +585,24 @@ class AuthFirebaseDatasource {
           .map((p) => p.providerId)
           .toList();
 
+      // Sincronizar la foto del proveedor (ej. Google) en cada inicio de sesión
+      // para que siempre se muestre la foto actual de la cuenta vinculada.
+      final fotoProveedor = firebaseUser.photoURL;
+
       await _usersCollection.doc(firebaseUser.uid).update({
         'ultimoAcceso': FieldValue.serverTimestamp(),
         'emailVerificado': firebaseUser.emailVerified,
         'proveedoresVinculados': providerIds,
+        if (fotoProveedor != null && fotoProveedor.isNotEmpty)
+          'fotoUrl': fotoProveedor,
       });
 
       return UsuarioModel.fromFirestore(doc).copyWith(
         emailVerificado: firebaseUser.emailVerified,
         ultimoAcceso: DateTime.now(),
+        fotoUrl: (fotoProveedor != null && fotoProveedor.isNotEmpty)
+            ? fotoProveedor
+            : null,
       );
     }
 

@@ -16,6 +16,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../application/providers/colaboradores_providers.dart';
 import '../../domain/enums/rol_granja_enum.dart';
@@ -59,11 +60,16 @@ class _SeleccionarRolInvitacionPageState
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(S.of(context).farmInviteUser),
+        title: FormTextScale(child: Text(S.of(context).farmInviteUser)),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, size: 28),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: rolUsuarioAsync.when(
+      body: FormTextScale(
+        child: rolUsuarioAsync.when(
         data: (rolUsuario) {
           if (currentUser == null) {
             return _buildNoPermissionView(
@@ -91,6 +97,7 @@ class _SeleccionarRolInvitacionPageState
           context,
           S.of(context).farmVerifyPermError(error.toString()),
           Icons.error_outline,
+        ),
         ),
       ),
     );

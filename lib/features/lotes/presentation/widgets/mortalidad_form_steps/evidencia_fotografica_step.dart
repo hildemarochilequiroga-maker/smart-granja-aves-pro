@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
-import '../../../../../core/presentation/widgets/form_widgets.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -49,13 +48,6 @@ class EvidenciaFotograficaStep extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
-          ),
-          AppSpacing.gapXl,
-
-          // Info card
-          FormInfoRow(
-            text: S.of(context).batchFormPhotoHelpText,
-            type: InfoCardType.info,
           ),
           AppSpacing.gapXl,
 

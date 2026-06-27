@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/presentation/widgets/form_widgets.dart';
 import '../../../../granjas/application/providers/granja_providers.dart';
 import '../../../../inventario/application/providers/providers.dart';
 import '../../../../lotes/application/providers/lote_providers.dart';
@@ -153,57 +154,18 @@ class HomeAlerts extends ConsumerWidget {
   }
 
   Widget _buildAlertCard(BuildContext context, Map<String, dynamic> alert) {
-    final colorScheme = Theme.of(context).colorScheme;
-    Color color;
-    switch (alert['type']) {
-      case 'error':
-        color = AppColors.error;
-        break;
-      case 'warning':
-        color = AppColors.warning;
-        break;
-      case 'info':
-      default:
-        color = AppColors.info;
-    }
+    final InfoCardType type = switch (alert['type']) {
+      'error' => InfoCardType.error,
+      'warning' => InfoCardType.warning,
+      _ => InfoCardType.info,
+    };
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: AppRadius.allSm,
-        border: Border(left: BorderSide(color: color, width: 4)),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(alert['icon'], color: color, size: 20),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert['title'],
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  alert['description'],
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: FormInfoCard(
+        type: type,
+        title: alert['title'] as String,
+        description: alert['description'] as String,
       ),
     );
   }

@@ -75,7 +75,7 @@ class CostoRemoteDatasourceImpl implements CostoRemoteDatasource {
   Future<void> actualizar(CostoGasto costo) async {
     try {
       final model = CostoGastoModel.fromEntity(costo);
-      await _costosCollection.doc(costo.id).update(model.toFirestore());
+      await _costosCollection.doc(costo.id).update(model.toFirestoreUpdate());
     } on Exception catch (e) {
       throw ServerException(
         message: ErrorMessages.format('ERR_UPDATE_COST', {'e': '$e'}),

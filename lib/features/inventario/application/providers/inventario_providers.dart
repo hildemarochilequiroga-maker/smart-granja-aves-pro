@@ -279,7 +279,7 @@ class InventarioMovimientoNotifier extends StateNotifier<AsyncValue<void>> {
 
 /// Provider para verificar stock suficiente.
 final hayStockSuficienteProvider =
-    FutureProvider.family<bool, ({String itemId, double cantidad})>((
+    FutureProvider.autoDispose.family<bool, ({String itemId, double cantidad})>((
       ref,
       params,
     ) {
@@ -288,7 +288,7 @@ final hayStockSuficienteProvider =
     });
 
 /// Provider para obtener stock actual.
-final stockActualProvider = FutureProvider.family<double, String>((
+final stockActualProvider = FutureProvider.autoDispose.family<double, String>((
   ref,
   itemId,
 ) {

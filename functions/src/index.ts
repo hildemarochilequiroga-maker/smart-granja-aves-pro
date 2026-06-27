@@ -147,22 +147,15 @@ export const onInventarioUpdate = onDocumentUpdated(
       const granjaDoc = await db.collection("granjas").doc(granjaId).get();
       const granjaName = granjaDoc.data()?.nombre ?? "Granja";
 
-      // Obtener usuarios a notificar (owner, admin, manager)
-      const colaboradores = await db
-        .collection("granjas")
-        .doc(granjaId)
-        .collection("colaboradores")
-        .where("rol", "in", ["owner", "admin", "manager"])
-        .where("activo", "==", true)
-        .get();
+      // Obtener usuarios a notificar (owner, admin, manager) desde la
+      // colección correcta `granja_usuarios` (ver getDestinatariosGranja).
+      const destinatarios = await getDestinatariosGranja(granjaId);
 
       const notificaciones: Promise<void>[] = [];
 
-      for (const colabDoc of colaboradores.docs) {
-        const colab = colabDoc.data() as ColaboradorData;
-
+      for (const usuarioId of destinatarios) {
         const notificacion: NotificacionData = {
-          usuarioId: colab.usuarioId,
+          usuarioId: usuarioId,
           tipo: "stock_bajo",
           titulo: `⚠️ Stock bajo: ${nombreItem}`,
           mensaje: `Solo quedan ${stockAhora.toFixed(1)} unidades en ${granjaName}`,
@@ -179,7 +172,7 @@ export const onInventarioUpdate = onDocumentUpdated(
         };
 
         notificaciones.push(
-          crearNotificacionYEnviarPush(colab.usuarioId, notificacion)
+          crearNotificacionYEnviarPush(usuarioId, notificacion)
         );
       }
 
@@ -188,7 +181,7 @@ export const onInventarioUpdate = onDocumentUpdated(
       if (fallidos > 0) {
         logger.warn(`⚠️ ${fallidos}/${results.length} notificaciones de stock bajo fallaron`);
       }
-      logger.info(`✅ Notificaciones de stock bajo enviadas: ${colaboradores.size}`);
+      logger.info(`✅ Notificaciones de stock bajo enviadas: ${destinatarios.length}`);
     }
   }
 );
@@ -231,14 +224,12 @@ export const verificarVencimientos = onSchedule(
 
       if (items.empty) continue;
 
-      // Obtener usuarios a notificar
-      const colaboradores = await db
-        .collection("granjas")
-        .doc(granjaId)
-        .collection("colaboradores")
-        .where("rol", "in", ["owner", "admin"])
-        .where("activo", "==", true)
-        .get();
+      // Obtener usuarios a notificar (owner/admin) desde `granja_usuarios`.
+      const destinatarios = await getDestinatariosGranja(granjaId, [
+        "owner",
+        "admin",
+      ]);
+      if (destinatarios.length === 0) continue;
 
       // Batch notifications per granja to avoid timeout on sequential awaits
       const batchPromises: Promise<void>[] = [];
@@ -250,11 +241,9 @@ export const verificarVencimientos = onSchedule(
           (fechaVenc.getTime() - ahora.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        for (const colabDoc of colaboradores.docs) {
-          const colab = colabDoc.data() as ColaboradorData;
-
+        for (const usuarioId of destinatarios) {
           const notificacion: NotificacionData = {
-            usuarioId: colab.usuarioId,
+            usuarioId: usuarioId,
             tipo: "proximo_vencer",
             titulo: `📅 Próximo a vencer: ${item.nombre}`,
             mensaje: `Vence en ${diasRestantes} días en ${granjaName}`,
@@ -271,7 +260,7 @@ export const verificarVencimientos = onSchedule(
           };
 
           batchPromises.push(
-            crearNotificacionYEnviarPush(colab.usuarioId, notificacion)
+            crearNotificacionYEnviarPush(usuarioId, notificacion)
           );
         }
       }
@@ -718,35 +707,35 @@ export const onInvitacionCreada = onDocumentCreated(
 // TRIGGER: Invitación aceptada
 // =============================================================================
 
+// Escucha la colección TOP-LEVEL `granja_usuarios` (docId `{granjaId}_{uid}`),
+// que es donde la app crea las membresías. Antes escuchaba la subcolección
+// `granjas/{id}/colaboradores`, que la app NUNCA escribe → el trigger jamás
+// se disparaba.
 export const onColaboradorAgregado = onDocumentCreated(
-  "granjas/{granjaId}/colaboradores/{colaboradorId}",
+  "granja_usuarios/{membresiaId}",
   async (event) => {
     if (await isAlreadyProcessed(event.id)) {
       logger.info(`Evento duplicado ignorado: ${event.id}`);
       return;
     }
 
-    const { granjaId } = event.params;
     const colaborador = event.data?.data();
-
     if (!colaborador) return;
 
+    // granjaId/usuarioId vienen como campos del documento top-level.
+    const granjaId = colaborador.granjaId as string | undefined;
+    const nuevoUsuarioId = colaborador.usuarioId as string | undefined;
+    const rol = colaborador.rol as string | undefined;
+    if (!granjaId || !nuevoUsuarioId || !rol) return;
+
     // No notificar al owner original
-    if (colaborador.rol === "owner") return;
+    if (rol === "owner") return;
 
-    const nuevoUsuarioId = colaborador.usuarioId;
-    const rol = colaborador.rol;
-
-    // Parallel reads — all three queries are independent
+    // Lecturas en paralelo: datos del nuevo usuario, granja y owners destino.
     const [usuarioDoc, granjaDoc, owners] = await Promise.all([
       db.collection("usuarios").doc(nuevoUsuarioId).get(),
       db.collection("granjas").doc(granjaId).get(),
-      db.collection("granjas")
-        .doc(granjaId)
-        .collection("colaboradores")
-        .where("rol", "==", "owner")
-        .where("activo", "==", true)
-        .get(),
+      getDestinatariosGranja(granjaId, ["owner", "admin"]),
     ]);
     const nombreColaborador = usuarioDoc.data()?.nombreCompleto ?? "Nuevo usuario";
     const granjaName = granjaDoc.data()?.nombre ?? "Granja";
@@ -758,14 +747,12 @@ export const onColaboradorAgregado = onDocumentCreated(
       viewer: "Observador",
     };
 
-    for (const ownerDoc of owners.docs) {
-      const owner = ownerDoc.data() as ColaboradorData;
-
-      // No notificar si el owner es el mismo que se agregó
-      if (owner.usuarioId === nuevoUsuarioId) continue;
+    for (const ownerId of owners) {
+      // No notificar si el destinatario es el mismo que se agregó
+      if (ownerId === nuevoUsuarioId) continue;
 
       const notificacion: NotificacionData = {
-        usuarioId: owner.usuarioId,
+        usuarioId: ownerId,
         tipo: "invitacion_aceptada",
         titulo: "👤 Nuevo colaborador",
         mensaje: `${nombreColaborador} se unió como ${rolLabels[rol] ?? rol} a ${granjaName}`,
@@ -781,7 +768,7 @@ export const onColaboradorAgregado = onDocumentCreated(
         accionUrl: `/granjas/${granjaId}/colaboradores`,
       };
 
-      await crearNotificacionYEnviarPush(owner.usuarioId, notificacion);
+      await crearNotificacionYEnviarPush(ownerId, notificacion);
     }
 
     logger.info(`✅ Notificación de nuevo colaborador enviada`);
@@ -882,4 +869,68 @@ async function crearNotificacionYEnviarPush(
   } catch (error) {
     logger.error(`Error enviando notificación a ${usuarioId}:`, error);
   }
+}
+
+// =============================================================================
+// SCHEDULED: Verificación periódica de alertas (consolidada, server-side)
+// =============================================================================
+//
+// Solución definitiva al costo del scheduler client-side: estas verificaciones
+// corren UNA vez por granja en el servidor, en vez de en cada dispositivo de
+// cada usuario. Mientras esta function esté activa, el cliente puede dejar de
+// ejecutar `AlertasService.ejecutarVerificacionesProgramadas` (el lock
+// distribuido del cliente es solo un puente hasta que esto se despliegue).
+//
+// Todas las functions de notificación ya leen destinatarios desde
+// `granja_usuarios` (vía `getDestinatariosGranja`), que es donde la app
+// escribe las membresías.
+//
+// TODO(server-side): portar desde Dart (AlertasService) las verificaciones
+// que aún no tienen function dedicada: lotes próximos a cierre, lotes sin
+// registros, vacunaciones programadas, inspecciones pendientes y entregas
+// programadas. Cada una: query por granja + dedupe + crearNotificacionYEnviarPush.
+export const verificarAlertasPeriodicas = onSchedule(
+  { schedule: "every 30 minutes", timeZone: "America/Bogota" },
+  async (event) => {
+    const scheduleKey = `schedule_alertas_${event.scheduleTime}`;
+    if (await isAlreadyProcessed(scheduleKey)) {
+      logger.info(`Ejecución periódica duplicada ignorada: ${scheduleKey}`);
+      return;
+    }
+
+    logger.info("🕐 Iniciando verificación periódica de alertas...");
+
+    const granjas = await db.collection("granjas").get();
+    for (const granjaDoc of granjas.docs) {
+      const granjaId = granjaDoc.id;
+      try {
+        // TODO: invocar aquí las verificaciones portadas (ver TODO de arriba).
+        // De momento es un esqueleto idempotente listo para extender sin
+        // cambiar el wiring del scheduler ni el schedule.
+        void granjaId;
+      } catch (error) {
+        logger.error(`Error verificando alertas de ${granjaId}:`, error);
+      }
+    }
+
+    logger.info("✅ Verificación periódica de alertas completada");
+  }
+);
+
+/**
+ * Obtiene los usuarioIds destinatarios (owner/admin/manager activos) de una
+ * granja desde la colección correcta `granja_usuarios`. Usar esto en lugar de
+ * `granjas/{id}/colaboradores` para que las notificaciones server-side lleguen.
+ */
+export async function getDestinatariosGranja(
+  granjaId: string,
+  roles: string[] = ["owner", "admin", "manager"]
+): Promise<string[]> {
+  const snap = await db
+    .collection("granja_usuarios")
+    .where("granjaId", "==", granjaId)
+    .where("activo", "==", true)
+    .where("rol", "in", roles)
+    .get();
+  return snap.docs.map((d) => d.data().usuarioId as string);
 }

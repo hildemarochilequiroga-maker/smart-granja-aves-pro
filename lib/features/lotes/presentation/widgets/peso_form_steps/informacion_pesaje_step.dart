@@ -3,13 +3,12 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/utils/field_validators.dart';
 import '../../../domain/enums/metodo_pesaje.dart';
-import 'package:smartgranjaavespro/core/theme/app_radius.dart';
 
 /// Step 1: Información del Pesaje
 class InformacionPesajeStep extends StatelessWidget {
@@ -19,8 +18,9 @@ class InformacionPesajeStep extends StatelessWidget {
     required this.pesoPromedioController,
     required this.cantidadAvesController,
     required this.fechaSeleccionada,
+    required this.fechaIngreso,
     required this.metodoSeleccionado,
-    required this.onSeleccionarFecha,
+    required this.onFechaChanged,
     required this.onMetodoChanged,
     required this.onPesoChanged,
     required this.autoValidate,
@@ -30,8 +30,9 @@ class InformacionPesajeStep extends StatelessWidget {
   final TextEditingController pesoPromedioController;
   final TextEditingController cantidadAvesController;
   final DateTime fechaSeleccionada;
+  final DateTime fechaIngreso;
   final MetodoPesaje metodoSeleccionado;
-  final VoidCallback onSeleccionarFecha;
+  final ValueChanged<DateTime> onFechaChanged;
   final ValueChanged<MetodoPesaje?> onMetodoChanged;
   final VoidCallback onPesoChanged;
   final bool autoValidate;
@@ -102,130 +103,29 @@ class InformacionPesajeStep extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Método de pesaje
-          RegistroDropdownField<MetodoPesaje>(
+          RegistroSelectorField<MetodoPesaje>(
             label: S.of(context).batchFormWeightMethod,
             value: metodoSeleccionado,
-            hint: S.of(context).batchFormMethodHint,
             required: true,
-            autovalidateMode: autoValidate
-                ? AutovalidateMode.always
-                : AutovalidateMode.onUserInteraction,
-            selectedItemBuilder: (context) {
-              return MetodoPesaje.values.map((metodo) {
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: metodo.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(metodo.localizedDescripcion(S.of(context))),
-                    ],
-                  ),
-                );
-              }).toList();
-            },
-            items: MetodoPesaje.values.map((metodo) {
-              return DropdownMenuItem(
-                value: metodo,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: metodo.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              metodo.localizedDescripcion(S.of(context)),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              metodo.localizedDescripcionDetallada(S.of(context)),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: onMetodoChanged,
+            options: MetodoPesaje.values,
+            labelOf: (metodo) => metodo.localizedDescripcion(S.of(context)),
+            subtitleOf: (metodo) =>
+                metodo.localizedDescripcionDetallada(S.of(context)),
+            colorOf: (metodo) => metodo.color,
+            onSelected: onMetodoChanged,
           ),
           const SizedBox(height: 16),
 
           // Fecha del pesaje
-          _buildFechaField(context, theme),
+          RegistroDateField(
+            label: S.of(context).batchFormDate,
+            value: fechaSeleccionada,
+            firstDate: fechaIngreso,
+            lastDate: DateTime.now(),
+            onChanged: onFechaChanged,
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFechaField(BuildContext context, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          S.of(context).batchFormDate,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onSeleccionarFecha,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: AppRadius.allSm,
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  DateFormat('dd/MM/yyyy').format(fechaSeleccionada),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                Icon(
-                  Icons.calendar_today_outlined,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

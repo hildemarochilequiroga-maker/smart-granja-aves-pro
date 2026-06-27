@@ -101,7 +101,7 @@ class HomeActivities extends ConsumerWidget {
                 ),
               ),
               padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Icon(actividad.icono, size: 18, color: actividad.color),
+              child: Icon(actividad.icono, size: 22, color: actividad.color),
             ),
             if (!isLast)
               Container(
@@ -230,41 +230,26 @@ class HomeActivities extends ConsumerWidget {
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: AppSpacing.base),
-        Container(
+        const SizedBox(height: AppSpacing.xl),
+        SizedBox(
           width: double.infinity,
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: AppRadius.allMd,
-            border: Border.all(color: colorScheme.outlineVariant),
-          ),
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.history,
-                  size: 36,
-                  color: colorScheme.outline,
-                ),
-              ),
+              // Ícono sin ningún fondo
+              Icon(Icons.history, size: 56, color: colorScheme.outline),
               const SizedBox(height: AppSpacing.md),
               Text(
                 S.of(context).homeNoRecentActivity,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 S.of(context).homeNoRecentActivityDesc,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
@@ -298,7 +283,7 @@ class HomeActivities extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              const Icon(Icons.error_outline, size: 32, color: AppColors.error),
+              const Icon(Icons.error_outline, size: 40, color: AppColors.error),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 S.of(context).homeErrorLoadingActivities,

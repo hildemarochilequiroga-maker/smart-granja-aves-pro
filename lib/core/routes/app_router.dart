@@ -9,6 +9,7 @@ import '../../features/auth/presentation/pages/pages.dart';
 import '../../features/costos/presentation/pages/costos_list_page.dart';
 import '../../features/costos/presentation/pages/registrar_costo_page.dart';
 import '../../features/costos/presentation/pages/costo_detail_page.dart';
+import '../../features/costos/domain/enums/tipo_gasto.dart';
 import '../../features/ventas/presentation/pages/ventas_list_page.dart';
 import '../../features/ventas/presentation/pages/registrar_venta_page.dart';
 import '../../features/ventas/presentation/pages/venta_detail_page.dart';
@@ -17,7 +18,6 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/inventario/presentation/pages/pages.dart';
 import '../../features/inventario/domain/entities/entities.dart';
 import '../../features/perfil/presentation/pages/perfil_page.dart';
-import '../../features/perfil/presentation/pages/editar_perfil_page.dart';
 import '../../features/perfil/presentation/pages/configuracion_page.dart';
 import '../../features/perfil/presentation/pages/notificaciones_config_page.dart';
 import '../../features/reportes/presentation/pages/reportes_page.dart';
@@ -227,7 +227,16 @@ abstract final class AppRouter {
       name: 'aceptarInvitacion',
       builder: (context, state) {
         final codigo = state.uri.queryParameters['codigo'];
-        return AceptarInvitacionGranjaPage(codigo: codigo);
+        // La vista de aceptar invitación está diseñada como bottom sheet
+        // (superficie redondeada anclada abajo). Para el deep-link la mostramos
+        // sobre un scrim ocupando la parte inferior de la pantalla.
+        return Scaffold(
+          backgroundColor: Colors.black54,
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: AceptarInvitacionGranjaPage(codigo: codigo),
+          ),
+        );
       },
     ),
 
@@ -402,6 +411,19 @@ abstract final class AppRouter {
           );
         }
         return HistorialConsumoPage(lote: lote);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.loteCostoPorAve,
+      name: 'loteCostoPorAve',
+      builder: (context, state) {
+        final lote = state.extra as Lote?;
+        if (lote == null) {
+          return ErrorPage(
+            error: ErrorMessages.get('ROUTER_BATCH_INFO_MISSING'),
+          );
+        }
+        return CostoPorAvePage(lote: lote);
       },
     ),
     GoRoute(
@@ -636,6 +658,16 @@ abstract final class AppRouter {
       builder: (context, state) {
         final granjaId = state.uri.queryParameters['granjaId'];
         final loteId = state.uri.queryParameters['loteId'];
+        final tipoParam = state.uri.queryParameters['tipo'];
+        TipoGasto? tipoInicial;
+        if (tipoParam != null && tipoParam.isNotEmpty) {
+          for (final t in TipoGasto.values) {
+            if (t.name == tipoParam) {
+              tipoInicial = t;
+              break;
+            }
+          }
+        }
         // Nota: Para edición, el costo se carga en la página usando costoId
         // El costoExistente se pasa como extra si está disponible
         final costoExistente = state.extra as dynamic;
@@ -643,6 +675,7 @@ abstract final class AppRouter {
           granjaId: granjaId?.isNotEmpty == true ? granjaId : null,
           loteId: loteId?.isNotEmpty == true ? loteId : null,
           costoExistente: costoExistente is Map ? null : costoExistente,
+          tipoInicial: tipoInicial,
         );
       },
     ),
@@ -783,13 +816,6 @@ abstract final class AppRouter {
       path: AppRoutes.configuracion,
       name: 'configuracion',
       builder: (context, state) => const ConfiguracionPage(),
-    ),
-
-    // Editar Perfil
-    GoRoute(
-      path: AppRoutes.editarPerfil,
-      name: 'editarPerfil',
-      builder: (context, state) => const EditarPerfilPage(),
     ),
 
     // Notificaciones Config

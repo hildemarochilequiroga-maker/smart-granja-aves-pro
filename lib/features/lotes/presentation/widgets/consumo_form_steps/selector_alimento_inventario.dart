@@ -87,37 +87,6 @@ class _SelectorAlimentoInventarioState
           loading: () => _buildLoadingState(context),
           error: (_, __) => _buildErrorState(context),
         ),
-
-        // Info card
-        if (widget.itemSeleccionado == null) ...[
-          AppSpacing.gapMd,
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.info.withValues(alpha: 0.08),
-              borderRadius: AppRadius.allSm,
-              border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.lightbulb_outline,
-                  color: AppColors.info,
-                  size: 18,
-                ),
-                AppSpacing.hGapSm,
-                Expanded(
-                  child: Text(
-                    S.of(context).batchFormSelectFoodHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

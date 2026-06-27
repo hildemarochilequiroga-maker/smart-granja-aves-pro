@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/constants/app_assets.dart';
+import '../../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -49,6 +50,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final granjaSeleccionada = ref.watch(granjaSeleccionadaProvider);
 
     ref.listen(granjaSeleccionadaProvider, (previous, next) {
       if (!mounted) return;
@@ -74,40 +76,43 @@ class _HomePageState extends ConsumerState<HomePage> {
         elevation: 0,
         scrolledUnderElevation: 1,
         titleSpacing: 0,
-        title: Row(
-          children: [
-            const SizedBox(width: AppSpacing.md),
-            // Logo de la app
-            ClipRRect(
-              borderRadius: AppRadius.allSm,
-              child: Builder(
-                builder: (context) {
-                  final dpr = MediaQuery.devicePixelRatioOf(context);
-                  return Image.asset(
-                    AppAssets.logoIcon,
-                    width: 36,
-                    height: 36,
-                    cacheWidth: (36 * dpr).round(),
-                    cacheHeight: (36 * dpr).round(),
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.agriculture,
-                      size: 36,
-                      color: colorScheme.onPrimary,
-                    ),
-                  );
-                },
+        title: FormTextScale(
+          factor: 1.2,
+          child: Row(
+            children: [
+              const SizedBox(width: AppSpacing.md),
+              // Logo de la app
+              ClipRRect(
+                borderRadius: AppRadius.allSm,
+                child: Builder(
+                  builder: (context) {
+                    final dpr = MediaQuery.devicePixelRatioOf(context);
+                    return Image.asset(
+                      AppAssets.logoIcon,
+                      width: 44,
+                      height: 44,
+                      cacheWidth: (44 * dpr).round(),
+                      cacheHeight: (44 * dpr).round(),
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.agriculture,
+                        size: 44,
+                        color: colorScheme.onPrimary,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            // Nombre de la app
-            Text(
-              'Smart Granja Aves',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onPrimary,
+              const SizedBox(width: AppSpacing.sm),
+              // Nombre de la app
+              Text(
+                'Smart Granja Aves',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           // Botón de notificaciones
@@ -118,51 +123,54 @@ class _HomePageState extends ConsumerState<HomePage> {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _onRefresh,
-        child: CustomScrollView(
+      body: FormTextScale(
+        factor: 1.2,
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: CustomScrollView(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          slivers: const [
+          slivers: [
             // Header con saludo y selector de granja
-            SliverToBoxAdapter(child: HomeHeader()),
-            // KPIs Grid
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.base,
-                  AppSpacing.base,
-                  AppSpacing.base,
-                  AppSpacing.md,
+            const SliverToBoxAdapter(child: HomeHeader()),
+            // KPIs Grid, Quick Actions y Activities: solo si hay granja
+            if (granjaSeleccionada != null) ...[
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.base,
+                    AppSpacing.base,
+                    AppSpacing.base,
+                    AppSpacing.md,
+                  ),
+                  child: HomeKpisGrid(),
                 ),
-                child: HomeKpisGrid(),
               ),
-            ),
-            // Quick Actions
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.base,
-                  0,
-                  AppSpacing.base,
-                  AppSpacing.md,
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.base,
+                    0,
+                    AppSpacing.base,
+                    AppSpacing.md,
+                  ),
+                  child: HomeQuickActions(),
                 ),
-                child: HomeQuickActions(),
               ),
-            ),
-            // Activities
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.base,
-                  0,
-                  AppSpacing.base,
-                  AppSpacing.xxl,
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.base,
+                    0,
+                    AppSpacing.base,
+                    AppSpacing.xxl,
+                  ),
+                  child: HomeActivities(),
                 ),
-                child: HomeActivities(),
               ),
-            ),
-          ],
+            ],
+            ],
+          ),
         ),
       ),
     );

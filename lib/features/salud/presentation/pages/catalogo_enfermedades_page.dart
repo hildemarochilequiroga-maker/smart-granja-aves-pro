@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -69,7 +70,7 @@ class _CatalogoEnfermedadesPageState
           unawaited(HapticFeedback.mediumImpact());
         },
         color: theme.colorScheme.primary,
-        edgeOffset: 130,
+        edgeOffset: 134,
         child: CustomScrollView(
           slivers: [
             // Barra de búsqueda sticky
@@ -228,10 +229,10 @@ class _EnfermedadesSearchBarDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<GravedadEnfermedad?> onGravedadFilterChanged;
 
   @override
-  double get minExtent => 110;
+  double get minExtent => 134;
 
   @override
-  double get maxExtent => 110;
+  double get maxExtent => 134;
 
   @override
   Widget build(
@@ -326,7 +327,8 @@ class _EnfermedadCard extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isSmallScreen = size.width < 360;
 
-    return Container(
+    return FormTextScale(
+      child: Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: AppRadius.allMd,
@@ -365,7 +367,8 @@ class _EnfermedadCard extends StatelessWidget {
           ),
         ),
       ),
-    ).cardEntrance();
+      ).cardEntrance(),
+    );
   }
 
   Widget _buildHeader(
@@ -716,12 +719,17 @@ class DetalleEnfermedadPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(enfermedad.nombreComun),
+        title: FormTextScale(
+          factor: 1.2,
+          child: Text(enfermedad.nombreComun),
+        ),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      body: SingleChildScrollView(
+      body: FormTextScale(
+        factor: 1.2,
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -779,6 +787,7 @@ class DetalleEnfermedadPage extends StatelessWidget {
 
             AppSpacing.gapXxl,
           ],
+        ),
         ),
       ),
     );

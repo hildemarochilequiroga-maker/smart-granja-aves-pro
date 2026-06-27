@@ -24,6 +24,7 @@ import '../../../../core/widgets/sync_status_indicator.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../application/services/registro_quick_cache_service.dart';
 import '../widgets/consumo_form_steps/informacion_consumo_step.dart';
 import '../widgets/consumo_form_steps/resumen_observaciones_step.dart';
@@ -51,7 +52,6 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
   bool _autoValidate = false;
   bool _isSaving = false;
   bool _hasUnsavedChanges = false;
-  DateTime? _lastSaveTime;
 
   int _currentStep = 0;
   Timer? _autoSaveTimer;
@@ -171,7 +171,6 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
       });
       await prefs.setString('consumo_draft_${widget.lote.id}', draft);
       _hasUnsavedChanges = false;
-      _lastSaveTime = DateTime.now();
       debugPrint('✅ Borrador guardado exitosamente');
     } on Exception catch (e) {
       debugPrint('❌ Error al guardar borrador: $e');
@@ -257,21 +256,6 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
     }
   }
 
-  String _formatSaveTime(DateTime saveTime) {
-    final now = DateTime.now();
-    final difference = now.difference(saveTime);
-    final l = S.of(context);
-
-    if (difference.inSeconds < 10) {
-      return l.batchRightNow;
-    } else if (difference.inSeconds < 60) {
-      return l.batchSecondsAgo(difference.inSeconds);
-    } else if (difference.inMinutes < 60) {
-      return l.batchMinutesAgo(difference.inMinutes);
-    } else {
-      return l.batchHoursAgo(difference.inHours);
-    }
-  }
 
   Future<bool?> _showUnsavedChangesDialog() async {
     final l = S.of(context);
@@ -283,34 +267,6 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
       confirmText: l.batchExit,
       cancelText: l.commonContinue,
     );
-  }
-
-  Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
-      context: context,
-      initialDate: _fechaSeleccionada,
-      firstDate: widget.lote.fechaIngreso,
-      lastDate: DateTime.now(),
-      locale: const Locale('es', 'ES'),
-    );
-
-    if (fecha != null) {
-      setState(() {
-        _fechaSeleccionada = fecha;
-      });
-    }
-  }
-
-  /// Maneja la selección de un item de inventario y autocompleta campos.
-  void _onItemInventarioChanged(ItemInventario? item) {
-    setState(() {
-      _itemInventarioSeleccionado = item;
-
-      // Autocompletar precio si el item tiene precio unitario
-      if (item != null && item.precioUnitario != null) {
-        _costoPorKgController.text = item.precioUnitario!.toStringAsFixed(2);
-      }
-    });
   }
 
   void _goToStep(int step) {
@@ -789,26 +745,19 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
       child: Scaffold(
         backgroundColor: colorScheme.surfaceContainerLowest,
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                S.of(context).registerConsumptionTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-              if (_lastSaveTime != null)
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  _isSaving
-                      ? S.of(context).batchSaving
-                      : S
-                            .of(context)
-                            .batchSavedTime(_formatSaveTime(_lastSaveTime!)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
-                  ),
+                  S.of(context).registerConsumptionTitle,
+                  style: theme.textTheme.titleMedium,
                 ),
-            ],
+              ],
+            ),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
@@ -860,69 +809,73 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _steps,
-              onStepTapped: _goToStep,
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _steps,
+                onStepTapped: _goToStep,
+              ),
 
-            // Contenido de los pasos
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // Step 1: Información del Consumo
-                    InformacionConsumoStep(
-                      formKey: _formKey,
-                      cantidadKgController: _cantidadKgController,
-                      fechaSeleccionada: _fechaSeleccionada,
-                      tipoSeleccionado: _tipoSeleccionado,
-                      onSeleccionarFecha: _seleccionarFecha,
-                      onTipoChanged: (value) {
-                        if (value != null) {
+              // Contenido de los pasos
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Step 1: Información del Consumo
+                      InformacionConsumoStep(
+                        formKey: _formKey,
+                        cantidadKgController: _cantidadKgController,
+                        fechaSeleccionada: _fechaSeleccionada,
+                        fechaIngreso: widget.lote.fechaIngreso,
+                        tipoSeleccionado: _tipoSeleccionado,
+                        onFechaChanged: (fecha) {
                           setState(() {
-                            _tipoSeleccionado = value;
+                            _fechaSeleccionada = fecha;
+                            _hasUnsavedChanges = true;
                           });
-                        }
-                      },
-                      onCantidadChanged: () => setState(() {}),
-                      autoValidate: _autoValidate,
-                      edadDias: _edadDias,
-                      tipoRecomendado: _sugerirTipoAlimento(_edadDias),
-                      costoPorKgController: _costoPorKgController,
-                      onCostoPorKgChanged: () => setState(() {}),
-                      granjaId: widget.lote.granjaId,
-                      itemInventarioSeleccionado: _itemInventarioSeleccionado,
-                      onItemInventarioChanged: _onItemInventarioChanged,
-                      stockDisponible: _itemInventarioSeleccionado?.stockActual,
-                    ),
+                        },
+                        onTipoChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _tipoSeleccionado = value;
+                            });
+                          }
+                        },
+                        onCantidadChanged: () => setState(() {}),
+                        autoValidate: _autoValidate,
+                        edadDias: _edadDias,
+                        tipoRecomendado: _sugerirTipoAlimento(_edadDias),
+                        costoPorKgController: _costoPorKgController,
+                        onCostoPorKgChanged: () => setState(() {}),
+                      ),
 
-                    // Step 2: Resumen y Observaciones
-                    ResumenObservacionesStep(
-                      formKey: _formKey,
-                      observacionesController: _observacionesController,
-                      autoValidate: _autoValidate,
-                      cantidadKg: _cantidadKg,
-                      tipoAlimento: _tipoSeleccionado,
-                      fecha: _fechaSeleccionada,
-                      avesActuales: cantidadActual,
-                      costoPorKg: double.tryParse(_costoPorKgController.text),
-                      consumoAcumuladoKg: widget.lote.consumoAcumuladoKg,
-                    ),
-                  ],
+                      // Step 2: Resumen y Observaciones
+                      ResumenObservacionesStep(
+                        formKey: _formKey,
+                        observacionesController: _observacionesController,
+                        autoValidate: _autoValidate,
+                        cantidadKg: _cantidadKg,
+                        tipoAlimento: _tipoSeleccionado,
+                        fecha: _fechaSeleccionada,
+                        avesActuales: cantidadActual,
+                        costoPorKg: double.tryParse(_costoPorKgController.text),
+                        consumoAcumuladoKg: widget.lote.consumoAcumuladoKg,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );

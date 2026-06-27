@@ -11,10 +11,16 @@ import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_section_header.dart';
+import '../../../../../core/widgets/app_stat_card.dart';
 import '../../../../../l10n/app_localizations.dart';
 
 /// Card de estadística (KPI) del historial: valor destacado + subtítulo.
+///
+/// Alias delgado sobre [AppStatCard] (en `core`), conservado para no romper
+/// los usos existentes en las páginas de historial.
 class HistorialStatCard extends StatelessWidget {
   const HistorialStatCard({
     super.key,
@@ -31,49 +37,11 @@ class HistorialStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isHighlight
-            ? color.withValues(alpha: 0.08)
-            : theme.colorScheme.surface,
-        borderRadius: AppRadius.allMd,
-        border: isHighlight
-            ? Border.all(color: color.withValues(alpha: 0.3))
-            : null,
-        boxShadow: isHighlight
-            ? null
-            : [
-                BoxShadow(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-              height: 1,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+    return AppStatCard(
+      value: value,
+      subtitle: subtitle,
+      color: color,
+      isHighlight: isHighlight,
     );
   }
 }
@@ -102,11 +70,19 @@ class HistorialStatsLoading extends StatelessWidget {
       child: Column(
         children: [
           Row(
-            children: [box(), const SizedBox(width: AppSpacing.md), box()],
+            children: [
+              box(),
+              const SizedBox(width: AppSpacing.md),
+              box(),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
-            children: [box(), const SizedBox(width: AppSpacing.md), box()],
+            children: [
+              box(),
+              const SizedBox(width: AppSpacing.md),
+              box(),
+            ],
           ),
         ],
       ),
@@ -145,6 +121,56 @@ class HistorialGraficosCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Sección de KPIs del historial: grid 2x2 de [HistorialStatCard] seguido del
+/// botón "Ver gráficos".
+///
+/// Unifica la estructura (padding, filas y separaciones) que estaba duplicada en
+/// cada página de historial. Solo se pasan las 4 [cards] y el callback del botón.
+class HistorialStatsGrid extends StatelessWidget {
+  const HistorialStatsGrid({
+    super.key,
+    required this.cards,
+    required this.onVerGraficos,
+  }) : assert(cards.length == 4, 'Se esperan exactamente 4 KPIs (grid 2x2)');
+
+  /// Las 4 cards de KPI, en orden de lectura (fila superior, luego inferior).
+  final List<HistorialStatCard> cards;
+
+  /// Acción del botón "Ver gráficos".
+  final VoidCallback onVerGraficos;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Grid de estadísticas 2x2
+          Row(
+            children: [
+              Expanded(child: cards[0]),
+              AppSpacing.hGapMd,
+              Expanded(child: cards[1]),
+            ],
+          ),
+          AppSpacing.gapMd,
+          Row(
+            children: [
+              Expanded(child: cards[2]),
+              AppSpacing.hGapMd,
+              Expanded(child: cards[3]),
+            ],
+          ),
+          AppSpacing.gapMd,
+          // Botón "Ver gráficos" debajo de los KPIs
+          HistorialGraficosCard(onTap: onVerGraficos),
+        ],
       ),
     );
   }
@@ -437,6 +463,225 @@ class HistorialErrorState extends StatelessWidget {
   }
 }
 
+/// Bottom sheet de filtros estándar de las páginas de historial.
+///
+/// Unifica el contenedor (handle, header "Filtrar registros", divider, contenido
+/// scrolleable y botón "Aplicar/Cerrar") que antes estaba copiado en cada página.
+/// Cada página solo aporta sus secciones de filtro vía [sectionsBuilder], que
+/// recibe el [StateSetter] del modal para refrescarlo al cambiar una selección.
+class HistorialFiltrosBottomSheet {
+  const HistorialFiltrosBottomSheet._();
+
+  /// Muestra el bottom sheet de filtros.
+  ///
+  /// - [hasActiveFilters]: se evalúa en cada rebuild para decidir la etiqueta
+  ///   del botón (Aplicar filtros vs. Cerrar).
+  /// - [sectionsBuilder]: construye las secciones de filtro; recibe el
+  ///   [setModalState] para refrescar el sheet tras un cambio de selección.
+  static Future<void> show({
+    required BuildContext context,
+    required bool Function() hasActiveFilters,
+    required List<Widget> Function(StateSetter setModalState) sectionsBuilder,
+  }) {
+    HapticFeedback.selectionClick();
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AppBottomSheetScaffold(
+            title: S.of(context).batchFilterRecords,
+            scrollable: true,
+            child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Contenido scrolleable
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: sectionsBuilder(setModalState),
+                        ),
+                      ),
+                    ),
+
+                    // Botón aplicar / cerrar
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                      child: AppButton.primary(
+                        label: hasActiveFilters()
+                            ? S.of(context).commonApplyFilters
+                            : S.of(context).commonClose,
+                        onPressed: () => Navigator.pop(context),
+                        expanded: true,
+                        backgroundColor: hasActiveFilters()
+                            ? AppColors.warning
+                            : AppColors.error,
+                        foregroundColor: AppColors.white,
+                      ),
+                    ),
+                  ],
+                ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Sección "Período" (Todo / 7 días / 30 días) del bottom sheet de filtros.
+///
+/// [selected] es el valor actual (`'todos'`, `'7d'`, `'30d'`) y [onSelect] se
+/// invoca con el nuevo valor al tocar una opción.
+class HistorialPeriodoFilterSection extends StatelessWidget {
+  const HistorialPeriodoFilterSection({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppSectionHeader(title: s.batchTimePeriod, padding: EdgeInsets.zero),
+        AppSpacing.gapMd,
+        Row(
+          children: [
+            Expanded(
+              child: HistorialPeriodOption(
+                label: s.batchAllTime,
+                subtitle: s.batchNoTimeLimit,
+                isSelected: selected == 'todos',
+                onTap: () => onSelect('todos'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: HistorialPeriodOption(
+                label: s.batchDays7,
+                subtitle: s.batchLastWeek,
+                isSelected: selected == '7d',
+                onTap: () => onSelect('7d'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: HistorialPeriodOption(
+                label: s.batchDays30,
+                subtitle: s.batchLastMonth,
+                isSelected: selected == '30d',
+                onTap: () => onSelect('30d'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Opción de filtro categórico del bottom sheet (causa de mortalidad, tipo de
+/// alimento, método de pesaje, rango de postura…): punto de color + etiqueta y
+/// [subtitle] opcional. La selección se resalta con [AppColors.info], igual en
+/// los 4 historiales.
+class HistorialFiltroOption extends StatelessWidget {
+  const HistorialFiltroOption({
+    super.key,
+    required this.label,
+    this.subtitle,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String label;
+  final String? subtitle;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.info.withValues(alpha: 0.12)
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
+          borderRadius: AppRadius.allMd,
+          border: Border.all(
+            color: isSelected
+                ? AppColors.info.withValues(alpha: 0.5)
+                : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? AppColors.info
+                          : theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      maxLines: 2,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Shell (contenedor) de una card de registro del historial: borde de color
 /// de acento, sombra suave y InkWell. El contenido específico de cada tipo se
 /// pasa como [child].
@@ -478,10 +723,7 @@ class HistorialRegistroCardShell extends StatelessWidget {
           borderRadius: AppRadius.allMd,
           splashColor: accentColor.withValues(alpha: 0.1),
           highlightColor: accentColor.withValues(alpha: 0.05),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(14), child: child),
         ),
       ),
     );

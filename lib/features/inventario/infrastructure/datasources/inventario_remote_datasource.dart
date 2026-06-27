@@ -38,14 +38,40 @@ abstract class InventarioRemoteDatasource {
   Future<MovimientoInventario> crearMovimiento(MovimientoInventario movimiento);
   Future<void> actualizarStockItem(String itemId, double nuevoStock);
 
-  /// Registra un movimiento y actualiza el stock en una operación atómica.
-  /// Si una de las dos escrituras falla, ambas se revierten.
-  Future<MovimientoInventario> registrarMovimientoYActualizarStock(
-    MovimientoInventario movimiento,
-    double nuevoStock,
-  );
+  /// Registra un movimiento aplicando un cambio de stock RELATIVO de forma
+  /// segura ante concurrencia.
+  ///
+  /// Usa una transacción que re-lee el stock actual del item dentro de la
+  /// misma transacción y aplica [delta] sobre el valor del servidor (no sobre
+  /// un valor leído antes por el cliente). Esto evita *lost updates* cuando
+  /// varios usuarios mueven stock del mismo item a la vez.
+  ///
+  /// - [delta]: cambio de stock (positivo entrada, negativo salida).
+  /// - [permitirNegativo]: si es `false` (salidas), la transacción aborta con
+  ///   [StockInsuficienteException] si el stock resultante sería negativo.
+  /// - Para AJUSTE a un valor absoluto, usar [stockAbsoluto] (ignora [delta]).
+  ///
+  /// El `stockAnterior`/`stockNuevo` reales se escriben en el movimiento con
+  /// los valores observados dentro de la transacción.
+  Future<MovimientoInventario> registrarMovimientoConDelta({
+    required MovimientoInventario movimiento,
+    double? delta,
+    double? stockAbsoluto,
+    bool permitirNegativo = false,
+  });
 
   Stream<List<MovimientoInventario>> streamMovimientos(String itemId);
+}
+
+/// Lanzada por [InventarioRemoteDatasource.registrarMovimientoConDelta] cuando
+/// una salida dejaría el stock en negativo (validado dentro de la transacción).
+class StockInsuficienteException implements Exception {
+  const StockInsuficienteException({
+    required this.stockDisponible,
+    required this.solicitado,
+  });
+  final double stockDisponible;
+  final double solicitado;
 }
 
 /// Implementación de datasource usando Firestore.
@@ -263,27 +289,64 @@ class InventarioRemoteDatasourceImpl implements InventarioRemoteDatasource {
   }
 
   @override
-  Future<MovimientoInventario> registrarMovimientoYActualizarStock(
-    MovimientoInventario movimiento,
-    double nuevoStock,
-  ) async {
-    final batch = _firestore.batch();
+  Future<MovimientoInventario> registrarMovimientoConDelta({
+    required MovimientoInventario movimiento,
+    double? delta,
+    double? stockAbsoluto,
+    bool permitirNegativo = false,
+  }) async {
+    assert(
+      (delta != null) ^ (stockAbsoluto != null),
+      'Debe especificarse exactamente uno: delta o stockAbsoluto',
+    );
 
-    // 1. Actualizar stock del item
-    batch.update(_itemsRef.doc(movimiento.itemId), {
-      'stockActual': nuevoStock,
-      'fechaActualizacion': FieldValue.serverTimestamp(),
+    final itemRef = _itemsRef.doc(movimiento.itemId);
+    final movDocRef = _movimientosRef.doc();
+
+    final movimientoFinal = await _firestore.runTransaction<MovimientoInventario>((
+      txn,
+    ) async {
+      // Re-leer el stock del SERVIDOR dentro de la transacción para que el
+      // cálculo no dependa de un valor potencialmente obsoleto del cliente.
+      final snap = await txn.get(itemRef);
+      if (!snap.exists) {
+        throw const StockInsuficienteException(
+          stockDisponible: 0,
+          solicitado: 0,
+        );
+      }
+      final stockAnterior = (snap.data()?['stockActual'] ?? 0).toDouble();
+
+      final double stockNuevo;
+      if (stockAbsoluto != null) {
+        stockNuevo = stockAbsoluto;
+      } else {
+        stockNuevo = stockAnterior + delta!;
+        if (!permitirNegativo && stockNuevo < 0) {
+          throw StockInsuficienteException(
+            stockDisponible: stockAnterior,
+            solicitado: delta.abs(),
+          );
+        }
+      }
+
+      // Escribir el movimiento con los valores reales observados en la tx.
+      final movConStock = movimiento.copyWith(
+        stockAnterior: stockAnterior,
+        stockNuevo: stockNuevo,
+      );
+      final model = MovimientoInventarioModel.fromEntity(movConStock);
+
+      txn.update(itemRef, {
+        'stockActual': stockNuevo,
+        'fechaActualizacion': FieldValue.serverTimestamp(),
+      });
+      txn.set(movDocRef, model.toFirestore());
+
+      return movConStock;
     });
 
-    // 2. Crear documento de movimiento
-    final model = MovimientoInventarioModel.fromEntity(movimiento);
-    final movDocRef = _movimientosRef.doc();
-    batch.set(movDocRef, model.toFirestore());
-
-    // Ejecutar ambas escrituras atómicamente
-    await batch.commit();
-
-    return movimiento.copyWith(id: movDocRef.id);
+    return movimientoFinal.copyWith(id: movDocRef.id);
   }
 
   @override

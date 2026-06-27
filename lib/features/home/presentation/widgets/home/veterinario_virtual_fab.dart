@@ -67,7 +67,7 @@ class _VeterinarioVirtualFabState extends State<VeterinarioVirtualFab>
             onPressed: () => context.push(AppRoutes.veterinarioVirtual),
             label: const Text(
               'Veterinario Virtual',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 19),
             ),
           ),
         ),

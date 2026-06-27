@@ -4,8 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/presentation/widgets/app_dropdown_field.dart';
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -255,10 +254,6 @@ class _LocationStepState extends State<LocationStep> {
           ),
           AppSpacing.gapXl,
 
-          // Card informativa
-          _buildInfoCard(),
-          AppSpacing.gapBase,
-
           // Coordenadas GPS (expandible)
           _buildCoordinatesSection(),
         ],
@@ -274,18 +269,13 @@ class _LocationStepState extends State<LocationStep> {
     String? hint,
     String? Function(String?)? validator,
   }) {
-    return AppDropdownField<String>(
+    return RegistroSelectorField<String>(
       label: label,
       value: value,
       hint: hint,
-      onChanged: onChanged,
-      validator: validator,
-      autovalidateMode: widget.autoValidate
-          ? AutovalidateMode.always
-          : AutovalidateMode.onUserInteraction,
-      items: items
-          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-          .toList(),
+      options: items,
+      labelOf: (item) => item,
+      onSelected: (item) => onChanged?.call(item),
     );
   }
 
@@ -330,41 +320,6 @@ class _LocationStepState extends State<LocationStep> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildInfoCard() {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(
-          color: AppColors.info.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).farmPreciseLocation,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.info,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            S.of(context).farmLocationHelp,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -50,8 +50,9 @@ class NotificacionesRepository {
 
   /// Stream del conteo de no leídas.
   ///
-  /// Firestore no soporta streams de aggregation queries,
-  /// se limita a 999 docs para acotar la descarga.
+  /// Firestore no soporta streams de aggregation queries (`count()` no es
+  /// observable), así que se cuentan los documentos del snapshot, acotados
+  /// a 100 para limitar la descarga. El badge muestra "99+" por encima.
   Stream<int> streamConteoNoLeidas(String usuarioId) {
     return _notificacionesRef(usuarioId)
         .where('leida', isEqualTo: false)

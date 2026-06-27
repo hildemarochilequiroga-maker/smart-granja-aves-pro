@@ -22,17 +22,20 @@ import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/save_success_overlay.dart';
-import '../../../../core/widgets/sync_status_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
+import '../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../../inventario/application/services/inventario_integracion_service.dart';
 import '../../../lotes/application/providers/lote_providers.dart';
+import '../../../lotes/domain/entities/lote.dart';
 import '../../../lotes/domain/enums/estado_lote.dart';
 import '../../application/providers/ventas_provider.dart';
 import '../../infrastructure/datasources/venta_remote_datasource_impl.dart';
@@ -118,7 +121,6 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
   Timer? _autoSaveTimer;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
-  DateTime? _lastSaveTime;
   static const String _draftKeyPrefix = 'venta_draft_';
   String get _draftKey =>
       '$_draftKeyPrefix${widget.ventaExistente?.id ?? 'new'}';
@@ -354,26 +356,10 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
 
       await prefs.setString(_draftKey, jsonEncode(data));
       _hasUnsavedChanges = false;
-      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
     } finally {
       _isSaving = false;
-    }
-  }
-
-  String _formatSaveTime(DateTime saveTime) {
-    final now = DateTime.now();
-    final difference = now.difference(saveTime);
-
-    if (difference.inSeconds < 10) {
-      return S.of(context).commonJustNow;
-    } else if (difference.inSeconds < 60) {
-      return S.of(context).commonSecondsAgo(difference.inSeconds.toString());
-    } else if (difference.inMinutes < 60) {
-      return S.of(context).commonMinutesAgo(difference.inMinutes.toString());
-    } else {
-      return S.of(context).commonHoursAgo(difference.inHours.toString());
     }
   }
 
@@ -927,23 +913,10 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(isEditing ? l.ventaEditTitle : l.ventaNewSaleTitle),
-              if (_lastSaveTime != null)
-                Text(
-                  _isSaving
-                      ? l.commonSaving
-                      : S
-                            .of(context)
-                            .salesSavedAgo(_formatSaveTime(_lastSaveTime!)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
-                  ),
-                ),
-            ],
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Text(isEditing ? l.ventaEditTitle : l.ventaNewSaleTitle),
           ),
           leading: IconButton(
             icon: const Icon(Icons.close),
@@ -953,73 +926,52 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
-          actions: [
-            // Indicador de sincronización
-            const Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: SyncStatusBadge(),
-            ),
-            if (_isSaving)
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Center(
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(
-                        AppColors.onPrimary.withValues(alpha: 0.8),
+        ),
+        body: FormTextScale(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                // Indicador de progreso
+                FormProgressIndicator(
+                  currentStep: _currentStep,
+                  steps: steps,
+                  onStepTapped: _goToStep,
+                ),
+
+                // Contenido del paso actual
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) =>
+                        setState(() => _currentStep = index),
+                    children: [
+                      // Paso 0: Tipo de producto
+                      TipoProductoStep(
+                        tipoSeleccionado: _tipoProducto,
+                        onTipoChanged: (tipo) =>
+                            setState(() => _tipoProducto = tipo),
                       ),
-                    ),
+
+                      // Paso 1: Cliente
+                      ClienteStep(
+                        clienteInicial: _cliente,
+                        onClienteChanged: (cliente) =>
+                            setState(() => _cliente = cliente),
+                        autoValidate: _autoValidatePerStep[1],
+                      ),
+
+                      // Paso 2: Detalles del producto (incluye fecha y observaciones)
+                      _buildProductDetailsStep(theme),
+                    ],
                   ),
                 ),
-              ),
-          ],
-        ),
-        body: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Indicador de progreso
-              FormProgressIndicator(
-                currentStep: _currentStep,
-                steps: steps,
-                onStepTapped: _goToStep,
-              ),
 
-              // Contenido del paso actual
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (index) =>
-                      setState(() => _currentStep = index),
-                  children: [
-                    // Paso 0: Tipo de producto
-                    TipoProductoStep(
-                      tipoSeleccionado: _tipoProducto,
-                      onTipoChanged: (tipo) =>
-                          setState(() => _tipoProducto = tipo),
-                    ),
-
-                    // Paso 1: Cliente
-                    ClienteStep(
-                      clienteInicial: _cliente,
-                      onClienteChanged: (cliente) =>
-                          setState(() => _cliente = cliente),
-                      autoValidate: _autoValidatePerStep[1],
-                    ),
-
-                    // Paso 2: Detalles del producto (incluye fecha y observaciones)
-                    _buildProductDetailsStep(theme),
-                  ],
-                ),
-              ),
-
-              // Botones de navegación
-              _buildNavigationButtons(theme),
-            ],
+                // Botones de navegación
+                _buildNavigationButtons(theme),
+              ],
+            ),
           ),
         ),
       ),
@@ -1081,7 +1033,7 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
             child: InkWell(
               onTap: () async {
                 unawaited(HapticFeedback.lightImpact());
-                final fecha = await showDatePicker(
+                final fecha = await showRegistroDatePicker(
                   context: context,
                   initialDate: _fechaVenta,
                   firstDate: DateTime.now().subtract(const Duration(days: 30)),
@@ -1251,62 +1203,85 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
                   _autoValidatePerStep[2] &&
                   (_selectedLoteId == null || _selectedLoteId!.isEmpty);
 
+              // Lote actualmente seleccionado (si existe en la lista activa)
+              final loteSeleccionado = lotesActivos
+                  .where((lote) => lote.id == _selectedLoteId)
+                  .firstOrNull;
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DropdownButtonFormField<String>(
-                    initialValue:
-                        lotesActivos.any((lote) => lote.id == _selectedLoteId)
-                        ? _selectedLoteId
-                        : null,
-                    isExpanded: true,
-                    menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
-                    decoration: InputDecoration(
-                      hintText: S.of(context).salesSelectBatchHint,
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: AppRadius.allSm,
-                        borderSide: BorderSide(
-                          color: showLoteError
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.outline.withValues(
-                                  alpha: 0.4,
-                                ),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.allSm,
-                        borderSide: BorderSide(
-                          color: showLoteError
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.outline.withValues(
-                                  alpha: 0.4,
-                                ),
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
+                  InkWell(
+                    onTap: () => _mostrarSelectorLoteVenta(lotesActivos),
+                    borderRadius: AppRadius.allSm,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 14,
                       ),
-                    ),
-                    items: lotesActivos.map((lote) {
-                      return DropdownMenuItem<String>(
-                        value: lote.id,
-                        child: Text(
-                          S
-                              .of(context)
-                              .batchDropdownItemCode(
-                                lote.codigo,
-                                '${lote.avesDisponibles}',
-                              ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: AppRadius.allSm,
+                        border: Border.all(
+                          color: showLoteError
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.outline.withValues(
+                                  alpha: 0.4,
+                                ),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      HapticFeedback.lightImpact();
-                      setState(() => _selectedLoteId = value);
-                    },
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.inventory_2_outlined,
+                            color: AppColors.primary,
+                            size: 22,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: loteSeleccionado == null
+                                ? Text(
+                                    S.of(context).salesSelectBatchHint,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.4),
+                                    ),
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        loteSeleccionado.nombre ??
+                                            loteSeleccionado.codigo,
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                      Text(
+                                        S
+                                            .of(context)
+                                            .historialBirdsUnit(
+                                              loteSeleccionado.avesDisponibles,
+                                            ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   if (showLoteError) ...[
                     const SizedBox(height: AppSpacing.xs),
@@ -1341,6 +1316,34 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Muestra el bottom sheet unificado para seleccionar el lote de la venta.
+  void _mostrarSelectorLoteVenta(List<Lote> lotes) {
+    final l = S.of(context);
+    showAppBottomSheet<void>(
+      context: context,
+      title: l.salesSelectBatchLabel,
+      isScrollControlled: true,
+      scrollable: true,
+      builder: (ctx) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        children: lotes.map((lote) {
+          return AppSheetOptionTile(
+            icon: Icons.inventory_2_outlined,
+            label: lote.nombre ?? lote.codigo,
+            subtitle: l.historialBirdsUnit(lote.avesDisponibles),
+            selected: lote.id == _selectedLoteId,
+            onTap: () {
+              unawaited(AppHaptics.selection());
+              setState(() => _selectedLoteId = lote.id);
+              Navigator.pop(ctx);
+            },
+          );
+        }).toList(),
       ),
     );
   }
@@ -1542,21 +1545,6 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.info.withValues(alpha: 0.08),
-            borderRadius: AppRadius.allSm,
-            border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
-          ),
-          child: Text(
-            S.of(context).salesEggInstructions,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.base),
         ...ClasificacionHuevo.values.map((clasificacion) {
           return Container(
             margin: const EdgeInsets.only(bottom: 12),

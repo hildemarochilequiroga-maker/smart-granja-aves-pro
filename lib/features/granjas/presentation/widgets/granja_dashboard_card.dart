@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_progress_bar.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/providers/granja_providers.dart';
+import '../../domain/entities/granja_dashboard.dart';
 
 /// **Widget de dashboard de una granja específica.**
 ///
@@ -50,15 +51,15 @@ class GranjaDashboardCard extends ConsumerWidget {
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent({required this.dashboard});
 
-  final Map<String, dynamic> dashboard;
+  final GranjaDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
-    final granja = (dashboard['granja'] as Map<String, dynamic>?) ?? {};
-    final capacidad = (dashboard['capacidad'] as Map<String, dynamic>?) ?? {};
-    final lotes = (dashboard['lotes'] as Map<String, dynamic>?) ?? {};
-    final galpones = (dashboard['galpones'] as Map<String, dynamic>?) ?? {};
-    final alertas = (dashboard['alertas'] as Map<String, dynamic>?) ?? {};
+    final resumen = dashboard.resumen;
+    final capacidad = dashboard.capacidad;
+    final lotes = dashboard.lotes;
+    final galpones = dashboard.galpones;
+    final alertas = dashboard.alertas;
     final l = S.of(context);
 
     return Column(
@@ -74,13 +75,13 @@ class _DashboardContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (granja['nombre'] as String?) ?? '',
+                    resumen.nombre,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    (granja['estado'] as String?) ?? '',
+                    resumen.estado,
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppColors.outline),
@@ -98,10 +99,9 @@ class _DashboardContent extends StatelessWidget {
         _SectionTitle(title: l.farmCapacity),
         const SizedBox(height: AppSpacing.md),
         _CapacidadWidget(
-          totalAves: (capacidad['totalAves'] as int?) ?? 0,
-          capacidadMaxima: (capacidad['capacidadMaxima'] as int?) ?? 0,
-          porcentajeOcupacion:
-              (capacidad['porcentajeOcupacion'] as double?) ?? 0.0,
+          totalAves: capacidad.totalAves,
+          capacidadMaxima: capacidad.capacidadMaxima,
+          porcentajeOcupacion: capacidad.porcentajeOcupacion,
         ),
         const SizedBox(height: AppSpacing.base),
 
@@ -112,7 +112,7 @@ class _DashboardContent extends StatelessWidget {
               child: _StatCard(
                 icon: Icons.egg,
                 label: l.farmActiveBatches,
-                value: ((lotes['activos'] as int?) ?? 0).toString(),
+                value: lotes.activos.toString(),
                 color: AppColors.success,
               ),
             ),
@@ -121,7 +121,7 @@ class _DashboardContent extends StatelessWidget {
               child: _StatCard(
                 icon: Icons.warehouse,
                 label: l.farmActiveShedsLabel,
-                value: ((galpones['activos'] as int?) ?? 0).toString(),
+                value: galpones.activos.toString(),
                 color: AppColors.info,
               ),
             ),
@@ -130,7 +130,7 @@ class _DashboardContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.base),
 
         // Alertas
-        if (_tieneAlertas(alertas)) ...[
+        if (alertas.tieneAlertas) ...[
           const Divider(),
           const SizedBox(height: AppSpacing.base),
           _SectionTitle(title: l.farmAlertsTitle),
@@ -139,10 +139,6 @@ class _DashboardContent extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  bool _tieneAlertas(Map<String, dynamic> alertas) {
-    return alertas.values.any((value) => value == true);
   }
 }
 
@@ -263,14 +259,14 @@ class _StatCard extends StatelessWidget {
 class _AlertasWidget extends StatelessWidget {
   const _AlertasWidget({required this.alertas});
 
-  final Map<String, dynamic> alertas;
+  final GranjaDashboardAlertas alertas;
 
   @override
   Widget build(BuildContext context) {
     final alertasList = <Widget>[];
     final l = S.of(context);
 
-    if (alertas['sobrepoblacion'] == true) {
+    if (alertas.sobrepoblacion) {
       alertasList.add(
         _AlertaItem(
           icon: Icons.warning,
@@ -280,7 +276,7 @@ class _AlertasWidget extends StatelessWidget {
       );
     }
 
-    if (alertas['datosDesactualizados'] == true) {
+    if (alertas.datosDesactualizados) {
       alertasList.add(
         _AlertaItem(
           icon: Icons.sync_problem,
@@ -290,7 +286,7 @@ class _AlertasWidget extends StatelessWidget {
       );
     }
 
-    if (alertas['sinLotes'] == true) {
+    if (alertas.sinLotes) {
       alertasList.add(
         _AlertaItem(
           icon: Icons.info,

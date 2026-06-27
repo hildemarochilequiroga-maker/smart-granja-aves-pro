@@ -2,6 +2,7 @@
 library;
 
 export 'cerrar_lote_page.dart';
+export 'costo_por_ave_page.dart';
 export 'crear_lote_page.dart';
 export 'editar_lote_page.dart';
 export 'graficos_consumo_page.dart';

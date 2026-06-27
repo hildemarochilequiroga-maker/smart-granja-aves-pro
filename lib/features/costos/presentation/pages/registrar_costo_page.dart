@@ -9,19 +9,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/save_success_overlay.dart';
-import '../../../../core/widgets/sync_status_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../inventario/application/services/inventario_integracion_service.dart';
-import '../../../inventario/domain/entities/entities.dart';
+import '../../../lotes/application/providers/lote_providers.dart';
+import '../../../lotes/domain/entities/lote.dart';
+import '../../../lotes/domain/enums/estado_lote.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
 import '../../../inventario/domain/enums/enums.dart';
 import '../../application/providers/costos_provider.dart';
@@ -36,11 +40,16 @@ class RegistrarCostoPage extends ConsumerStatefulWidget {
   final String? loteId;
   final CostoGasto? costoExistente;
 
+  /// Tipo de gasto preseleccionado al abrir el formulario (atajo desde, p. ej.,
+  /// los botones de "costos pendientes" del costo por ave).
+  final TipoGasto? tipoInicial;
+
   const RegistrarCostoPage({
     super.key,
     this.granjaId,
     this.loteId,
     this.costoExistente,
+    this.tipoInicial,
   });
 
   @override
@@ -52,6 +61,8 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
   final _formKey = GlobalKey<FormState>();
   final _conceptoController = TextEditingController();
   final _montoController = TextEditingController();
+  // Costo por ave (solo para tipo compra de aves; enlazado con el monto total).
+  final _costoPorAveController = TextEditingController();
   final _proveedorController = TextEditingController();
   final _facturaController = TextEditingController();
   final _observacionesController = TextEditingController();
@@ -64,15 +75,14 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
   bool _isSubmitting = false;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
-  DateTime? _lastSaveTime;
   // AutoValidate por step para que errores solo afecten el step actual
   final List<bool> _autoValidatePerStep = [false, false, false];
 
   // Granja seleccionada (si no se proporciona en el widget)
   String? _selectedGranjaId;
 
-  // Item del inventario seleccionado (para vincular costo con inventario)
-  ItemInventario? _itemInventarioSeleccionado;
+  // Lote seleccionado para gastos directos (alimento/medicamento).
+  String? _selectedLoteId;
 
   // Timer para auto-guardado
   Timer? _autoSaveTimer;
@@ -107,11 +117,17 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
 
     // Si se proporciona granjaId, usarlo
     _selectedGranjaId = widget.granjaId;
+    _selectedLoteId = widget.loteId;
 
     if (widget.costoExistente != null) {
       _loadExistingCosto();
     } else {
       _checkForDraft();
+      // Tipo preseleccionado (atajo desde costos pendientes): prevalece sobre
+      // el draft para respetar la intención explícita del usuario.
+      if (widget.tipoInicial != null) {
+        _tipoGasto = widget.tipoInicial;
+      }
     }
 
     // Configurar auto-guardado cada 30 segundos
@@ -141,12 +157,43 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
     });
   }
 
+  /// Cantidad de aves del lote seleccionado (cantidadInicial), o null si no hay
+  /// lote o aún no cargó. Se usa para enlazar costo total ↔ costo por ave.
+  int? get _cantidadAvesLote {
+    final loteId = _selectedLoteId;
+    if (loteId == null) return null;
+    final lote = ref.watch(loteByIdProvider(loteId)).valueOrNull;
+    return lote?.cantidadInicial;
+  }
+
+  /// El usuario editó el monto TOTAL → recalcula el costo por ave.
+  void _onMontoTotalChanged() {
+    final aves = _cantidadAvesLote;
+    final total = double.tryParse(_montoController.text.replaceAll(',', '.'));
+    if (aves != null && aves > 0 && total != null) {
+      _costoPorAveController.text = (total / aves).toStringAsFixed(4);
+    }
+    setState(() => _hasUnsavedChanges = true);
+  }
+
+  /// El usuario editó el costo POR AVE → recalcula el monto total.
+  void _onCostoPorAveChanged() {
+    final aves = _cantidadAvesLote;
+    final porAve =
+        double.tryParse(_costoPorAveController.text.replaceAll(',', '.'));
+    if (aves != null && aves > 0 && porAve != null) {
+      _montoController.text = (porAve * aves).toStringAsFixed(2);
+    }
+    setState(() => _hasUnsavedChanges = true);
+  }
+
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
     _debounceSaveTimer?.cancel();
     _conceptoController.dispose();
     _montoController.dispose();
+    _costoPorAveController.dispose();
     _proveedorController.dispose();
     _facturaController.dispose();
     _observacionesController.dispose();
@@ -166,29 +213,10 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
     });
   }
 
-  /// Callback cuando se selecciona un item del inventario
-  void _onItemInventarioChanged(ItemInventario? item) {
-    setState(() {
-      _itemInventarioSeleccionado = item;
-      _hasUnsavedChanges = true;
-
-      if (item != null) {
-        // Autocompletar el concepto con el nombre del producto
-        if (_conceptoController.text.isEmpty) {
-          _conceptoController.text = S.of(context).purchaseOf(item.nombre);
-        }
-
-        // Autocompletar proveedor si el item tiene uno
-        if (_proveedorController.text.isEmpty && item.proveedor != null) {
-          _proveedorController.text = item.proveedor!;
-        }
-      }
-    });
-  }
-
   void _loadExistingCosto() {
     final costo = widget.costoExistente!;
     _selectedGranjaId = costo.granjaId;
+    _selectedLoteId = costo.loteId;
     _tipoGasto = costo.tipo;
     _conceptoController.text = costo.concepto;
     _montoController.text = costo.monto.toStringAsFixed(2);
@@ -238,6 +266,9 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
 
   void _restoreDraft(Map<String, dynamic> draft) {
     setState(() {
+      if (draft['loteId'] != null) {
+        _selectedLoteId = draft['loteId'] as String?;
+      }
       if (draft['tipoGasto'] != null) {
         _tipoGasto = TipoGasto.values.firstWhere(
           (t) => t.name == draft['tipoGasto'],
@@ -263,6 +294,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       final prefs = await SharedPreferences.getInstance();
       final draft = {
         'granjaId': _selectedGranjaId,
+        'loteId': _selectedLoteId,
         'tipoGasto': _tipoGasto?.name,
         'concepto': _conceptoController.text,
         'monto': _montoController.text,
@@ -274,23 +306,12 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       };
       await prefs.setString(_draftKey, jsonEncode(draft));
       debugPrint('Borrador guardado automáticamente');
-      _lastSaveTime = DateTime.now();
       _hasUnsavedChanges = false;
     } on Exception catch (e) {
       debugPrint('Error al guardar borrador: $e');
     } finally {
       _isSaving = false;
     }
-  }
-
-  String _formatSaveTime(DateTime time, S l) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
-    if (diff.inSeconds < 60) return l.savedMomentAgo;
-    if (diff.inMinutes < 60) return l.savedMinutesAgo(diff.inMinutes);
-    return l.savedAtTime(
-      '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
-    );
   }
 
   Future<void> _clearDraft() async {
@@ -368,6 +389,12 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
             _proveedorController.text.trim().length < 3) {
           return false;
         }
+        // Para gastos directos (alimento/medicamento) el lote es obligatorio
+        if ((_tipoGasto?.esDirecto ?? false) &&
+            (_selectedLoteId == null || _selectedLoteId!.isEmpty)) {
+          _showValidationError(S.of(context).costoSelectBatchRequired);
+          return false;
+        }
         return true;
 
       default:
@@ -389,28 +416,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
     try {
       final integracionService = ref.read(inventarioIntegracionServiceProvider);
 
-      // Si hay un item seleccionado del inventario, registrar entrada a ese item
-      if (_itemInventarioSeleccionado != null) {
-        await integracionService.registrarEntradaDesdeCosto(
-          granjaId: costo.granjaId,
-          tipoItem: _itemInventarioSeleccionado!.tipo,
-          nombreItem: _itemInventarioSeleccionado!.nombre,
-          cantidad: 1, // Por defecto 1 unidad
-          unidad: _itemInventarioSeleccionado!.unidad,
-          costoTotal: costo.monto,
-          proveedor: costo.proveedor,
-          numeroDocumento: costo.numeroFactura,
-          registradoPor: userId,
-          costoId: costo.id,
-          itemId: _itemInventarioSeleccionado!.id, // Vincular al item existente
-        );
-        debugPrint(
-          '✅ Entrada registrada para item existente: ${_itemInventarioSeleccionado!.nombre}',
-        );
-        return;
-      }
-
-      // Si no hay item seleccionado, crear nuevo item como antes
+      // Crear nuevo item de inventario a partir del costo
       final tipoItem = costo.tipo == TipoGasto.alimento
           ? TipoItem.alimento
           : TipoItem.medicamento;
@@ -487,6 +493,8 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
           concepto: _conceptoController.text.trim(),
           monto: monto,
           fecha: _fechaGasto,
+          loteId: _tipoGasto!.esDirecto ? _selectedLoteId : null,
+          clearLoteId: !_tipoGasto!.esDirecto,
           proveedor: _proveedorController.text.trim().isEmpty
               ? null
               : _proveedorController.text.trim(),
@@ -533,7 +541,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
           monto: monto,
           fecha: _fechaGasto,
           registradoPor: usuario.id,
-          loteId: widget.loteId,
+          loteId: _tipoGasto!.esDirecto ? _selectedLoteId : null,
           proveedor: _proveedorController.text.trim().isEmpty
               ? null
               : _proveedorController.text.trim(),
@@ -624,6 +632,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
+          toolbarHeight: 64,
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
@@ -631,106 +640,85 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
             icon: const Icon(Icons.close),
             onPressed: _onBackPressed,
           ),
-          title: Column(
-            children: [
-              Text(
-                isEditing
-                    ? S.of(context).costsEditCost
-                    : S.of(context).costRegisterCost,
-                style: AppTextStyles.titleMedium.copyWith(
-                  color: AppColors.onPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
+          title: FormTextScale(
+            factor: 1.4,
+            child: Text(
+              isEditing
+                  ? S.of(context).costsEditCost
+                  : S.of(context).costRegisterCost,
+              style: AppTextStyles.titleMedium.copyWith(
+                color: AppColors.onPrimary,
+                fontWeight: FontWeight.w600,
               ),
-              if (_lastSaveTime != null)
-                Text(
-                  _formatSaveTime(_lastSaveTime!, S.of(context)),
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
-                    fontSize: 11,
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            // Indicador de sincronización
-            const Padding(
-              padding: EdgeInsets.only(right: AppSpacing.sm),
-              child: SyncStatusBadge(),
             ),
-            if (_isSaving)
-              Container(
-                margin: const EdgeInsets.only(right: AppSpacing.base),
-                width: 20,
-                height: 20,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.onPrimary,
+          ),
+        ),
+        body: FormTextScale(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                // Indicador de progreso
+                FormProgressIndicator(
+                  steps: _steps,
+                  currentStep: _currentStep,
+                  onStepTapped: (step) {
+                    if (step < _currentStep) {
+                      _goToStep(step);
+                    }
+                  },
+                ),
+
+                // Contenido del formulario
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() => _currentStep = index);
+                    },
+                    children: [
+                      // Paso 1: Tipo y Concepto (con selector de granja si es necesario)
+                      _buildStep1WithGranjaSelector(),
+
+                      // Paso 2: Monto y Fecha
+                      MontoStep(
+                        conceptoController: _conceptoController,
+                        montoController: _montoController,
+                        fecha: _fechaGasto,
+                        onFechaChanged: (fecha) {
+                          setState(() {
+                            _fechaGasto = fecha;
+                            _hasUnsavedChanges = true;
+                          });
+                        },
+                        autoValidate: _autoValidatePerStep[1],
+                        esCompraAves: _tipoGasto?.esCompraAves ?? false,
+                        cantidadAves: _cantidadAvesLote,
+                        costoPorAveController: _costoPorAveController,
+                        onMontoTotalChanged: _onMontoTotalChanged,
+                        onCostoPorAveChanged: _onCostoPorAveChanged,
+                        tipoGasto: _tipoGasto,
+                      ),
+
+                      // Paso 3: Detalles adicionales
+                      DetallesStep(
+                        proveedorController: _proveedorController,
+                        numeroFacturaController: _facturaController,
+                        observacionesController: _observacionesController,
+                        autoValidate: _autoValidatePerStep[2],
+                        loteSelector: (_tipoGasto?.esDirecto ?? false)
+                            ? _buildLoteSelector()
+                            : null,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-          ],
-        ),
-        body: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Indicador de progreso
-              FormProgressIndicator(
-                steps: _steps,
-                currentStep: _currentStep,
-                onStepTapped: (step) {
-                  if (step < _currentStep) {
-                    _goToStep(step);
-                  }
-                },
-              ),
 
-              // Contenido del formulario
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (index) {
-                    setState(() => _currentStep = index);
-                  },
-                  children: [
-                    // Paso 1: Tipo y Concepto (con selector de granja si es necesario)
-                    _buildStep1WithGranjaSelector(),
-
-                    // Paso 2: Monto y Fecha
-                    MontoStep(
-                      conceptoController: _conceptoController,
-                      montoController: _montoController,
-                      fecha: _fechaGasto,
-                      onFechaChanged: (fecha) {
-                        setState(() {
-                          _fechaGasto = fecha;
-                          _hasUnsavedChanges = true;
-                        });
-                      },
-                      autoValidate: _autoValidatePerStep[1],
-                      tipoGasto: _tipoGasto,
-                      granjaId: _selectedGranjaId,
-                      itemInventarioSeleccionado: _itemInventarioSeleccionado,
-                      onItemInventarioChanged: _onItemInventarioChanged,
-                    ),
-
-                    // Paso 3: Detalles adicionales
-                    DetallesStep(
-                      proveedorController: _proveedorController,
-                      numeroFacturaController: _facturaController,
-                      observacionesController: _observacionesController,
-                      autoValidate: _autoValidatePerStep[2],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Botones de navegación
-              _buildNavigationButtons(theme, isEditing),
-            ],
+                // Botones de navegación
+                _buildNavigationButtons(theme, isEditing),
+              ],
+            ),
           ),
         ),
       ),
@@ -746,8 +734,174 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
         setState(() {
           _tipoGasto = tipo;
           _hasUnsavedChanges = true;
+          // Si el nuevo tipo no es directo, limpiar el lote asignado.
+          if (!tipo.esDirecto) {
+            _selectedLoteId = null;
+          }
         });
       },
+    );
+  }
+
+  /// Selector de lote para gastos directos (alimento/medicamento).
+  ///
+  /// Se muestra como un campo que abre un bottom sheet unificado.
+  Widget _buildLoteSelector() {
+    final theme = Theme.of(context);
+    final l = S.of(context);
+
+    if (_selectedGranjaId == null || _selectedGranjaId!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final lotesAsync = ref.watch(lotesStreamProvider(_selectedGranjaId!));
+    final showError =
+        _autoValidatePerStep[2] &&
+        (_selectedLoteId == null || _selectedLoteId!.isEmpty);
+
+    return lotesAsync.when(
+      data: (lotes) {
+        final lotesActivos = lotes
+            .where((lote) => lote.estado == EstadoLote.activo)
+            .toList();
+
+        final loteSeleccionado = lotesActivos
+            .where((lote) => lote.id == _selectedLoteId)
+            .firstOrNull;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${l.costoBatchLabel} *',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            InkWell(
+              onTap: lotesActivos.isEmpty
+                  ? null
+                  : () => _mostrarSelectorLoteCosto(lotesActivos),
+              borderRadius: AppRadius.allSm,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: AppRadius.allSm,
+                  border: Border.all(
+                    color: showError
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.inventory_2_outlined,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: lotesActivos.isEmpty
+                          ? Text(
+                              S.of(context).salesNoActiveBatches,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          : loteSeleccionado == null
+                          ? Text(
+                              l.costoSelectBatchHint,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  loteSeleccionado.nombre ??
+                                      loteSeleccionado.codigo,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  l.historialBirdsUnit(
+                                    loteSeleccionado.avesActuales,
+                                  ),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                    if (lotesActivos.isNotEmpty)
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (showError) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                l.costoSelectBatchRequired,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSpacing.base),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Muestra el bottom sheet unificado para seleccionar el lote del gasto.
+  void _mostrarSelectorLoteCosto(List<Lote> lotes) {
+    final l = S.of(context);
+    showAppBottomSheet<void>(
+      context: context,
+      title: l.costoBatchLabel,
+      isScrollControlled: true,
+      scrollable: true,
+      builder: (ctx) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        children: lotes.map((lote) {
+          return AppSheetOptionTile(
+            icon: Icons.inventory_2_outlined,
+            label: lote.nombre ?? lote.codigo,
+            subtitle: l.historialBirdsUnit(lote.avesActuales),
+            selected: lote.id == _selectedLoteId,
+            onTap: () {
+              unawaited(AppHaptics.selection());
+              setState(() {
+                _selectedLoteId = lote.id;
+                _hasUnsavedChanges = true;
+              });
+              Navigator.pop(ctx);
+            },
+          );
+        }).toList(),
+      ),
     );
   }
 

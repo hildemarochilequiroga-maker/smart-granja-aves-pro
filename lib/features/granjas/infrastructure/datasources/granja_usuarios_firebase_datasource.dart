@@ -699,25 +699,4 @@ class GranjaUsuariosFirebaseDatasource {
 
     return 'GRANJA-$part1-$part2';
   }
-
-  /// Agrega usuario a la lista de acceso de granja.
-  ///
-  /// Mantenido por compatibilidad. Actualmente sin uso interno (ya se
-  /// hace de forma atómica desde [asignarUsuarioAGranja] /
-  /// [aceptarInvitacionAtomico]).
-  // ignore: unused_element
-  Future<void> _agregarUsuarioAGranjaAcceso(
-    String granjaId,
-    String usuarioId,
-  ) async {
-    try {
-      await _granjasCollection.doc(granjaId).update({
-        'usuariosAccesoIds': FieldValue.arrayUnion([usuarioId]),
-      });
-    } on Exception catch (e) {
-      // No es crítico, el acceso se verifica principalmente por granja_usuarios
-      // El campo usuariosAccesoIds es para optimización de queries
-      debugPrint('⚠️ No se pudo actualizar usuariosAccesoIds: $e');
-    }
-  }
 }

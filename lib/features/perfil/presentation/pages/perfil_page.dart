@@ -15,9 +15,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/currency_provider.dart';
 import '../../../../core/config/locale_provider.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
+import '../../../../core/presentation/widgets/full_height_sheet.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -26,6 +28,9 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../../granjas/domain/entities/granja.dart';
+import '../../../granjas/presentation/pages/aceptar_invitacion_granja_page.dart';
+import '../../../granjas/presentation/pages/gestionar_colaboradores_page.dart';
+import '../../../granjas/presentation/pages/seleccionar_rol_invitacion_page.dart';
 import '../widgets/widgets.dart';
 
 /// Página de perfil con menú de opciones.
@@ -41,20 +46,25 @@ class PerfilPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(
-          l.profileMyAccount,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onPrimary,
+        title: FormTextScale(
+          factor: 1.2,
+          child: Text(
+            l.profileMyAccount,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onPrimary,
+            ),
           ),
         ),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: FormTextScale(
+        factor: 1.2,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header del perfil
@@ -62,11 +72,9 @@ class PerfilPage extends ConsumerWidget {
               nombreCompleto: usuario?.nombreCompleto ?? l.profileUser,
               email: usuario?.email ?? '',
               fotoUrl: usuario?.fotoUrl,
-              onEditarPerfil: () {
-                context.push(AppRoutes.editarPerfil);
-              },
+              onEditarPerfil: () => mostrarEditarPerfilSheet(context),
             ),
-            AppSpacing.gapXl,
+            AppSpacing.gapMd,
 
             // Sección: Colaboración
             MenuSection(
@@ -84,7 +92,13 @@ class PerfilPage extends ConsumerWidget {
                   label: l.profileAcceptInvitation,
                   iconColor: AppColors.purple,
                   subtitle: l.profileJoinFarm,
-                  onTap: () => context.push(AppRoutes.aceptarInvitacion),
+                  onTap: () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    useSafeArea: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const AceptarInvitacionGranjaPage(),
+                  ),
                 ),
                 MenuItem(
                   icon: Icons.group,
@@ -96,7 +110,7 @@ class PerfilPage extends ConsumerWidget {
                 ),
               ],
             ),
-            AppSpacing.gapBase,
+            AppSpacing.gapSm,
 
             // Sección: Configuración
             MenuSection(
@@ -118,42 +132,14 @@ class PerfilPage extends ConsumerWidget {
                   subtitle: ref.watch(currencyProvider).displayName,
                   onTap: () => _mostrarSelectorMoneda(context, ref),
                 ),
-                MenuItem(
-                  icon: Icons.notifications_outlined,
-                  label: l.profileNotifications,
-                  iconColor: AppColors.amber,
-                  subtitle: l.profileConfigureAlerts,
-                  onTap: () => context.push(AppRoutes.notificacionesConfig),
-                ),
-                MenuItem(
-                  icon: Icons.settings,
-                  label: l.profileGeneralSettings,
-                  iconColor: AppColors.grey600,
-                  subtitle: l.profileAppPreferences,
-                  onTap: () => context.push(AppRoutes.configuracion),
-                ),
               ],
             ),
-            AppSpacing.gapBase,
+            AppSpacing.gapSm,
 
             // Sección: Ayuda
             MenuSection(
               title: l.profileHelpSupport,
               items: [
-                MenuItem(
-                  icon: Icons.help_outline,
-                  label: l.profileHelpCenter,
-                  iconColor: AppColors.info,
-                  subtitle: l.profileFaqGuides,
-                  onTap: () => _mostrarAyuda(context),
-                ),
-                MenuItem(
-                  icon: Icons.feedback_outlined,
-                  label: l.profileSendFeedback,
-                  iconColor: AppColors.cyan,
-                  subtitle: l.profileShareIdeas,
-                  onTap: () => _mostrarEnviarSugerencia(context),
-                ),
                 MenuItem(
                   icon: Icons.privacy_tip_outlined,
                   label: l.authPrivacyPolicy,
@@ -175,27 +161,26 @@ class PerfilPage extends ConsumerWidget {
                 ),
               ],
             ),
-            AppSpacing.gapXl,
+            AppSpacing.gapMd,
 
-            // Cerrar sesión
+            // Cerrar sesión (sólido)
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
+              child: FilledButton.icon(
                 onPressed: () => _cerrarSesion(context, ref),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
-                  side: BorderSide(
-                    color: theme.colorScheme.error.withValues(alpha: 0.5),
-                  ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onError,
                   shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                icon: const Icon(Icons.logout),
+                icon: const Icon(Icons.logout, size: 24),
                 label: Text(l.authSignOut),
               ),
             ),
-            const SizedBox(height: 80), // Espacio para bottom nav
+            const SizedBox(height: 32), // Espacio para bottom nav
           ],
+          ),
         ),
       ),
     );
@@ -215,9 +200,12 @@ class PerfilPage extends ConsumerWidget {
         debugPrint(
           '   └─ Granja seleccionada: ${granja.nombre} (${granja.id})',
         );
-        context.push(
-          AppRoutes.granjaInvitarById(granja.id),
-          extra: {'granjaNombre': granja.nombre},
+        showFullHeightSheet<void>(
+          context: context,
+          child: SeleccionarRolInvitacionPage(
+            granjaId: granja.id,
+            granjaNombre: granja.nombre,
+          ),
         );
       },
     );
@@ -240,137 +228,84 @@ class PerfilPage extends ConsumerWidget {
         debugPrint(
           '   └─ Granja seleccionada: ${granja.nombre} (${granja.id})',
         );
-        context.push(
-          AppRoutes.granjaColaboradoresById(granja.id),
-          extra: {'granjaNombre': granja.nombre},
+        showFullHeightSheet<void>(
+          context: context,
+          child: GestionarColaboradoresPage(
+            granjaId: granja.id,
+            granjaNombre: granja.nombre,
+          ),
         );
       },
     );
   }
 
   void _mostrarSelectorIdioma(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final currentLocale = ref.read(localeProvider);
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              S.of(context).profileLanguage,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            AppSpacing.gapMd,
-            ...LocaleNotifier.supportedLocales.map((locale) {
-              final isSelected =
-                  locale.languageCode == currentLocale.languageCode;
-              final name = switch (locale.languageCode) {
-                'es' => 'Español',
-                'en' => 'English',
-                'pt' => 'Português',
-                _ => locale.languageCode,
-              };
-              final flag = switch (locale.languageCode) {
-                'es' => '🇪🇸',
-                'en' => '🇺🇸',
-                'pt' => '🇧🇷',
-                _ => '🏳️',
-              };
-              return ListTile(
-                leading: Text(flag, style: const TextStyle(fontSize: 24)),
-                title: Text(
-                  name,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-                trailing: isSelected
-                    ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-                    : null,
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-                onTap: () {
-                  ref.read(localeProvider.notifier).setLocale(locale);
-                  Navigator.pop(ctx);
-                },
-              );
-            }),
-            AppSpacing.gapMd,
-          ],
-        ),
+      title: S.of(context).profileLanguage,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...LocaleNotifier.supportedLocales.map((locale) {
+            final isSelected =
+                locale.languageCode == currentLocale.languageCode;
+            final name = switch (locale.languageCode) {
+              'es' => 'Español',
+              'en' => 'English',
+              'pt' => 'Português',
+              _ => locale.languageCode,
+            };
+            final flag = switch (locale.languageCode) {
+              'es' => '🇪🇸',
+              'en' => '🇺🇸',
+              'pt' => '🇧🇷',
+              _ => '🏳️',
+            };
+            return AppSheetOptionTile(
+              leading: Text(flag, style: const TextStyle(fontSize: 24)),
+              label: name,
+              selected: isSelected,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(locale);
+                Navigator.pop(ctx);
+              },
+            );
+          }),
+          AppSpacing.gapMd,
+        ],
       ),
     );
   }
 
   void _mostrarSelectorMoneda(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final currentCurrency = ref.read(currencyProvider);
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              S.of(context).profileCurrency,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+      title: S.of(context).profileCurrency,
+      isScrollControlled: true,
+      scrollable: true,
+      builder: (ctx) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        children: AppCurrency.values.map((currency) {
+          final isSelected = currency == currentCurrency;
+          return AppSheetOptionTile(
+            leading: Text(
+              currency.flag,
+              style: const TextStyle(fontSize: 24),
             ),
-            AppSpacing.gapMd,
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: AppCurrency.values.map((currency) {
-                  final isSelected = currency == currentCurrency;
-                  return ListTile(
-                    leading: Text(
-                      currency.flag,
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                    title: Text(
-                      currency.displayName,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    trailing: isSelected
-                        ? Icon(
-                            Icons.check_circle,
-                            color: theme.colorScheme.primary,
-                          )
-                        : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.allSm,
-                    ),
-                    onTap: () {
-                      ref.read(currencyProvider.notifier).setCurrency(currency);
-                      Navigator.pop(ctx);
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-            AppSpacing.gapMd,
-          ],
-        ),
+            label: currency.displayName,
+            selected: isSelected,
+            onTap: () {
+              ref.read(currencyProvider.notifier).setCurrency(currency);
+              Navigator.pop(ctx);
+            },
+          );
+        }).toList(),
       ),
     );
   }
@@ -384,7 +319,6 @@ class PerfilPage extends ConsumerWidget {
     required Color color,
     required void Function(Granja granja) onGranjaSeleccionada,
   }) {
-    final theme = Theme.of(context);
     final l = S.of(context);
     final granjasAsync = ref.read(granjasStreamProvider);
 
@@ -400,117 +334,29 @@ class PerfilPage extends ConsumerWidget {
           return;
         }
 
-        showModalBottomSheet(
+        showAppBottomSheet(
           context: context,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          builder: (ctx) => Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSpacing.gapXxs,
-                Text(
-                  subtitulo,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                AppSpacing.gapBase,
-                Divider(
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.5,
-                  ),
-                  height: 1,
-                ),
-                AppSpacing.gapMd,
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.sizeOf(context).height * 0.4,
-                  ),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: granjas.length,
-                    itemBuilder: (context, index) {
-                      final granja = granjas[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Card(
-                          elevation: 2,
-                          shadowColor: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.3,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.allMd,
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              onGranjaSeleccionada(granja);
-                            },
-                            borderRadius: AppRadius.allMd,
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          granja.nombre,
-                                          style: theme.textTheme.bodyLarge
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    theme.colorScheme.onSurface,
-                                              ),
-                                        ),
-                                        if (granja
-                                            .direccion
-                                            .direccionCompleta
-                                            .isNotEmpty) ...[
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            granja.direccion.direccionCompleta,
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                                  color: theme
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                AppSpacing.gapSm,
-              ],
-            ),
+          title: titulo,
+          subtitle: subtitulo,
+          isScrollControlled: true,
+          scrollable: true,
+          builder: (ctx) => ListView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            itemCount: granjas.length,
+            itemBuilder: (context, index) {
+              final granja = granjas[index];
+              return AppSheetOptionTile(
+                label: granja.nombre,
+                subtitle: granja.direccion.direccionCompleta.isNotEmpty
+                    ? granja.direccion.direccionCompleta
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onGranjaSeleccionada(granja);
+                },
+              );
+            },
           ),
         );
       },
@@ -532,44 +378,86 @@ class PerfilPage extends ConsumerWidget {
 
   Future<void> _cerrarSesion(BuildContext context, WidgetRef ref) async {
     final l = S.of(context);
-    final confirmar = await showDialog<bool>(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final confirmar = await showAppBottomSheet<bool>(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-        title: Text(
-          l.profileSignOutConfirm,
-          style: AppTextStyles.titleLarge.copyWith(
-            color: AppColors.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-          textAlign: TextAlign.center,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg,
         ),
-        content: Text(
-          l.profileSignOutMessage,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Ícono
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: AppColors.error,
+                size: 32,
+              ),
+            ),
+            AppSpacing.gapMd,
+            Text(
+              l.profileSignOutConfirm,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            AppSpacing.gapXs,
+            Text(
+              l.profileSignOutMessage,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            AppSpacing.gapLg,
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.onSurfaceVariant,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.allMd,
+                      ),
+                    ),
+                    child: Text(l.commonCancel),
+                  ),
+                ),
+                AppSpacing.hGapMd,
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.onError,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.allMd,
+                      ),
+                    ),
+                    child: Text(l.authSignOut),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.onSurfaceVariant,
-            ),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: AppColors.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-            ),
-            child: Text(l.authSignOut),
-          ),
-        ],
       ),
     );
 
@@ -585,226 +473,15 @@ class PerfilPage extends ConsumerWidget {
     }
   }
 
-  void _mostrarAyuda(BuildContext context) {
-    final theme = Theme.of(context);
-    final l = S.of(context);
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.profileHelpCenter,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            AppSpacing.gapXxs,
-            Text(
-              l.profileHelpQuestion,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            AppSpacing.gapBase,
-            Divider(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-              height: 1,
-            ),
-            AppSpacing.gapMd,
-            _buildAyudaItem(
-              context,
-              theme,
-              icon: Icons.email_outlined,
-              iconColor: AppColors.info,
-              title: l.profileEmailSupport,
-              subtitle: 'soporte@smartgranjaaves.com',
-            ),
-            AppSpacing.gapSm,
-            _buildAyudaItem(
-              context,
-              theme,
-              icon: Icons.help_outline,
-              iconColor: AppColors.success,
-              title: l.profileFaq,
-              subtitle: l.profileFaqSubtitle,
-            ),
-            AppSpacing.gapSm,
-            _buildAyudaItem(
-              context,
-              theme,
-              icon: Icons.article_outlined,
-              iconColor: AppColors.warning,
-              title: l.profileUserManual,
-              subtitle: l.profileUserManualSubtitle,
-            ),
-            AppSpacing.gapSm,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAyudaItem(
-    BuildContext context,
-    ThemeData theme, {
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-  }) {
-    return Card(
-      elevation: 2,
-      shadowColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-      child: InkWell(
-        onTap: () => Navigator.pop(context),
-        borderRadius: AppRadius.allMd,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: AppRadius.allMd,
-                ),
-                child: Icon(icon, color: iconColor, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _mostrarEnviarSugerencia(BuildContext context) {
-    final theme = Theme.of(context);
-    final l = S.of(context);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.profileSendFeedback,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            AppSpacing.gapXxs,
-            Text(
-              l.profileFeedbackQuestion,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            AppSpacing.gapBase,
-            Divider(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-              height: 1,
-            ),
-            AppSpacing.gapMd,
-            TextField(
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: l.profileFeedbackHint,
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.6,
-                  ),
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.allMd,
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.allMd,
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-            AppSpacing.gapBase,
-            SizedBox(
-              width: double.infinity,
-              child: AppButton.primary(
-                label: l.profileSendFeedback,
-                onPressed: () {
-                  Navigator.pop(context);
-                  AppSnackBar.success(context, message: l.profileFeedbackThanks);
-                },
-                expanded: true,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _mostrarAcercaDe(BuildContext context) {
     final l = S.of(context);
     showDialog(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-        child: Padding(
+        child: FormTextScale(
+          factor: 1.2,
+          child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -892,6 +569,7 @@ class PerfilPage extends ConsumerWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

@@ -59,8 +59,14 @@ class LoteFirebaseDatasource {
   /// Elimina un lote y todos sus datos relacionados.
   ///
   /// Incluye: subcollections (pesos, produccion, mortalidad, consumos),
-  /// costos_gastos y ventas_productos referenciados.
+  /// costos_gastos y ventas_productos referenciados. Además libera el
+  /// `galpon.loteActualId` si este lote era el lote activo del galpón,
+  /// para no dejar el galpón apuntando a un documento inexistente.
   Future<void> eliminar(String id) async {
+    // 0. Leer el lote antes de borrarlo para conocer su galpón.
+    final loteDoc = await _lotesCollection.doc(id).get();
+    final galponId = loteDoc.data()?['galponId'] as String?;
+
     // 1. Eliminar subcollections del lote
     await _eliminarSubcoleccion(id, 'pesos');
     await _eliminarSubcoleccion(id, 'produccion');
@@ -71,8 +77,24 @@ class LoteFirebaseDatasource {
     await _limpiarColeccionPorLote('costos_gastos', id);
     await _limpiarColeccionPorLote('ventas_productos', id);
 
-    // 3. Eliminar el lote
-    await _lotesCollection.doc(id).delete();
+    // 3. Eliminar el lote y liberar el galpón si lo referenciaba.
+    if (galponId != null && galponId.isNotEmpty) {
+      final galponRef = _firestore.collection('galpones').doc(galponId);
+      await _firestore.runTransaction((transaction) async {
+        final galponSnap = await transaction.get(galponRef);
+        transaction.delete(_lotesCollection.doc(id));
+        // Solo liberar si el galpón apuntaba precisamente a este lote.
+        if (galponSnap.exists &&
+            galponSnap.data()?['loteActualId'] == id) {
+          transaction.update(galponRef, {
+            'loteActualId': null,
+            'ultimaActualizacion': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+    } else {
+      await _lotesCollection.doc(id).delete();
+    }
 
     debugPrint('✅ Lote $id eliminado con todos sus datos relacionados');
   }

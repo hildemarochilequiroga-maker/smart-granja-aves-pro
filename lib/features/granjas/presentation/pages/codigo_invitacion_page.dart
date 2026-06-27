@@ -14,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/invitacion_granja.dart';
@@ -63,15 +64,16 @@ class _CodigoInvitacionPageState extends ConsumerState<CodigoInvitacionPage> {
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
-          title: Text(widget.granjaNombre),
+          title: FormTextScale(child: Text(widget.granjaNombre)),
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close),
+            icon: const Icon(Icons.close, size: 28),
             onPressed: _handleBack,
           ),
         ),
-        body: Column(
+        body: FormTextScale(
+          child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
@@ -114,6 +116,7 @@ class _CodigoInvitacionPageState extends ConsumerState<CodigoInvitacionPage> {
             // Botón compartir fijo abajo
             _buildBottomButton(theme),
           ],
+        ),
         ),
       ),
     );
@@ -245,13 +248,13 @@ class _CodigoInvitacionPageState extends ConsumerState<CodigoInvitacionPage> {
                         Icons.check_circle,
                         key: ValueKey('check'),
                         color: AppColors.success,
-                        size: 22,
+                        size: 26,
                       )
                     : Icon(
                         Icons.copy_rounded,
                         key: const ValueKey('copy'),
                         color: theme.colorScheme.onSurface,
-                        size: 22,
+                        size: 26,
                       ),
               ),
             ],

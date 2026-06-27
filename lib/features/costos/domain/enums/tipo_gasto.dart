@@ -2,10 +2,12 @@ import 'package:smartgranjaavespro/core/utils/formatters.dart';
 
 /// Clasificación de gastos operativos en la granja avícola.
 enum TipoGasto {
+  compraAves('Compra de Aves', 'Adquisición de pollitos/aves', '#00897B'),
   alimento('Alimento', 'Concentrados y granos', '#FF9800'),
   manoDeObra('Mano de Obra', 'Salarios y beneficios', '#2196F3'),
   energia('Energía', 'Electricidad y combustible', '#FFC107'),
   medicamento('Medicamento', 'Sanidad animal', '#F44336'),
+  cama('Cama', 'Viruta, cascarilla y sustrato', '#8D6E63'),
   mantenimiento('Mantenimiento', 'Reparaciones y limpieza', '#607D8B'),
   agua('Agua', 'Consumo de agua', '#03A9F4'),
   transporte('Transporte', 'Logística y movilización', '#9C27B0'),
@@ -22,7 +24,14 @@ enum TipoGasto {
 
   /// Verifica si el gasto es directamente asignable a un lote.
   bool get esDirecto =>
-      this == TipoGasto.alimento || this == TipoGasto.medicamento;
+      this == TipoGasto.compraAves ||
+      this == TipoGasto.alimento ||
+      this == TipoGasto.medicamento ||
+      this == TipoGasto.cama;
+
+  /// `true` si el tipo representa la compra inicial de aves del lote (permite
+  /// a la UI mostrar los campos enlazados costo total ↔ costo por ave).
+  bool get esCompraAves => this == TipoGasto.compraAves;
 
   /// Verifica si el gasto es fijo (no varía con producción).
   bool get esFijo =>
@@ -40,10 +49,12 @@ enum TipoGasto {
   String get displayName {
     final locale = Formatters.currentLocale;
     return switch (this) {
+      TipoGasto.compraAves => switch (locale) { 'es' => 'Compra de Aves', 'pt' => 'Compra de Aves', _ => 'Bird Purchase' },
       TipoGasto.alimento => switch (locale) { 'es' => 'Alimento', 'pt' => 'Ração', _ => 'Feed' },
       TipoGasto.manoDeObra => switch (locale) { 'es' => 'Mano de Obra', 'pt' => 'Mão de Obra', _ => 'Labor' },
       TipoGasto.energia => switch (locale) { 'es' => 'Energía', 'pt' => 'Energia', _ => 'Energy' },
       TipoGasto.medicamento => switch (locale) { 'es' => 'Medicamento', 'pt' => 'Medicamento', _ => 'Medicine' },
+      TipoGasto.cama => switch (locale) { 'es' => 'Cama', 'pt' => 'Cama', _ => 'Bedding' },
       TipoGasto.mantenimiento => switch (locale) { 'es' => 'Mantenimiento', 'pt' => 'Manutenção', _ => 'Maintenance' },
       TipoGasto.agua => switch (locale) { 'es' => 'Agua', 'pt' => 'Água', _ => 'Water' },
       TipoGasto.transporte => switch (locale) { 'es' => 'Transporte', 'pt' => 'Transporte', _ => 'Transport' },
@@ -58,6 +69,8 @@ enum TipoGasto {
   String get displayDescripcion {
     final locale = Formatters.currentLocale;
     return switch (this) {
+      TipoGasto.compraAves =>
+        switch (locale) { 'es' => 'Adquisición de pollitos/aves', 'pt' => 'Aquisição de pintos/aves', _ => 'Chick/bird acquisition' },
       TipoGasto.alimento =>
         switch (locale) { 'es' => 'Concentrados y granos', 'pt' => 'Concentrados e grãos', _ => 'Concentrates and grains' },
       TipoGasto.manoDeObra =>
@@ -65,6 +78,8 @@ enum TipoGasto {
       TipoGasto.energia =>
         switch (locale) { 'es' => 'Electricidad y combustible', 'pt' => 'Eletricidade e combustível', _ => 'Electricity and fuel' },
       TipoGasto.medicamento => switch (locale) { 'es' => 'Sanidad animal', 'pt' => 'Sanidade animal', _ => 'Animal health' },
+      TipoGasto.cama =>
+        switch (locale) { 'es' => 'Viruta, cascarilla y sustrato', 'pt' => 'Maravalha, casca e substrato', _ => 'Shavings, husk and bedding' },
       TipoGasto.mantenimiento =>
         switch (locale) { 'es' => 'Reparaciones y limpieza', 'pt' => 'Reparos e limpeza', _ => 'Repairs and cleaning' },
       TipoGasto.agua => switch (locale) { 'es' => 'Consumo de agua', 'pt' => 'Consumo de água', _ => 'Water consumption' },
@@ -84,8 +99,10 @@ enum TipoGasto {
   String get categoriaEstadoResultados {
     final locale = Formatters.currentLocale;
     switch (this) {
+      case TipoGasto.compraAves:
       case TipoGasto.alimento:
       case TipoGasto.medicamento:
+      case TipoGasto.cama:
         return switch (locale) { 'es' => 'Costo de Producción', 'pt' => 'Custo de Produção', _ => 'Production Cost' };
       case TipoGasto.manoDeObra:
         return switch (locale) { 'es' => 'Gastos de Personal', 'pt' => 'Despesas de Pessoal', _ => 'Personnel Expenses' };

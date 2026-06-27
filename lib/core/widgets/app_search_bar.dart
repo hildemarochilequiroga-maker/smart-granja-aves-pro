@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_shadow.dart';
 import '../theme/app_spacing.dart';
@@ -104,24 +105,24 @@ class AppSearchBar extends StatelessWidget {
         textField: true,
         label: semanticLabel ?? hintText,
         child: SizedBox(
-          height: 48,
+          height: 58,
           child: TextField(
             controller: controller,
             focusNode: focusNode,
             autofocus: autofocus,
             textInputAction: TextInputAction.search,
             keyboardType: TextInputType.text,
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurface,
             ),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+              hintStyle: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               hintMaxLines: 1,
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest,
+              fillColor: theme.colorScheme.surface,
               prefixIcon: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: Icon(
@@ -130,7 +131,7 @@ class AppSearchBar extends StatelessWidget {
                   color: searchQuery.isNotEmpty
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
-                  size: 20,
+                  size: 24,
                 ),
               ),
               suffixIcon: searchQuery.isNotEmpty
@@ -138,7 +139,7 @@ class AppSearchBar extends StatelessWidget {
                       button: true,
                       label: S.of(context).commonClearSearch,
                       child: IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
+                        icon: const Icon(Icons.close_rounded, size: 22),
                         color: theme.colorScheme.onSurfaceVariant,
                         onPressed: () {
                           HapticFeedback.selectionClick();
@@ -153,21 +154,20 @@ class AppSearchBar extends StatelessWidget {
                 vertical: 14,
               ),
               border: OutlineInputBorder(
-                borderRadius: AppRadius.allMd,
-                borderSide: BorderSide(color: theme.colorScheme.outline),
+                borderRadius: AppRadius.allSm,
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: AppRadius.allMd,
+                borderRadius: AppRadius.allSm,
                 borderSide: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.5),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.4),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: AppRadius.allMd,
-                borderSide: BorderSide(
-                  color: theme.colorScheme.primary,
-                  width: 2,
-                ),
+                borderRadius: AppRadius.allSm,
+                borderSide: const BorderSide(color: AppColors.info, width: 2),
               ),
             ),
             onChanged: onSearchChanged,

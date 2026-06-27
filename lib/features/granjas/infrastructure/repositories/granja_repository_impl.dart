@@ -78,12 +78,6 @@ class GranjaRepositoryImpl implements GranjaRepository {
   }
 
   @override
-  Future<Either<Failure, List<Granja>>> obtenerTodas() async {
-    // Este método no debería usarse directamente, usar obtenerPorUsuario
-    return const Right([]);
-  }
-
-  @override
   Future<Either<Failure, List<Granja>>> obtenerPorUsuario(
     String usuarioId,
   ) async {
@@ -219,28 +213,6 @@ class GranjaRepositoryImpl implements GranjaRepository {
       return Right(result.map((m) => m.toEntity()).toList());
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
-    } on Exception catch (e) {
-      return Left(UnknownFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<Granja>>> obtenerCercanas({
-    required double latitud,
-    required double longitud,
-    required double radioKm,
-  }) async {
-    // Nota: La búsqueda geoespacial real requeriría GeoFirestore o similar.
-    // Por ahora, obtenemos todas las granjas y filtramos localmente.
-    // En producción, esto debería implementarse con índices geoespaciales.
-    try {
-      if (!await _networkInfo.isConnected) {
-        return Left(NetworkFailure.noConnection());
-      }
-
-      // Por ahora retornamos lista vacía - se necesita implementar
-      // índices geoespaciales en Firestore para búsqueda eficiente
-      return const Right([]);
     } on Exception catch (e) {
       return Left(UnknownFailure(message: e.toString()));
     }

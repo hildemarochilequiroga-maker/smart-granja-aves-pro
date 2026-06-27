@@ -92,6 +92,9 @@ class CostoGastoModel {
     );
   }
 
+  /// Payload para crear el documento (`add`/`set`).
+  ///
+  /// Omite los campos opcionales nulos para mantener el documento limpio.
   Map<String, dynamic> toFirestore() {
     return {
       'granjaId': granjaId,
@@ -114,6 +117,42 @@ class CostoGastoModel {
       if (numeroFactura != null) 'numeroFactura': numeroFactura,
       if (numeroRecibo != null) 'numeroRecibo': numeroRecibo,
       if (observaciones != null) 'observaciones': observaciones,
+      'registradoPor': registradoPor,
+      'fechaRegistro': Timestamp.fromDate(fechaRegistro),
+    };
+  }
+
+  /// Payload para actualizar el documento (`update`).
+  ///
+  /// A diferencia de [toFirestore], los campos opcionales nulos se envían como
+  /// [FieldValue.delete] para que se borren del documento. De lo contrario,
+  /// `update` conservaría el valor anterior al limpiar un campo (p. ej. quitar
+  /// el lote, el proveedor o la factura al editar un costo).
+  Map<String, dynamic> toFirestoreUpdate() {
+    return {
+      'granjaId': granjaId,
+      'tipo': tipo.toJson(),
+      'concepto': concepto,
+      'monto': monto,
+      'fecha': Timestamp.fromDate(fecha),
+      'proveedor': proveedor ?? FieldValue.delete(),
+      'categoria': categoria ?? FieldValue.delete(),
+      'centroCosto': centroCosto ?? FieldValue.delete(),
+      'loteId': loteId ?? FieldValue.delete(),
+      'casaId': casaId ?? FieldValue.delete(),
+      'lotesAsignados': lotesAsignados.isNotEmpty
+          ? lotesAsignados
+          : FieldValue.delete(),
+      'requiereAprobacion': requiereAprobacion,
+      'aprobado': aprobado,
+      'aprobadoPor': aprobadoPor ?? FieldValue.delete(),
+      'fechaAprobacion': fechaAprobacion != null
+          ? Timestamp.fromDate(fechaAprobacion!)
+          : FieldValue.delete(),
+      'motivoRechazo': motivoRechazo ?? FieldValue.delete(),
+      'numeroFactura': numeroFactura ?? FieldValue.delete(),
+      'numeroRecibo': numeroRecibo ?? FieldValue.delete(),
+      'observaciones': observaciones ?? FieldValue.delete(),
       'registradoPor': registradoPor,
       'fechaRegistro': Timestamp.fromDate(fechaRegistro),
     };

@@ -29,6 +29,7 @@ import '../../../lotes/application/providers/lote_providers.dart';
 import '../../application/providers/costos_provider.dart';
 import '../../domain/entities/costo_gasto.dart';
 import '../../domain/enums/tipo_gasto.dart';
+import '../widgets/costo_tipo_visuals.dart';
 
 /// Página de detalle de costo.
 class CostoDetailPage extends ConsumerWidget {
@@ -198,21 +199,15 @@ class _CostoDetailView extends ConsumerWidget {
           children: [
             Row(
               children: [
-                // Punto de color en lugar de icono
+                // Avatar con icono del tipo de gasto
                 Container(
-                  width: 16,
-                  height: 16,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: tipoInfo.color,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: tipoInfo.color.withValues(alpha: 0.4),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: tipoInfo.color.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.allMd,
                   ),
+                  child: Icon(costo.tipo.icon, color: tipoInfo.color, size: 24),
                 ),
                 AppSpacing.hGapMd,
                 Expanded(
@@ -720,75 +715,26 @@ class _CostoDetailView extends ConsumerWidget {
   }
 
   _TipoInfo _getTipoInfo(BuildContext context, TipoGasto tipo) {
+    return _TipoInfo(label: _getTipoLabel(context, tipo), color: tipo.color);
+  }
+
+  String _getTipoLabel(BuildContext context, TipoGasto tipo) {
     final l = S.of(context);
-    switch (tipo) {
-      case TipoGasto.alimento:
-        return _TipoInfo(
-          label: l.costoTypeAlimento,
-          icon: Icons.restaurant_rounded,
-          color: AppColors.warning,
-        );
-      case TipoGasto.manoDeObra:
-        return _TipoInfo(
-          label: l.costoTypeManoObra,
-          icon: Icons.people_rounded,
-          color: AppColors.info,
-        );
-      case TipoGasto.energia:
-        return _TipoInfo(
-          label: l.costoTypeEnergia,
-          icon: Icons.bolt_rounded,
-          color: AppColors.amber,
-        );
-      case TipoGasto.medicamento:
-        return _TipoInfo(
-          label: l.costoTypeMedicamento,
-          icon: Icons.medical_services_rounded,
-          color: AppColors.error,
-        );
-      case TipoGasto.mantenimiento:
-        return _TipoInfo(
-          label: l.costoTypeMantenimiento,
-          icon: Icons.build_rounded,
-          color: AppColors.purple,
-        );
-      case TipoGasto.agua:
-        return _TipoInfo(
-          label: l.costoTypeAgua,
-          icon: Icons.water_drop_rounded,
-          color: AppColors.cyan,
-        );
-      case TipoGasto.transporte:
-        return _TipoInfo(
-          label: l.costoTypeTransporte,
-          icon: Icons.local_shipping_rounded,
-          color: AppColors.success,
-        );
-      case TipoGasto.administrativo:
-        return _TipoInfo(
-          label: l.costoTypeAdministrativo,
-          icon: Icons.business_rounded,
-          color: AppColors.outline,
-        );
-      case TipoGasto.depreciacion:
-        return _TipoInfo(
-          label: l.costoTypeDepreciacion,
-          icon: Icons.trending_down_rounded,
-          color: AppColors.brown,
-        );
-      case TipoGasto.financiero:
-        return _TipoInfo(
-          label: l.costoTypeFinanciero,
-          icon: Icons.account_balance_rounded,
-          color: AppColors.indigo,
-        );
-      case TipoGasto.otros:
-        return _TipoInfo(
-          label: l.costoTypeOtros,
-          icon: Icons.more_horiz_rounded,
-          color: AppColors.outline,
-        );
-    }
+    return switch (tipo) {
+      TipoGasto.compraAves => l.costoTypeCompraAves,
+      TipoGasto.alimento => l.costoTypeAlimento,
+      TipoGasto.manoDeObra => l.costoTypeManoObra,
+      TipoGasto.energia => l.costoTypeEnergia,
+      TipoGasto.medicamento => l.costoTypeMedicamento,
+      TipoGasto.cama => l.costoTypeCama,
+      TipoGasto.mantenimiento => l.costoTypeMantenimiento,
+      TipoGasto.agua => l.costoTypeAgua,
+      TipoGasto.transporte => l.costoTypeTransporte,
+      TipoGasto.administrativo => l.costoTypeAdministrativo,
+      TipoGasto.depreciacion => l.costoTypeDepreciacion,
+      TipoGasto.financiero => l.costoTypeFinanciero,
+      TipoGasto.otros => l.costoTypeOtros,
+    };
   }
 
   String _formatDateTimePretty(BuildContext context, DateTime date) {
@@ -820,10 +766,9 @@ class _CostoDetailView extends ConsumerWidget {
 
 class _TipoInfo {
   final String label;
-  final IconData icon;
   final Color color;
 
-  _TipoInfo({required this.label, required this.icon, required this.color});
+  const _TipoInfo({required this.label, required this.color});
 }
 
 class _InfoRow {

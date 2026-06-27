@@ -17,6 +17,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -101,7 +103,7 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         color: theme.colorScheme.primary,
-        edgeOffset: 110,
+        edgeOffset: 132,
         child: CustomScrollView(
           slivers: [
             // Barra de búsqueda sticky
@@ -163,7 +165,6 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
                       hasFilters: hasFilters,
                       filterTitle: S.of(context).batchNotFoundFilter,
                       filterDescription: S.of(context).batchAdjustFilters,
-                      onClearFilters: _clearFilters,
                     ),
                   );
                 }
@@ -187,6 +188,7 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
                         ),
                         child: LoteListCard(
                           lote: lote,
+                          index: index,
                           onDetalles: () => _navigateToDetail(lote.id),
                           onEditar: () => _navigateToEdit(lote.id),
                           onCambiarEstado: () => _showCambiarEstadoDialog(lote),
@@ -216,10 +218,10 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
         child: FloatingActionButton.extended(
           heroTag: 'lotes_list_fab',
           onPressed: _navigateToCreate,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add, size: 26),
           label: Text(
             S.of(context).batchNewBatch,
-            style: theme.textTheme.labelLarge?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -256,27 +258,25 @@ class _LotesListPageState extends ConsumerState<LotesListPage> {
     }).toList();
   }
 
-  void _clearFilters() {
-    _searchController.clear();
-    setState(() {
-      _searchQuery = '';
-      _estadoFilter = null;
-      _tipoFilter = null;
-    });
-  }
-
   Future<void> _onRefresh() async {
+    // Invalidar y esperar el primer dato fresco para que el indicador de
+    // refresco permanezca visible hasta que el stream reemita (evita parpadeo).
     if (widget.galponId != null) {
       ref.invalidate(lotesGalponStreamProvider(widget.galponId!));
+      await ref.read(lotesGalponStreamProvider(widget.galponId!).future);
     } else {
       ref.invalidate(lotesStreamProvider(widget.granjaId));
+      await ref.read(lotesStreamProvider(widget.granjaId).future);
     }
   }
 
   /// Muestra diálogo para cambiar estado.
   Future<void> _showCambiarEstadoDialog(Lote lote) async {
-    final nuevoEstado = await showDialog<EstadoLote>(
+    final nuevoEstado = await showModalBottomSheet<EstadoLote>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => _CambiarEstadoDialog(lote: lote),
     );
 
@@ -413,10 +413,10 @@ class _LoteSearchBarDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<TipoAve?> onTipoFilterChanged;
 
   @override
-  double get minExtent => 116;
+  double get minExtent => 132;
 
   @override
-  double get maxExtent => 116;
+  double get maxExtent => 132;
 
   @override
   Widget build(
@@ -528,29 +528,24 @@ class _CambiarEstadoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final estadosPermitidos = lote.estado.transicionesPermitidas;
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
-      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-      title: Text(
-        S.of(context).batchSelectNewStatus,
-        style: AppTextStyles.titleLarge.copyWith(
-          fontWeight: FontWeight.w600,
-          color: AppColors.onSurface,
-        ),
-        textAlign: TextAlign.center,
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Label estado actual
-          Text(
-            S.of(context).batchCurrentStatus,
+    return AppBottomSheetScaffold(
+      title: S.of(context).batchSelectNewStatus,
+      scrollable: true,
+      child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  children: [
+                    // Label estado actual
+                    Text(
+                      S.of(context).batchCurrentStatus,
             style: AppTextStyles.labelMedium.copyWith(
               color: AppColors.onSurfaceVariant,
               fontWeight: FontWeight.w500,
@@ -748,18 +743,22 @@ class _CambiarEstadoDialog extends StatelessWidget {
               );
             }),
           ],
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.onSurfaceVariant,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ],
+                ),
+              ),
+              // Botón cerrar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: AppButton.primary(
+                  label: S.of(context).commonClose,
+                  onPressed: () => Navigator.pop(context),
+                  expanded: true,
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                ),
+              ),
+            ],
           ),
-          child: Text(S.of(context).commonCancel),
-        ),
-      ],
     );
   }
 }

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -23,6 +23,7 @@ import '../../domain/entities/registro_produccion.dart';
 import '../../application/providers/registro_providers.dart';
 import '../../application/services/registro_quick_cache_service.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/produccion_form_steps/informacion_produccion_step.dart';
 import '../widgets/produccion_form_steps/clasificacion_huevos_step.dart';
 import '../widgets/produccion_form_steps/observaciones_fotos_step.dart';
@@ -45,7 +46,6 @@ class _RegistrarProduccionPageState
   int _currentStep = 0;
   bool _autoValidate = false;
   bool _isSaving = false;
-  DateTime? _lastSaveTime;
   bool _isUploadingPhotos = false;
   bool _hasUnsavedChanges = false;
   Timer? _autoSaveTimer;
@@ -218,7 +218,6 @@ class _RegistrarProduccionPageState
       await prefs.setString('produccion_draft_${widget.lote.id}', draft);
 
       _hasUnsavedChanges = false;
-      _lastSaveTime = DateTime.now();
     } on Exception catch (e) {
       debugPrint('Error guardando borrador: $e');
     } finally {
@@ -278,21 +277,6 @@ class _RegistrarProduccionPageState
     }
   }
 
-  String _formatSaveTime(DateTime saveTime) {
-    final l = S.of(context);
-    final now = DateTime.now();
-    final difference = now.difference(saveTime);
-
-    if (difference.inSeconds < 10) {
-      return l.batchRightNow;
-    } else if (difference.inSeconds < 60) {
-      return l.batchSecondsAgo(difference.inSeconds);
-    } else if (difference.inMinutes < 60) {
-      return l.batchMinutesAgo(difference.inMinutes);
-    } else {
-      return l.batchHoursAgo(difference.inHours);
-    }
-  }
 
   Future<bool?> _showUnsavedChangesDialog() async {
     final l = S.of(context);
@@ -693,10 +677,11 @@ class _RegistrarProduccionPageState
 
       // Crear registro usando datasource
       // Actualizar acumulado de huevos en el lote
-      final nuevoTotalHuevos =
-          (widget.lote.huevosProducidos ?? 0) + registro.huevosRecolectados;
+      // Incremento relativo atómico: evita lost updates si dos registros de
+      // producción del mismo lote se guardan a la vez (antes se escribía el
+      // total absoluto precalculado en el cliente).
       final actualizaciones = <String, dynamic>{
-        'huevosProducidos': nuevoTotalHuevos,
+        'huevosProducidos': FieldValue.increment(registro.huevosRecolectados),
       };
 
       // Si es el primer registro de producción, marcar fechaPrimerHuevo
@@ -707,7 +692,7 @@ class _RegistrarProduccionPageState
 
       debugPrint(
         '🔄 Crear registro + actualizar lote en transacción atómica '
-        '(huevos: $nuevoTotalHuevos)',
+        '(huevos +${registro.huevosRecolectados})',
       );
       await ref
           .read(registroProduccionDatasourceProvider)
@@ -842,28 +827,21 @@ class _RegistrarProduccionPageState
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                S.of(context).registerProductionTitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              if (_lastSaveTime != null)
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  _isSaving
-                      ? S.of(context).batchSaving
-                      : S
-                            .of(context)
-                            .batchSavedTime(_formatSaveTime(_lastSaveTime!)),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
+                  S.of(context).registerProductionTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
@@ -915,103 +893,101 @@ class _RegistrarProduccionPageState
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _steps,
-              onStepTapped: (index) {
-                if (index < _currentStep) {
-                  setState(() {
-                    _currentStep = index;
-                    _autoValidate = false;
-                  });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _steps,
+                onStepTapped: (index) {
+                  if (index < _currentStep) {
+                    setState(() {
+                      _currentStep = index;
+                      _autoValidate = false;
+                    });
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+              ),
 
-            // Contenido de los pasos
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // Step 1: Información básica
-                    InformacionProduccionStep(
-                      huevosRecolectadosController:
-                          _huevosRecolectadosController,
-                      huevosBuenosController: _huevosBuenosController,
-                      fechaSeleccionada: _fechaSeleccionada,
-                      onSeleccionarFecha: () async {
-                        final fecha = await showDatePicker(
-                          context: context,
-                          initialDate: _fechaSeleccionada,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime.now(),
-                        );
-                        if (fecha != null) {
+              // Contenido de los pasos
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Step 1: Información básica
+                      InformacionProduccionStep(
+                        huevosRecolectadosController:
+                            _huevosRecolectadosController,
+                        huevosBuenosController: _huevosBuenosController,
+                        fechaSeleccionada: _fechaSeleccionada,
+                        fechaIngreso: widget.lote.fechaIngreso,
+                        onFechaChanged: (fecha) {
                           setState(() {
                             _fechaSeleccionada = fecha;
+                            _hasUnsavedChanges = true;
                           });
-                        }
-                      },
-                      onHuevosBuenosChanged: () => setState(() {}),
-                      cantidadAves:
-                          widget.lote.cantidadActual ??
-                          widget.lote.cantidadInicial,
-                      autoValidate: _autoValidate,
-                    ),
-
-                    // Step 2: Clasificación
-                    ClasificacionHuevosStep(
-                      huevosRotosController: _huevosRotosController,
-                      huevosSuciosController: _huevosSuciosController,
-                      huevosPequenosController: _huevosPequenosController,
-                      huevosMedianosController: _huevosMedianosController,
-                      huevosGrandesController: _huevosGrandesController,
-                      huevosExtraGrandesController:
-                          _huevosExtraGrandesController,
-                      pesoPromedioController: _pesoPromedioController,
-                      huevosBuenos:
-                          int.tryParse(_huevosBuenosController.text) ?? 0,
-                      autoValidate: _autoValidate,
-                      onClasificacionChanged: () => setState(() {}),
-                    ),
-
-                    // Step 3: Observaciones y fotos
-                    ObservacionesFotosProduccionStep(
-                      observacionesController: _observacionesController,
-                      autoValidate: _autoValidate,
-                      fotosSeleccionadas: _fotosSeleccionadas,
-                      onAgregarFoto: _agregarFoto,
-                      onEliminarFoto: _eliminarFoto,
-                      huevosRecolectados: int.tryParse(
-                        _huevosRecolectadosController.text,
+                        },
+                        onHuevosBuenosChanged: () => setState(() {}),
+                        cantidadAves:
+                            widget.lote.cantidadActual ??
+                            widget.lote.cantidadInicial,
+                        autoValidate: _autoValidate,
                       ),
-                      huevosBuenos: int.tryParse(_huevosBuenosController.text),
-                      cantidadAves:
-                          widget.lote.cantidadActual ??
-                          widget.lote.cantidadInicial,
-                      pesoPromedioCalculado: _pesoPromedioCalculado > 0
-                          ? _pesoPromedioCalculado
-                          : null,
-                    ),
-                  ],
+
+                      // Step 2: Clasificación
+                      ClasificacionHuevosStep(
+                        huevosRotosController: _huevosRotosController,
+                        huevosSuciosController: _huevosSuciosController,
+                        huevosPequenosController: _huevosPequenosController,
+                        huevosMedianosController: _huevosMedianosController,
+                        huevosGrandesController: _huevosGrandesController,
+                        huevosExtraGrandesController:
+                            _huevosExtraGrandesController,
+                        pesoPromedioController: _pesoPromedioController,
+                        huevosBuenos:
+                            int.tryParse(_huevosBuenosController.text) ?? 0,
+                        autoValidate: _autoValidate,
+                        onClasificacionChanged: () => setState(() {}),
+                      ),
+
+                      // Step 3: Observaciones y fotos
+                      ObservacionesFotosProduccionStep(
+                        observacionesController: _observacionesController,
+                        autoValidate: _autoValidate,
+                        fotosSeleccionadas: _fotosSeleccionadas,
+                        onAgregarFoto: _agregarFoto,
+                        onEliminarFoto: _eliminarFoto,
+                        huevosRecolectados: int.tryParse(
+                          _huevosRecolectadosController.text,
+                        ),
+                        huevosBuenos: int.tryParse(
+                          _huevosBuenosController.text,
+                        ),
+                        cantidadAves:
+                            widget.lote.cantidadActual ??
+                            widget.lote.cantidadInicial,
+                        pesoPromedioCalculado: _pesoPromedioCalculado > 0
+                            ? _pesoPromedioCalculado
+                            : null,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );

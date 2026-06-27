@@ -712,6 +712,18 @@ class SPt extends S {
   String get commonExit => 'Sair';
 
   @override
+  String get appExitTitle => 'Sair do aplicativo?';
+
+  @override
+  String get appExitMessage => 'Tem certeza de que deseja fechar o aplicativo?';
+
+  @override
+  String get appExitConfirm => 'Sim, sair';
+
+  @override
+  String get appExitPressAgain => 'Pressione voltar novamente para sair';
+
+  @override
   String get commonDontWorryDataSafe =>
       'Não se preocupe, seus dados estão seguros.';
 
@@ -1324,6 +1336,44 @@ class SPt extends S {
 
   @override
   String get batchCostPerBird => 'Custo por Ave';
+
+  @override
+  String get batchCostBreakdown => 'Detalhamento do custo';
+
+  @override
+  String get batchCostByType => 'Custo por tipo de despesa';
+
+  @override
+  String get batchCalcBasis => 'Base do cálculo';
+
+  @override
+  String get batchPendingCosts => 'Custos a registrar';
+
+  @override
+  String get batchDirectExpenses => 'Despesas diretas';
+
+  @override
+  String get batchSharedExpenses => 'Despesas compartilhadas';
+
+  @override
+  String get batchFeedCost => 'Ração';
+
+  @override
+  String batchLiveBirdsBasis(String count) {
+    return 'Calculado sobre $count aves vivas';
+  }
+
+  @override
+  String get batchMissingInitialCost => 'Falta o custo inicial das aves';
+
+  @override
+  String get batchNoCostData =>
+      'Ainda não há custos registrados para este lote';
+
+  @override
+  String batchConsumosSinCosto(String count) {
+    return '$count registros de consumo sem custo: a ração pode estar subestimada';
+  }
 
   @override
   String get batchEstimatedClose => 'Fechamento Estimado';
@@ -5368,6 +5418,9 @@ class SPt extends S {
   String get batchViewCharts => 'Ver Gráficos';
 
   @override
+  String get commonCharts => 'Gráficos';
+
+  @override
   String get batchFilterRecords => 'Filtrar registros';
 
   @override
@@ -5428,7 +5481,7 @@ class SPt extends S {
   String get historialTotalConsumed => 'total consumido';
 
   @override
-  String get historialDeadBirds => 'morto aves';
+  String get historialDeadBirds => 'aves mortas';
 
   @override
   String get historialNoProductionRecords => 'Sin registros de produção';
@@ -6395,6 +6448,9 @@ class SPt extends S {
 
   @override
   String get batchLiveBirds => 'Live Aves';
+
+  @override
+  String get batchEnteredBirds => 'Aves ingressadas';
 
   @override
   String get batchTotalLosses => 'Bajas Totales';
@@ -10425,6 +10481,19 @@ class SPt extends S {
       'El nome debe tener al menos 3 caracteres';
 
   @override
+  String get costoBatchLabel => 'Lote atribuído';
+
+  @override
+  String get costoSelectBatchHint => 'Selecione o lote para esta despesa';
+
+  @override
+  String get costoSelectBatchRequired =>
+      'Selecione o lote ao qual esta despesa é atribuída';
+
+  @override
+  String get costoBatchNoneOption => 'Sem lote (despesa geral)';
+
+  @override
   String get costoInvoiceLabel => 'Número de Fatura/Recibo';
 
   @override
@@ -10440,6 +10509,24 @@ class SPt extends S {
   String get costoCardSupplier => 'Fornecedor: ';
 
   @override
+  String get costoTypeCompraAves => 'Compra de Aves';
+
+  @override
+  String get costoTotalPurchaseLabel => 'Custo total da compra';
+
+  @override
+  String get costoPerBirdLabel => 'Custo por ave';
+
+  @override
+  String costoPurchaseBirdsBasis(String count) {
+    return 'Sobre $count aves do lote';
+  }
+
+  @override
+  String get costoPurchaseNoBatch =>
+      'Atribua um lote para calcular o custo por ave';
+
+  @override
   String get costoTypeAlimento => 'Ração';
 
   @override
@@ -10450,6 +10537,9 @@ class SPt extends S {
 
   @override
   String get costoTypeMedicamento => 'Medicamento';
+
+  @override
+  String get costoTypeCama => 'Cama';
 
   @override
   String get costoTypeMantenimiento => 'Manutenção';
@@ -12717,7 +12807,7 @@ class SPt extends S {
   String get bioLastLevel => 'bioLastLevel';
 
   @override
-  String get diseaseCatalogSearch => 'diseaseCatalogSearch';
+  String get diseaseCatalogSearch => 'Buscar doença...';
 
   @override
   String get diseaseCatalogWarning => 'diseaseCatalogWarning';

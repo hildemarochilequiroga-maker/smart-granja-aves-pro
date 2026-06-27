@@ -142,13 +142,19 @@ class AppButton extends StatelessWidget {
           child: _buildChild(foregroundColor ?? colors.onError),
         );
       case AppButtonVariant.secondary:
+        // Borde y texto en color de contenido neutro (negro en claro,
+        // blanco en oscuro) para unificar todos los botones secundarios
+        // tipo "Anterior"/"Cancelar"/"Cerrar". Respeta foregroundColor
+        // si se pasa explícitamente.
+        final secondaryColor = foregroundColor ?? colors.onSurface;
         button = OutlinedButton(
           onPressed: effectiveOnPressed,
           style: OutlinedButton.styleFrom(
-            foregroundColor: foregroundColor,
+            foregroundColor: secondaryColor,
+            side: BorderSide(color: secondaryColor),
             shape: shape,
           ),
-          child: _buildChild(foregroundColor ?? colors.primary),
+          child: _buildChild(secondaryColor),
         );
       case AppButtonVariant.text:
         button = TextButton(
@@ -166,6 +172,12 @@ class AppButton extends StatelessWidget {
     return sized;
   }
 
+  /// Estilo de texto estándar de todos los botones de la app.
+  static const TextStyle _labelStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+  );
+
   Widget _buildChild(Color spinnerColor) {
     if (isLoading) {
       return SizedBox(
@@ -174,14 +186,14 @@ class AppButton extends StatelessWidget {
         child: CircularProgressIndicator(strokeWidth: 2.5, color: spinnerColor),
       );
     }
-    if (icon == null) return Text(label);
+    if (icon == null) return Text(label, style: _labelStyle);
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(icon, size: 20),
         const SizedBox(width: 8),
-        Text(label),
+        Text(label, style: _labelStyle),
       ],
     );
   }

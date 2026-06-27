@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -193,6 +194,16 @@ class _AceptarInvitacionGranjaPageState
     }
   }
 
+  /// Navega a [ruta]. Si esta vista está montada dentro de un bottom sheet
+  /// modal, primero lo cierra para no dejarlo abierto sobre la nueva pantalla.
+  void _irA(String ruta) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
+    context.go(ruta);
+  }
+
   void _volverAIngresar() {
     setState(() {
       _granjaNombre = null;
@@ -244,44 +255,35 @@ class _AceptarInvitacionGranjaPageState
   // VISTA 1: Ingreso de código
   // ============================================================================
   Widget _buildIngresoCodigoView(ThemeData theme, dynamic currentUser) {
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(S.of(context).farmJoinFarm),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-      ),
-      body: FadeTransition(
+    return _SheetShell(
+      title: S.of(context).farmJoinFarm,
+      child: FadeTransition(
         opacity: _fadeAnimation,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Header
-                      _buildHeader(theme),
-                      const SizedBox(height: AppSpacing.xl),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  _buildHeader(theme),
+                  const SizedBox(height: AppSpacing.xl),
 
-                      // Campo de código
-                      _buildCodigoInput(theme),
-                    ],
-                  ),
-                ),
+                  // Campo de código
+                  _buildCodigoInput(theme),
+                ],
               ),
             ),
 
-            // Botón fijo en la parte inferior
+            // Botón inferior
             _buildBottomButton(
               theme,
               onPressed: _isVerifying ? null : _verificarCodigo,
               isLoading: _isVerifying,
               label: S.of(context).farmVerifyCode,
-              icon: Icons.search_rounded,
             ),
           ],
         ),
@@ -293,22 +295,11 @@ class _AceptarInvitacionGranjaPageState
   // VISTA 2: Confirmación
   // ============================================================================
   Widget _buildConfirmacionView(ThemeData theme, dynamic currentUser) {
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(S.of(context).farmConfirmInvitation),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _volverAIngresar,
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+    return _SheetShell(
+      title: S.of(context).farmConfirmInvitation,
+      leadingBack: _volverAIngresar,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -480,29 +471,8 @@ class _AceptarInvitacionGranjaPageState
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                ],
-              ),
-            ),
-          ),
 
-          // Botones fijos en la parte inferior
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+                  // Botones de acción
                   AppButton.primary(
                     label: S.of(context).farmJoinTheFarm,
                     icon: Icons.check_circle_rounded,
@@ -521,9 +491,6 @@ class _AceptarInvitacionGranjaPageState
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -532,12 +499,10 @@ class _AceptarInvitacionGranjaPageState
   // VISTA 3: Éxito
   // ============================================================================
   Widget _buildSuccessView(ThemeData theme) {
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
+    return _SheetShell(
+      title: S.of(context).farmWelcome,
+      child: Padding(
+            padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -609,7 +574,7 @@ class _AceptarInvitacionGranjaPageState
                 AppButton.primary(
                   label: S.of(context).farmViewMyFarms,
                   icon: Icons.agriculture_rounded,
-                  onPressed: () => context.go(AppRoutes.granjas),
+                  onPressed: () => _irA(AppRoutes.granjasHome),
                   expanded: true,
                   height: 56,
                   backgroundColor: AppColors.info,
@@ -618,12 +583,10 @@ class _AceptarInvitacionGranjaPageState
                 const SizedBox(height: AppSpacing.md),
                 AppButton.text(
                   label: S.of(context).commonGoToHome,
-                  onPressed: () => context.go(AppRoutes.home),
+                  onPressed: () => _irA(AppRoutes.home),
                 ),
               ],
             ),
-          ),
-        ),
       ),
     );
   }
@@ -754,52 +717,50 @@ class _AceptarInvitacionGranjaPageState
     required VoidCallback? onPressed,
     required bool isLoading,
     required String label,
-    required IconData icon,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: SizedBox(
           width: double.infinity,
           height: 56,
-          child: FilledButton.icon(
+          child: FilledButton(
             onPressed: onPressed,
-            icon: isLoading
-                ? const SizedBox(
-                    width: AppSpacing.lg,
-                    height: AppSpacing.lg,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.white,
-                    ),
-                  )
-                : Icon(icon),
-            label: Text(
-              isLoading ? S.of(context).commonVerifying : label,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.white,
-              ),
-            ),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.info,
               foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
             ),
+            child: isLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: AppSpacing.lg,
+                        height: AppSpacing.lg,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      AppSpacing.hGapSm,
+                      Text(
+                        S.of(context).commonVerifying,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    label,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
+                  ),
           ),
         ),
-      ),
     );
   }
 
@@ -849,6 +810,102 @@ class _AceptarInvitacionGranjaPageState
 // ============================================================================
 // WIDGETS AUXILIARES PRIVADOS
 // ============================================================================
+
+/// Contenedor con el diseño estándar de bottom sheet de la app: superficie
+/// redondeada, handle arriba, fila de título con botón de cerrar, y el [child]
+/// debajo. El alto se ajusta al contenido (sin abarcar toda la pantalla),
+/// acotado al 90% de la pantalla con scroll si hace falta.
+class _SheetShell extends StatelessWidget {
+  const _SheetShell({required this.title, this.leadingBack, required this.child});
+
+  final String title;
+
+  /// Si se provee, se muestra una flecha de "volver" a la izquierda del título
+  /// que ejecuta este callback (en vez de solo el botón de cerrar a la derecha).
+  final VoidCallback? leadingBack;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return FormTextScale(
+      factor: 1.2,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xxl),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Container(
+                  margin: const EdgeInsets.only(top: AppSpacing.md),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.outlineVariant,
+                    borderRadius: AppRadius.allFull,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                // Encabezado: título + cerrar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Row(
+                    children: [
+                      if (leadingBack != null) ...[
+                        IconButton(
+                          onPressed: leadingBack,
+                          icon: const Icon(Icons.arrow_back),
+                          color: colorScheme.onSurfaceVariant,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        AppSpacing.hGapSm,
+                      ],
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+                // Contenido (scroll si excede el alto máximo)
+                Flexible(
+                  child: SingleChildScrollView(child: child),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _DetailRow extends StatelessWidget {
   const _DetailRow({required this.label, required this.value, this.color});

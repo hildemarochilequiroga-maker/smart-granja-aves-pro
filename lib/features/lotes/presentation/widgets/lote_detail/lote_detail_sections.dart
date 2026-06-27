@@ -15,6 +15,7 @@ import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/widgets/app_progress_bar.dart';
 import '../../../../../core/widgets/app_stat_item.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/presentation/widgets/form_widgets.dart';
 import 'lote_detail_utils.dart';
 
 // ==================== HEADER ====================
@@ -147,54 +148,10 @@ class LoteAlertaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!lote.requiereAtencion) return const SizedBox.shrink();
 
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.1),
-        borderRadius: AppRadius.allSm,
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.2),
-              borderRadius: AppRadius.allSm,
-            ),
-            child: const Icon(
-              Icons.warning_amber_rounded,
-              color: AppColors.warning,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  S.of(context).batchRequiresAttention,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.warning,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxxs),
-                Text(
-                  S.of(context).batchNeedsReview,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return FormInfoCard(
+      type: InfoCardType.warning,
+      title: S.of(context).batchRequiresAttention,
+      description: S.of(context).batchNeedsReview,
     );
   }
 }
@@ -1095,7 +1052,7 @@ class _InfoRow extends StatelessWidget {
             color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: Icon(icon, color: color, size: 23),
         ),
         const SizedBox(width: 14),
         Expanded(

@@ -1,7 +1,7 @@
-/// Página de lista de ventas de productos
+﻿/// PÃ¡gina de lista de ventas de productos
 ///
 /// Muestra todas las ventas registradas con:
-/// - Card de resumen con total y estadísticas
+/// - Card de resumen con total y estadÃ­sticas
 /// - Filtros por tipo de producto
 /// - Cards modernas con acciones
 /// - Pull-to-refresh
@@ -22,6 +22,8 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
@@ -36,11 +38,12 @@ import '../../application/providers/ventas_provider.dart';
 import '../../domain/entities/venta_producto.dart';
 import '../../domain/enums/tipo_producto_venta.dart';
 import '../../domain/enums/estado_venta.dart';
+import '../widgets/venta_visuals.dart';
 import '../widgets/ventas_list/venta_list_card.dart';
 import '../widgets/ventas_list/ventas_error_state.dart';
 import '../widgets/ventas_list/ventas_resumen_card.dart';
 
-/// Página principal de gestión de ventas
+/// PÃ¡gina principal de gestiÃ³n de ventas
 class VentasListPage extends ConsumerStatefulWidget {
   const VentasListPage({super.key, this.loteId, this.granjaId});
 
@@ -113,27 +116,28 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
             final filteredVentas = _filterVentas(ventas);
 
             if (ventas.isEmpty) {
-              return AppEmptyState(
-                icon: Icons.storefront_outlined,
-                title: S.of(context).ventasEmpty,
-                description: S.of(context).ventasEmptyDescription,
-                actionLabel: S.of(context).ventasNewSale,
-                actionIcon: Icons.add_rounded,
-                onAction: () => _navegarARegistrar(),
+              return FormTextScale(
+                child: AppEmptyState(
+                  icon: Icons.storefront_outlined,
+                  title: S.of(context).ventasEmpty,
+                  description: S.of(context).ventasEmptyDescription,
+                ),
               );
             }
 
             if (filteredVentas.isEmpty) {
-              return AppEmptyState(
-                hasFilters: true,
-                filterTitle: S.of(context).ventasNoResults,
-                filterDescription: S.of(context).ventasNoFilterResults,
-                onClearFilters: () {
-                  setState(() {
-                    _tipoFilter = null;
-                    _estadoFilter = null;
-                  });
-                },
+              return FormTextScale(
+                child: AppEmptyState(
+                  hasFilters: true,
+                  filterTitle: S.of(context).ventasNoResults,
+                  filterDescription: S.of(context).ventasNoFilterResults,
+                  onClearFilters: () {
+                    setState(() {
+                      _tipoFilter = null;
+                      _estadoFilter = null;
+                    });
+                  },
+                ),
               );
             }
 
@@ -141,10 +145,7 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
               slivers: [
                 // Resumen de ventas
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 8),
-                    child: VentasResumenCard(ventas: ventas),
-                  ),
+                  child: VentasResumenCard(ventas: ventas),
                 ),
 
                 // Chips de filtro
@@ -213,6 +214,7 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                         ),
                         child: VentaListCard(
                           venta: venta,
+                          index: index,
                           onTap: () => _showDetail(venta),
                           onEliminar: () => _confirmarEliminar(venta),
                         ),
@@ -250,10 +252,10 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
           : FloatingActionButton.extended(
               heroTag: 'ventas_list_fab',
               onPressed: () => _navegarARegistrar(),
-              icon: const Icon(Icons.add_rounded),
+              icon: const Icon(Icons.add_rounded, size: 26),
               label: Text(
                 S.of(context).ventasNewSale,
-                style: theme.textTheme.labelLarge?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -284,13 +286,13 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
 
   void _showDetail(VentaProducto venta) {
     HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    showAppBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      scrollable: true,
       builder: (context) => _VentaDetailSheet(
         venta: venta,
-        tipoColor: _getTipoColor(venta.tipoProducto),
+        tipoColor: venta.tipoProducto.color,
         onEditar: venta.estado.esModificable
             ? () {
                 Navigator.pop(context);
@@ -360,53 +362,17 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final hayFiltros = tempTipoFilter != null || tempEstadoFilter != null;
 
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
+          return AppBottomSheetScaffold(
+            title: S.of(context).ventasFilterTitle,
+            scrollable: true,
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título (sin icono)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      S.of(context).ventasFilterTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
                   // Contenido scrolleable
                   Flexible(
                     child: SingleChildScrollView(
@@ -414,14 +380,14 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Sección: Tipo de producto
+                          // SecciÃ³n: Tipo de producto
                           AppSectionHeader(
                             title: S.of(context).ventasProductType,
                             padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
 
-                          // Opción "Todos los tipos"
+                          // OpciÃ³n "Todos los tipos"
                           AspectRatio(
                             aspectRatio: 4.8,
                             child: _buildTipoOption(
@@ -453,7 +419,7 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                                 theme: theme,
                                 label: tipo.displayName,
                                 isSelected: tempTipoFilter == tipo,
-                                color: _getTipoColor(tipo),
+                                color: tipo.color,
                                 onTap: () {
                                   setModalState(() {
                                     tempTipoFilter = tipo;
@@ -465,14 +431,14 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
 
                           AppSpacing.gapXl,
 
-                          // Sección: Estado
+                          // SecciÃ³n: Estado
                           AppSectionHeader(
                             title: S.of(context).ventaFilterSaleState,
                             padding: EdgeInsets.zero,
                           ),
                           AppSpacing.gapMd,
 
-                          // Opción "Todos los estados"
+                          // OpciÃ³n "Todos los estados"
                           AspectRatio(
                             aspectRatio: 4.8,
                             child: _buildTipoOption(
@@ -564,7 +530,7 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                     ),
                   ),
 
-                  // Botón aplicar
+                  // BotÃ³n aplicar / cerrar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                     child: AppButton.primary(
@@ -580,13 +546,14 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
                         Navigator.pop(context);
                       },
                       expanded: true,
-                      backgroundColor: AppColors.success,
+                      backgroundColor: hayFiltros
+                          ? AppColors.warning
+                          : AppColors.error,
                       foregroundColor: AppColors.white,
                     ),
                   ),
                 ],
               ),
-            ),
           );
         },
       ),
@@ -648,21 +615,6 @@ class _VentasListPageState extends ConsumerState<VentasListPage> {
     );
   }
 
-  Color _getTipoColor(TipoProductoVenta tipo) {
-    switch (tipo) {
-      case TipoProductoVenta.avesVivas:
-        return AppColors.warning;
-      case TipoProductoVenta.avesFaenadas:
-        return AppColors.brown;
-      case TipoProductoVenta.avesDescarte:
-        return AppColors.outline;
-      case TipoProductoVenta.huevos:
-        return AppColors.warning;
-      case TipoProductoVenta.pollinaza:
-        return AppColors.success;
-    }
-  }
-
   void _mostrarSnackBar(String mensaje, {required bool esExito}) {
     if (esExito) {
       AppSnackBar.success(context, message: mensaje);
@@ -700,45 +652,38 @@ class _VentaDetailSheet extends StatelessWidget {
     final horaFormat = DateFormat('HH:mm', locale).format(venta.fechaVenta);
 
     // Estado
-    final estadoColor = _parseColor(venta.estado.colorHex);
+    final estadoColor = venta.estado.color;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.paddingOf(context).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
-              // Header con fecha y badge de total
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          AppSpacing.sm,
+          20,
+          MediaQuery.paddingOf(context).bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              // Header con icono del tipo, fecha y badge de total
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: tipoColor.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.allMd,
+                    ),
+                    child: Icon(
+                      venta.tipoProducto.icon,
+                      color: tipoColor,
+                      size: 24,
+                    ),
+                  ),
+                  AppSpacing.hGapMd,
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,7 +726,7 @@ class _VentaDetailSheet extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.lg),
 
-              // Información en formato tabla
+              // InformaciÃ³n en formato tabla
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -824,7 +769,7 @@ class _VentaDetailSheet extends StatelessWidget {
                         venta.cliente.contacto,
                       ),
 
-                    // Detalles según tipo de producto
+                    // Detalles segÃºn tipo de producto
                     ..._buildProductDetails(context, theme),
 
                     if (venta.descuentoPorcentaje > 0) ...[
@@ -879,7 +824,7 @@ class _VentaDetailSheet extends StatelessWidget {
                 ),
               ),
 
-              // Botones de acción
+              // Botones de acciÃ³n
               if (onEditar != null || onEliminar != null) ...[
                 const SizedBox(height: AppSpacing.lg),
                 Row(
@@ -929,7 +874,6 @@ class _VentaDetailSheet extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -1048,13 +992,6 @@ class _VentaDetailSheet extends StatelessWidget {
           ),
         ];
     }
-  }
-
-  Color _parseColor(String hex) {
-    final buffer = StringBuffer();
-    if (hex.length == 7) buffer.write('FF');
-    buffer.write(hex.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
   }
 
   Widget _buildTableRow(

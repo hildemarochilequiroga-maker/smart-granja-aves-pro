@@ -200,6 +200,7 @@ class CostoGasto extends Equatable {
     String? observaciones,
     String? registradoPor,
     DateTime? fechaRegistro,
+    bool clearLoteId = false,
   }) {
     return CostoGasto(
       id: id ?? this.id,
@@ -211,7 +212,7 @@ class CostoGasto extends Equatable {
       proveedor: proveedor ?? this.proveedor,
       categoria: categoria ?? this.categoria,
       centroCosto: centroCosto ?? this.centroCosto,
-      loteId: loteId ?? this.loteId,
+      loteId: clearLoteId ? null : (loteId ?? this.loteId),
       casaId: casaId ?? this.casaId,
       lotesAsignados: lotesAsignados ?? this.lotesAsignados,
       requiereAprobacion: requiereAprobacion ?? this.requiereAprobacion,

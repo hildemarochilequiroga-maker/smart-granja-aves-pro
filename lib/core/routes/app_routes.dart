@@ -114,6 +114,8 @@ abstract final class AppRoutes {
       '/granjas/:granjaId/lotes/:id/guias-manejo';
   static const String loteGuiaDiaria =
       '/granjas/:granjaId/lotes/:id/guia-diaria';
+  static const String loteCostoPorAve =
+      '/granjas/:granjaId/lotes/:id/costo-por-ave';
 
   static String lotesPorGalpon(String granjaId, String galponId) =>
       '/granjas/$granjaId/galpones/$galponId/lotes';
@@ -169,6 +171,8 @@ abstract final class AppRoutes {
       '/granjas/$granjaId/lotes/$loteId/guias-manejo';
   static String loteGuiaDiariaById(String granjaId, String loteId) =>
       '/granjas/$granjaId/lotes/$loteId/guia-diaria';
+  static String loteCostoPorAveById(String granjaId, String loteId) =>
+      '/granjas/$granjaId/lotes/$loteId/costo-por-ave';
 
   // ============================================================================
   // SALUD
@@ -248,6 +252,11 @@ abstract final class AppRoutes {
   static String costoDetalleById(String id) => '/costos/$id';
   static String costoRegistrarConLote(String loteId, String granjaId) =>
       '/costos/registrar?loteId=$loteId&granjaId=$granjaId';
+  static String costoRegistrarConTipo(
+    String loteId,
+    String granjaId,
+    String tipo,
+  ) => '/costos/registrar?loteId=$loteId&granjaId=$granjaId&tipo=$tipo';
 
   // ============================================================================
   // VENTAS
@@ -294,7 +303,6 @@ abstract final class AppRoutes {
   // CONFIGURACIÓN Y PERFIL
   // ============================================================================
   static const String configuracion = '/configuracion';
-  static const String editarPerfil = '/perfil/editar';
   static const String notificacionesConfig = '/configuracion/notificaciones';
 
   // ============================================================================

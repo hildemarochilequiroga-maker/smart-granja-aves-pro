@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../core/constants/app_assets.dart';
+import '../../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../../core/theme/app_animations.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/widgets/app_action_sheet.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_status_badge.dart';
 import '../../../../../core/widgets/app_image.dart';
@@ -21,6 +23,7 @@ class GranjaListCard extends StatelessWidget {
   const GranjaListCard({
     super.key,
     required this.granja,
+    this.index = 0,
     this.onDetalles,
     this.onEdit,
     this.onCambiarEstado,
@@ -29,6 +32,10 @@ class GranjaListCard extends StatelessWidget {
   });
 
   final Granja granja;
+
+  /// Posición en la lista — usada para escalonar la animación de entrada.
+  final int index;
+
   final VoidCallback? onDetalles;
   final VoidCallback? onEdit;
   final VoidCallback? onCambiarEstado;
@@ -43,51 +50,53 @@ class GranjaListCard extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isSmallScreen = size.width < 360;
 
-    return Semantics(
-      button: true,
-      label: l.farmSemantics(granja.nombre, statusInfo.text),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: AppRadius.allMd,
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: AppRadius.allMd,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header: Nombre + Dirección + Estado
-                _buildHeader(context, theme, statusInfo, isSmallScreen),
-                AppSpacing.gapBase,
+    return FormTextScale(
+      child: Semantics(
+        button: true,
+        label: l.farmSemantics(granja.nombre, statusInfo.text),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: AppRadius.allMd,
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: AppRadius.allMd,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header: Nombre + Dirección + Estado
+                  _buildHeader(context, theme, statusInfo, isSmallScreen),
+                  AppSpacing.gapBase,
 
-                // Imagen ilustrativa
-                _buildImageSection(
-                  theme,
-                  statusInfo,
-                  size.width,
-                  isSmallScreen,
-                ),
-                AppSpacing.gapBase,
+                  // Imagen ilustrativa
+                  _buildImageSection(
+                    theme,
+                    statusInfo,
+                    size.width,
+                    isSmallScreen,
+                  ),
+                  AppSpacing.gapBase,
 
-                // Botón de acción principal
-                _buildActionButton(context, theme),
-              ],
+                  // Botón de acción principal
+                  _buildActionButton(context, theme),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    ).cardEntrance();
+      ).staggeredEntrance(index: index),
+    );
   }
 
   Widget _buildHeader(
@@ -138,85 +147,40 @@ class GranjaListCard extends StatelessWidget {
   }
 
   Widget _buildMenuButton(BuildContext context, ThemeData theme) {
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(
         Icons.more_vert,
         color: theme.colorScheme.onSurfaceVariant,
         size: 22,
       ),
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
-      color: theme.colorScheme.surface,
-      elevation: 3,
-      offset: const Offset(0, 40),
       tooltip: S.of(context).commonMoreOptions,
-      onSelected: (value) {
-        switch (value) {
-          case 'detalles':
-            onDetalles?.call();
-            break;
-          case 'edit':
-            onEdit?.call();
-            break;
-          case 'cambiar_estado':
-            onCambiarEstado?.call();
-            break;
-          case 'eliminar':
-            onEliminar?.call();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        // Detalles
-        PopupMenuItem(
-          value: 'detalles',
-          height: 48,
-          child: Text(
-            S.of(context).commonDetails,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+      onPressed: () => showAppActionSheet(
+        context: context,
+        title: granja.nombre,
+        actions: [
+          AppActionSheetItem(
+            label: S.of(context).commonDetails,
+            icon: Icons.info_outline,
+            onTap: onDetalles,
           ),
-        ),
-        // Editar
-        PopupMenuItem(
-          value: 'edit',
-          height: 48,
-          child: Text(
-            S.of(context).commonEdit,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).commonEdit,
+            icon: Icons.edit_outlined,
+            onTap: onEdit,
           ),
-        ),
-        // Cambiar estado
-        PopupMenuItem(
-          value: 'cambiar_estado',
-          height: 48,
-          child: Text(
-            S.of(context).commonChangeStatus,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).commonChangeStatus,
+            icon: Icons.swap_horiz_rounded,
+            onTap: onCambiarEstado,
           ),
-        ),
-        // Separador
-        const PopupMenuDivider(height: 8),
-        // Eliminar
-        PopupMenuItem(
-          value: 'eliminar',
-          height: 48,
-          child: Text(
-            S.of(context).commonDelete,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.error,
-              fontWeight: FontWeight.w500,
-            ),
+          AppActionSheetItem(
+            label: S.of(context).commonDelete,
+            icon: Icons.delete_outline,
+            isDestructive: true,
+            onTap: onEliminar,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

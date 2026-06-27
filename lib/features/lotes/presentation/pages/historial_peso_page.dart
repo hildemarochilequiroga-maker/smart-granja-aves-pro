@@ -16,7 +16,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../widgets/historial/historial_components.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_image.dart';
@@ -66,97 +66,99 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
     final statsAsync = ref.watch(registrosPesoStatsProvider(widget.lote.id));
 
     // Solo el body, sin Scaffold ni AppBar (el dashboard ya lo proporciona)
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      color: theme.colorScheme.primary,
-      child: CustomScrollView(
-        slivers: [
-          const SliverPadding(padding: EdgeInsets.only(top: 8)),
-          // Estad�sticas con tarjeta de gr�ficos
-          SliverToBoxAdapter(
-            child: statsAsync.when(
-              data: (stats) => _buildEstadisticasSection(stats, theme),
-              loading: () => const HistorialStatsLoading(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // Indicador de filtros activos (debajo de estad�sticas)
-          if (hayFiltrosActivos)
+    return FormTextScale(
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: theme.colorScheme.primary,
+        child: CustomScrollView(
+          slivers: [
+            const SliverPadding(padding: EdgeInsets.only(top: 8)),
+            // Estad�sticas con tarjeta de gr�ficos
             SliverToBoxAdapter(
-              child: HistorialFiltrosActivosChip(
-                label: etiquetaFiltroActual,
-                onClear: _limpiarFiltros,
+              child: statsAsync.when(
+                data: (stats) => _buildEstadisticasSection(stats, theme),
+                loading: () => const HistorialStatsLoading(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
             ),
 
-          // Divider visual
-          const SliverToBoxAdapter(child: AppSpacing.gapSm),
-          SliverToBoxAdapter(
-            child: HistorialRegistrosHeader(
-              title: S.of(context).historialWeighingHistory,
-              ordenDesc: _ordenDesc,
-              onToggleOrden: () {
-                HapticFeedback.selectionClick();
-                setState(() => _ordenDesc = !_ordenDesc);
-              },
+            // Indicador de filtros activos (debajo de estad�sticas)
+            if (hayFiltrosActivos)
+              SliverToBoxAdapter(
+                child: HistorialFiltrosActivosChip(
+                  label: etiquetaFiltroActual,
+                  onClear: _limpiarFiltros,
+                ),
+              ),
+
+            // Divider visual
+            const SliverToBoxAdapter(child: AppSpacing.gapSm),
+            SliverToBoxAdapter(
+              child: HistorialRegistrosHeader(
+                title: S.of(context).historialWeighingHistory,
+                ordenDesc: _ordenDesc,
+                onToggleOrden: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _ordenDesc = !_ordenDesc);
+                },
+              ),
             ),
-          ),
 
-          // Lista de registros (lazy-loaded con SliverList)
-          registrosAsync.when(
-            data: (registros) {
-              final lista = _filtrarYOrdenar(registros);
+            // Lista de registros (lazy-loaded con SliverList)
+            registrosAsync.when(
+              data: (registros) {
+                final lista = _filtrarYOrdenar(registros);
 
-              if (lista.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: _buildEmptyState(theme, registros.isEmpty),
+                if (lista.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: _buildEmptyState(theme, registros.isEmpty),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index < lista.length - 1 ? 12 : 0,
+                        ),
+                        child: _buildAnimatedRegistroCard(
+                          lista[index],
+                          theme,
+                          index,
+                        ),
+                      ),
+                      childCount: lista.length,
+                    ),
+                  ),
                 );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index < lista.length - 1 ? 12 : 0,
-                      ),
-                      child: _buildAnimatedRegistroCard(
-                        lista[index],
-                        theme,
-                        index,
-                      ),
-                    ),
-                    childCount: lista.length,
-                  ),
-                ),
-              );
-            },
-            loading: () => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: List.generate(
-                    5,
-                    (index) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: SkeletonListCard(
-                        hasIcon: true,
-                        hasSubtitle: true,
-                        hasBadge: true,
-                        hasFooter: false,
+              },
+              loading: () => SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: List.generate(
+                      5,
+                      (index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: SkeletonListCard(
+                          hasIcon: true,
+                          hasSubtitle: true,
+                          hasBadge: true,
+                          hasFooter: false,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              error: (error, _) =>
+                  SliverToBoxAdapter(child: _buildErrorState(theme, error)),
             ),
-            error: (error, _) =>
-                SliverToBoxAdapter(child: _buildErrorState(theme, error)),
-          ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-        ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+          ],
+        ),
       ),
     );
   }
@@ -190,58 +192,32 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
     final gdp = stats['gananciaDialiaPromedio'] as double? ?? 0;
     final cv = stats['coeficienteVariacionPromedio'] as double? ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Grid de estad�sticas 2x2
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: totalRegistros.toString(),
-                  subtitle: S.of(context).historialRecords,
-                  color: AppColors.info,
-                ),
-              ),
-              AppSpacing.hGapMd,
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${ultimoPeso.toStringAsFixed(2)} kg',
-                  subtitle: S.of(context).historialLastWeight,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapMd,
-          Row(
-            children: [
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${gdp.toStringAsFixed(1)} g',
-                  subtitle: S.of(context).historialDailyGainStat,
-                  color: gdp >= 0 ? AppColors.success : AppColors.error,
-                  isHighlight: gdp < 0,
-                ),
-              ),
-              AppSpacing.hGapMd,
-              Expanded(
-                child: HistorialStatCard(
-                  value: '${cv.toStringAsFixed(1)}%',
-                  subtitle: S.of(context).historialUniformityCV,
-                  color: cv <= 10 ? AppColors.success : AppColors.warning,
-                  isHighlight: cv > 10,
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapMd,
-          // Tarjeta Ver Gr�ficos (debajo de KPIs)
-          HistorialGraficosCard(onTap: _navegarAGraficos),
-        ],
-      ),
+    return HistorialStatsGrid(
+      onVerGraficos: _navegarAGraficos,
+      cards: [
+        HistorialStatCard(
+          value: totalRegistros.toString(),
+          subtitle: S.of(context).historialRecords,
+          color: AppColors.info,
+        ),
+        HistorialStatCard(
+          value: '${ultimoPeso.toStringAsFixed(2)} kg',
+          subtitle: S.of(context).historialLastWeight,
+          color: theme.colorScheme.primary,
+        ),
+        HistorialStatCard(
+          value: '${gdp.toStringAsFixed(1)} g',
+          subtitle: S.of(context).historialDailyGainStat,
+          color: gdp >= 0 ? AppColors.success : AppColors.error,
+          isHighlight: gdp < 0,
+        ),
+        HistorialStatCard(
+          value: '${cv.toStringAsFixed(1)}%',
+          subtitle: S.of(context).historialUniformityCV,
+          color: cv <= 10 ? AppColors.success : AppColors.warning,
+          isHighlight: cv > 10,
+        ),
+      ],
     );
   }
 
@@ -418,279 +394,66 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
 
   /// M�todo p�blico para mostrar el men� de filtros (accesible desde el dashboard)
   void showFilterMenu() {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    HistorialFiltrosBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final theme = Theme.of(context);
-
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      S.of(context).batchFilterRecords,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
-                  // Contenido
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Per�odo
-                          AppSectionHeader(
-                            title: S.of(context).batchTimePeriod,
-                            padding: EdgeInsets.zero,
-                          ),
-                          AppSpacing.gapMd,
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchAllTime,
-                                  subtitle: S.of(context).batchNoTimeLimit,
-                                  icon: Icons.all_inclusive_rounded,
-                                  isSelected: _filtro == 'todos',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = 'todos');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays7,
-                                  subtitle: S.of(context).batchLastWeek,
-                                  icon: Icons.today_rounded,
-                                  isSelected: _filtro == '7d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '7d');
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildPeriodOption(
-                                  theme: theme,
-                                  label: S.of(context).batchDays30,
-                                  subtitle: S.of(context).batchLastMonth,
-                                  icon: Icons.date_range_rounded,
-                                  isSelected: _filtro == '30d',
-                                  onTap: () {
-                                    setModalState(() {});
-                                    setState(() => _filtro = '30d');
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          AppSpacing.gapXl,
-
-                          // M�todo de pesaje
-                          AppSectionHeader(
-                            title: S.of(context).historialFilterWeighingMethod,
-                            padding: EdgeInsets.zero,
-                          ),
-                          AppSpacing.gapMd,
-                          AspectRatio(
-                            aspectRatio: 4.8,
-                            child: _buildMetodoOption(
-                              theme: theme,
-                              label: S.of(context).historialAllMethods,
-                              isSelected: _metodoFiltro == null,
-                              color: theme.colorScheme.primary,
-                              onTap: () {
-                                setModalState(() {});
-                                setState(() => _metodoFiltro = null);
-                              },
-                            ),
-                          ),
-                          AppSpacing.gapSm,
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 8,
-                            crossAxisSpacing: 8,
-                            childAspectRatio: 2.4,
-                            children: MetodoPesaje.values.map((metodo) {
-                              return _buildMetodoOption(
-                                theme: theme,
-                                label: metodo.localizedDescripcion(
-                                  S.of(context),
-                                ),
-                                subtitle: metodo.localizedDescripcionDetallada(
-                                  S.of(context),
-                                ),
-                                isSelected: _metodoFiltro == metodo,
-                                color: metodo.color,
-                                onTap: () {
-                                  setModalState(() {});
-                                  setState(() => _metodoFiltro = metodo);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Bot�n aplicar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                    child: AppButton.primary(
-                      label: hayFiltrosActivos
-                          ? S.of(context).commonApplyFilters
-                          : S.of(context).commonClose,
-                      onPressed: () => Navigator.pop(context),
-                      expanded: true,
-                      backgroundColor: AppColors.warning,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPeriodOption({
-    required ThemeData theme,
-    required String label,
-    required String subtitle,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return HistorialPeriodOption(
-      label: label,
-      subtitle: subtitle,
-      isSelected: isSelected,
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildMetodoOption({
-    required ThemeData theme,
-    required String label,
-    String? subtitle,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.info.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.info.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: 1.5,
+      hasActiveFilters: () => hayFiltrosActivos,
+      sectionsBuilder: (setModalState) {
+        final theme = Theme.of(context);
+        return [
+          // Período
+          HistorialPeriodoFilterSection(
+            selected: _filtro,
+            onSelect: (value) {
+              setModalState(() {});
+              setState(() => _filtro = value);
+            },
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+
+          AppSpacing.gapXl,
+
+          // Método de pesaje
+          AppSectionHeader(
+            title: S.of(context).historialFilterWeighingMethod,
+            padding: EdgeInsets.zero,
+          ),
+          AppSpacing.gapMd,
+          AspectRatio(
+            aspectRatio: 4.8,
+            child: HistorialFiltroOption(
+              label: S.of(context).historialAllMethods,
+              isSelected: _metodoFiltro == null,
+              color: theme.colorScheme.primary,
+              onTap: () {
+                setModalState(() {});
+                setState(() => _metodoFiltro = null);
+              },
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.info
-                          : theme.colorScheme.onSurface,
+          ),
+          AppSpacing.gapSm,
+          // Una columna full-width: los métodos tienen nombre + descripción
+          // largos, así caben completos sin recortarse.
+          Column(
+            children: [
+              for (final metodo in MetodoPesaje.values)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: HistorialFiltroOption(
+                    label: metodo.localizedDescripcion(S.of(context)),
+                    subtitle: metodo.localizedDescripcionDetallada(
+                      S.of(context),
                     ),
-                    overflow: TextOverflow.ellipsis,
+                    isSelected: _metodoFiltro == metodo,
+                    color: metodo.color,
+                    onTap: () {
+                      setModalState(() {});
+                      setState(() => _metodoFiltro = metodo);
+                    },
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
+            ],
+          ),
+        ];
+      },
     );
   }
 
@@ -751,6 +514,7 @@ class HistorialPesoPageState extends ConsumerState<HistorialPesoPage> {
   Future<void> _onRefresh() async {
     ref.invalidate(registrosPesoStreamProvider(widget.lote.id));
     ref.invalidate(registrosPesoStatsProvider(widget.lote.id));
+    await ref.read(registrosPesoStreamProvider(widget.lote.id).future);
   }
 
   void _navegarAGraficos() {
@@ -793,219 +557,223 @@ class _DetailSheet extends StatelessWidget {
     final horaFormat = DateFormat('HH:mm', locale).format(registro.fecha);
     final semanasVida = (registro.edadDias / 7).ceil();
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.paddingOf(context).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
+    return FormTextScale(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              MediaQuery.paddingOf(context).bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              AppSpacing.gapLg,
+                AppSpacing.gapLg,
 
-              // Header con peso y fecha
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fechaFormat,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                // Header con peso y fecha
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fechaFormat,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          horaFormat,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          const SizedBox(height: 2),
+                          Text(
+                            horaFormat,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning,
+                        borderRadius: AppRadius.allSm,
+                      ),
+                      child: Text(
+                        '${(registro.pesoPromedio / 1000).toStringAsFixed(2)} kg',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                AppSpacing.gapLg,
+
+                // Informaci�n en formato tabla
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning,
-                      borderRadius: AppRadius.allSm,
-                    ),
-                    child: Text(
-                      '${(registro.pesoPromedio / 1000).toStringAsFixed(2)} kg',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
+                  child: Column(
+                    children: [
+                      _buildTableRow(
+                        theme,
+                        l.detailWeighingMethod,
+                        registro.metodoPesaje.localizedDescripcion(
+                          S.of(context),
+                        ),
+                        valueColor: metodColor,
                       ),
+                      _buildTableRow(
+                        theme,
+                        l.detailBirdAge,
+                        l.detailDaysWeek(
+                          registro.edadDias.toString(),
+                          semanasVida.toString(),
+                        ),
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailBirdsWeighed,
+                        '${registro.cantidadAvesPesadas}',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailAvgWeight,
+                        '${(registro.pesoPromedio / 1000).toStringAsFixed(2)} kg (${registro.pesoPromedio.toStringAsFixed(0)} g)',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailMinWeight,
+                        '${(registro.pesoMinimo / 1000).toStringAsFixed(2)} kg',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailMaxWeight,
+                        '${(registro.pesoMaximo / 1000).toStringAsFixed(2)} kg',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailTotalWeight,
+                        '${(registro.pesoTotal / 1000).toStringAsFixed(2)} kg',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailDailyGain,
+                        '${registro.gananciaDialiaPromedio.toStringAsFixed(1)} g/d�a',
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailCvCoefficient,
+                        '${registro.coeficienteVariacion.toStringAsFixed(1)}%',
+                        valueColor: registro.tieneBuenaUniformidad
+                            ? AppColors.success
+                            : AppColors.warning,
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailUniformity,
+                        registro.tieneBuenaUniformidad
+                            ? l.detailUniformityGood
+                            : l.detailUniformityRegular,
+                        valueColor: registro.tieneBuenaUniformidad
+                            ? AppColors.success
+                            : AppColors.warning,
+                      ),
+                      _buildTableRow(
+                        theme,
+                        l.detailRegisteredBy,
+                        registro.nombreUsuario,
+                        isLast: !(registro.observaciones?.isNotEmpty ?? false),
+                      ),
+                      if (registro.observaciones?.isNotEmpty ?? false)
+                        _buildTableRow(
+                          theme,
+                          l.detailObservations,
+                          registro.observaciones!,
+                          isLast: true,
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Fotos de evidencia
+                if (registro.fotosUrls.isNotEmpty) ...[
+                  AppSpacing.gapBase,
+                  Text(
+                    l.detailPhotoEvidence,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  AppSpacing.gapSm,
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: registro.fotosUrls.length,
+                      separatorBuilder: (_, __) => AppSpacing.hGapSm,
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: AppRadius.allSm,
+                          child: AppImage(
+                            url: registro.fotosUrls[index],
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorWidget: Container(
+                              width: 100,
+                              height: 100,
+                              color: AppColors.surfaceVariant,
+                              child: const Icon(
+                                Icons.broken_image_rounded,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
-              ),
 
-              AppSpacing.gapLg,
-
-              // Informaci�n en formato tabla
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLowest,
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildTableRow(
-                      theme,
-                      l.detailWeighingMethod,
-                      registro.metodoPesaje.localizedDescripcion(S.of(context)),
-                      valueColor: metodColor,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBirdAge,
-                      l.detailDaysWeek(
-                        registro.edadDias.toString(),
-                        semanasVida.toString(),
-                      ),
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailBirdsWeighed,
-                      '${registro.cantidadAvesPesadas}',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailAvgWeight,
-                      '${(registro.pesoPromedio / 1000).toStringAsFixed(2)} kg (${registro.pesoPromedio.toStringAsFixed(0)} g)',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailMinWeight,
-                      '${(registro.pesoMinimo / 1000).toStringAsFixed(2)} kg',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailMaxWeight,
-                      '${(registro.pesoMaximo / 1000).toStringAsFixed(2)} kg',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailTotalWeight,
-                      '${(registro.pesoTotal / 1000).toStringAsFixed(2)} kg',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailDailyGain,
-                      '${registro.gananciaDialiaPromedio.toStringAsFixed(1)} g/d�a',
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailCvCoefficient,
-                      '${registro.coeficienteVariacion.toStringAsFixed(1)}%',
-                      valueColor: registro.tieneBuenaUniformidad
-                          ? AppColors.success
-                          : AppColors.warning,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailUniformity,
-                      registro.tieneBuenaUniformidad
-                          ? l.detailUniformityGood
-                          : l.detailUniformityRegular,
-                      valueColor: registro.tieneBuenaUniformidad
-                          ? AppColors.success
-                          : AppColors.warning,
-                    ),
-                    _buildTableRow(
-                      theme,
-                      l.detailRegisteredBy,
-                      registro.nombreUsuario,
-                      isLast: !(registro.observaciones?.isNotEmpty ?? false),
-                    ),
-                    if (registro.observaciones?.isNotEmpty ?? false)
-                      _buildTableRow(
-                        theme,
-                        l.detailObservations,
-                        registro.observaciones!,
-                        isLast: true,
-                      ),
-                  ],
-                ),
-              ),
-
-              // Fotos de evidencia
-              if (registro.fotosUrls.isNotEmpty) ...[
-                AppSpacing.gapBase,
-                Text(
-                  l.detailPhotoEvidence,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
                 AppSpacing.gapSm,
-                SizedBox(
-                  height: 100,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: registro.fotosUrls.length,
-                    separatorBuilder: (_, __) => AppSpacing.hGapSm,
-                    itemBuilder: (context, index) {
-                      return ClipRRect(
-                        borderRadius: AppRadius.allSm,
-                        child: AppImage(
-                          url: registro.fotosUrls[index],
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          errorWidget: Container(
-                            width: 100,
-                            height: 100,
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(
-                              Icons.broken_image_rounded,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
               ],
-
-              AppSpacing.gapSm,
-            ],
+            ),
           ),
         ),
       ),

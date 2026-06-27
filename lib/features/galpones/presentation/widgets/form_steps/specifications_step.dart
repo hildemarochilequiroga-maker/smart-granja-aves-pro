@@ -203,53 +203,10 @@ class SpecificationsStep extends StatelessWidget {
           ),
           AppSpacing.gapBase,
 
-          // Card informativa
-          _buildInfoCard(),
-          AppSpacing.gapBase,
-
           // Tabla de densidades recomendadas
           _buildDensityTable(),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoCard() {
-    return Builder(
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.info.withValues(alpha: 0.08),
-            borderRadius: AppRadius.allSm,
-            border: Border.all(
-              color: AppColors.info.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.of(context).shedUsefulInfo,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: AppColors.info,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              AppSpacing.gapXxs,
-              Text(
-                S.of(context).shedDensityPlanningHelp,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -304,7 +261,10 @@ class SpecificationsStep extends StatelessWidget {
                   TableRow(
                     children: [
                       _buildTableCell(theme, S.of(context).shedFattening),
-                      _buildTableCell(theme, S.of(context).shedDensityFattening),
+                      _buildTableCell(
+                        theme,
+                        S.of(context).shedDensityFattening,
+                      ),
                     ],
                   ),
                   TableRow(

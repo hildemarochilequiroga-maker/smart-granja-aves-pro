@@ -12,20 +12,10 @@ final costoRepositoryProvider = Provider<CostoRepository>((ref) {
   return CostoRepositoryImpl(datasource);
 });
 
-// Use case providers
+// Use case providers (solo los consumidos por el CRUD notifier)
 final registrarCostoUseCaseProvider = Provider((ref) {
   final repository = ref.watch(costoRepositoryProvider);
   return RegistrarCostoUseCase(repository);
-});
-
-final obtenerCostosPorLoteUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return ObtenerCostosPorLoteUseCase(repository);
-});
-
-final calcularCostoTotalLoteUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return CalcularCostoTotalLoteUseCase(repository);
 });
 
 final aprobarCostoUseCaseProvider = Provider((ref) {
@@ -33,7 +23,13 @@ final aprobarCostoUseCaseProvider = Provider((ref) {
   return AprobarCostoUseCase(repository);
 });
 
-/// Provider para obtener un costo por su ID (cached, no recrea future en cada build)
+final rechazarCostoUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(costoRepositoryProvider);
+  return RechazarCostoUseCase(repository);
+});
+
+/// Provider para obtener un costo por su ID (cacheado, no recrea el future en
+/// cada build). Usado por la página de detalle.
 final costoByIdProvider = FutureProvider.autoDispose
     .family<CostoGasto?, String>((ref, costoId) {
       final repository = ref.read(costoRepositoryProvider);
@@ -215,66 +211,7 @@ final costoCrudProvider =
       );
     });
 
-// Use case providers adicionales
-final rechazarCostoUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return RechazarCostoUseCase(repository);
-});
-
-final obtenerCostosPendientesUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return ObtenerCostosPendientesUseCase(repository);
-});
-
-final obtenerCostosPorPeriodoUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return ObtenerCostosPorPeriodoUseCase(repository);
-});
-
-final obtenerDistribucionCostosUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return ObtenerDistribucionCostosUseCase(repository);
-});
-
-// Future providers
-final costosPorLoteProvider = FutureProvider.autoDispose
-    .family<List<CostoGasto>, String>((ref, String loteId) async {
-      final repository = ref.watch(costoRepositoryProvider);
-      return await repository.obtenerPorLote(loteId);
-    });
-
-final costoTotalLoteProvider = FutureProvider.autoDispose
-    .family<double, String>((ref, String loteId) async {
-      final repository = ref.watch(costoRepositoryProvider);
-      return await repository.calcularCostoTotalLote(loteId);
-    });
-
-final costosPorGranjaProvider = FutureProvider.autoDispose
-    .family<List<CostoGasto>, String>((ref, String granjaId) async {
-      final repository = ref.watch(costoRepositoryProvider);
-      return await repository.obtenerPorGranja(granjaId);
-    });
-
-final costosPendientesProvider = FutureProvider.autoDispose
-    .family<List<CostoGasto>, String>((ref, String granjaId) async {
-      final repository = ref.watch(costoRepositoryProvider);
-      return await repository.obtenerPendientesAprobacion(granjaId);
-    });
-
-final distribucionCostosProvider = FutureProvider.autoDispose
-    .family<Map<dynamic, double>, String>((ref, String granjaId) async {
-      final repository = ref.watch(costoRepositoryProvider);
-      return await repository.obtenerDistribucionPorTipo(granjaId);
-    });
-
-// Stream providers
-final streamTodosCostosProvider = StreamProvider.autoDispose<List<CostoGasto>>((
-  ref,
-) {
-  final repository = ref.watch(costoRepositoryProvider);
-  return repository.observarTodos();
-});
-
+// Stream providers — fuente reactiva de la lista de costos.
 final streamCostosPorLoteProvider = StreamProvider.autoDispose
     .family<List<CostoGasto>, String>((ref, String loteId) {
       final repository = ref.watch(costoRepositoryProvider);
@@ -285,11 +222,4 @@ final streamCostosPorGranjaProvider = StreamProvider.autoDispose
     .family<List<CostoGasto>, String>((ref, String granjaId) {
       final repository = ref.watch(costoRepositoryProvider);
       return repository.observarPorGranja(granjaId);
-    });
-
-/// Provider para obtener un costo por ID
-final costoPorIdProvider = FutureProvider.autoDispose
-    .family<CostoGasto?, String>((ref, String costoId) async {
-      final repository = ref.watch(costoRepositoryProvider);
-      return await repository.obtenerPorId(costoId);
     });

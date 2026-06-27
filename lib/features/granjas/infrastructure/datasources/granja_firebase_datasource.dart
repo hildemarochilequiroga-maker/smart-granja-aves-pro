@@ -554,23 +554,25 @@ class GranjaFirebaseDatasource {
       return granjasList;
     }
 
-    // Usar StreamGroup para combinar ambos streams reactivamente
+    // Usar Stream.multi para combinar ambos streams reactivamente
     return Stream.multi((controller) {
       // Suscribirse a granjas propias
-      final subPropias = granjasPropiasStream.listen((snapshot) {
-        lastPropias = snapshot;
-        if (lastPropias != null) {
+      final subPropias = granjasPropiasStream.listen(
+        (snapshot) {
+          lastPropias = snapshot;
           controller.add(combineResults());
-        }
-      });
+        },
+        onError: controller.addError,
+      );
 
       // Suscribirse a granjas colaborativas
-      final subColaborativas = granjasColaborativasStream.listen((snapshot) {
-        lastColaborativas = snapshot;
-        if (lastPropias != null) {
+      final subColaborativas = granjasColaborativasStream.listen(
+        (snapshot) {
+          lastColaborativas = snapshot;
           controller.add(combineResults());
-        }
-      });
+        },
+        onError: controller.addError,
+      );
 
       // Cancelar suscripciones cuando se cierre el stream
       controller.onCancel = () {
@@ -625,19 +627,21 @@ class GranjaFirebaseDatasource {
 
     // Usar Stream.multi para combinar ambos streams reactivamente
     return Stream.multi((controller) {
-      final subPropias = granjasPropiasStream.listen((snapshot) {
-        lastPropias = snapshot;
-        if (lastPropias != null) {
+      final subPropias = granjasPropiasStream.listen(
+        (snapshot) {
+          lastPropias = snapshot;
           controller.add(combineResults());
-        }
-      });
+        },
+        onError: controller.addError,
+      );
 
-      final subColaborativas = granjasColaborativasStream.listen((snapshot) {
-        lastColaborativas = snapshot;
-        if (lastPropias != null) {
+      final subColaborativas = granjasColaborativasStream.listen(
+        (snapshot) {
+          lastColaborativas = snapshot;
           controller.add(combineResults());
-        }
-      });
+        },
+        onError: controller.addError,
+      );
 
       controller.onCancel = () {
         subPropias.cancel();

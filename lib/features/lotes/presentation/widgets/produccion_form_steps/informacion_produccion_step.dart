@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/presentation/widgets/form_widgets.dart';
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -14,7 +14,8 @@ class InformacionProduccionStep extends StatelessWidget {
     required this.huevosRecolectadosController,
     required this.huevosBuenosController,
     required this.fechaSeleccionada,
-    required this.onSeleccionarFecha,
+    required this.fechaIngreso,
+    required this.onFechaChanged,
     required this.autoValidate,
     required this.cantidadAves,
     required this.onHuevosBuenosChanged,
@@ -23,7 +24,8 @@ class InformacionProduccionStep extends StatelessWidget {
   final TextEditingController huevosRecolectadosController;
   final TextEditingController huevosBuenosController;
   final DateTime fechaSeleccionada;
-  final VoidCallback onSeleccionarFecha;
+  final DateTime fechaIngreso;
+  final ValueChanged<DateTime> onFechaChanged;
   final bool autoValidate;
   final int cantidadAves;
   final VoidCallback onHuevosBuenosChanged;
@@ -113,12 +115,12 @@ class InformacionProduccionStep extends StatelessWidget {
           AppSpacing.gapBase,
 
           // Fecha
-          RegistroFormField(
+          RegistroDateField(
             label: S.of(context).batchFormDate,
-            hint: DateFormat('dd/MM/yyyy').format(fechaSeleccionada),
-            readOnly: true,
-            onTap: onSeleccionarFecha,
-            initialValue: DateFormat('dd/MM/yyyy').format(fechaSeleccionada),
+            value: fechaSeleccionada,
+            firstDate: fechaIngreso,
+            lastDate: DateTime.now(),
+            onChanged: onFechaChanged,
           ),
 
           // Tarjeta informativa con porcentaje de postura

@@ -23,6 +23,7 @@ class Notificacion extends Equatable {
     this.fechaLeida,
     this.prioridad = PrioridadNotificacion.normal,
     this.accionUrl,
+    this.dedupeKey,
   });
 
   /// ID único de la notificación.
@@ -64,6 +65,12 @@ class Notificacion extends Equatable {
   /// URL de acción al tocar la notificación.
   final String? accionUrl;
 
+  /// Clave de deduplicación para alertas de polling (tipo+ítem).
+  ///
+  /// Permite evitar recrear la misma alerta en cada corrida del scheduler.
+  /// `null` en notificaciones event-driven que no requieren deduplicación.
+  final String? dedupeKey;
+
   @override
   List<Object?> get props => [
     id,
@@ -79,6 +86,7 @@ class Notificacion extends Equatable {
     fechaLeida,
     prioridad,
     accionUrl,
+    dedupeKey,
   ];
 
   /// Crea una copia con los campos modificados.
@@ -96,6 +104,7 @@ class Notificacion extends Equatable {
     DateTime? fechaLeida,
     PrioridadNotificacion? prioridad,
     String? accionUrl,
+    String? dedupeKey,
   }) {
     return Notificacion(
       id: id ?? this.id,
@@ -111,6 +120,7 @@ class Notificacion extends Equatable {
       fechaLeida: fechaLeida ?? this.fechaLeida,
       prioridad: prioridad ?? this.prioridad,
       accionUrl: accionUrl ?? this.accionUrl,
+      dedupeKey: dedupeKey ?? this.dedupeKey,
     );
   }
 
@@ -134,6 +144,7 @@ class Notificacion extends Equatable {
         data['prioridad'] ?? 'normal',
       ),
       accionUrl: data['accionUrl'],
+      dedupeKey: data['dedupeKey'],
     );
   }
 
@@ -152,6 +163,7 @@ class Notificacion extends Equatable {
       if (fechaLeida != null) 'fechaLeida': Timestamp.fromDate(fechaLeida!),
       'prioridad': prioridad.value,
       if (accionUrl != null) 'accionUrl': accionUrl,
+      if (dedupeKey != null) 'dedupeKey': dedupeKey,
     };
   }
 

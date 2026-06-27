@@ -74,6 +74,7 @@ class UsuarioModel extends Usuario {
       fechaCreacion: usuario.fechaCreacion,
       ultimoAcceso: usuario.ultimoAcceso,
       metadata: usuario.metadata,
+      proveedoresVinculados: usuario.proveedoresVinculados,
     );
   }
 

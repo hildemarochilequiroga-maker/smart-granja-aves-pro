@@ -19,6 +19,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../application/providers/colaboradores_providers.dart';
 import '../../domain/entities/granja_usuario.dart';
@@ -55,13 +56,17 @@ class GestionarColaboradoresPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(S.of(context).farmCollaborators),
+        title: FormTextScale(child: Text(S.of(context).farmCollaborators)),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, size: 28),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         actions: [
           IconButton(
             onPressed: () => ref.invalidate(usuariosGranjaProvider(granjaId)),
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, size: 28),
             tooltip: S.of(context).commonUpdate,
           ),
         ],
@@ -80,14 +85,15 @@ class GestionarColaboradoresPage extends ConsumerWidget {
                 extra: {'granjaNombre': granjaNombre},
               );
             },
-            icon: const Icon(Icons.person_add_rounded),
-            label: Text(S.of(context).farmInviteCollaborator),
+            icon: const Icon(Icons.person_add_rounded, size: 26),
+            label: FormTextScale(child: Text(S.of(context).farmInviteCollaborator)),
           );
         },
         loading: () => null,
         error: (_, __) => null,
       ),
-      body: colaboradoresAsync.when(
+      body: FormTextScale(
+        child: colaboradoresAsync.when(
         data: (colaboradores) {
           if (colaboradores.isEmpty) {
             return _EmptyState(granjaId: granjaId, granjaNombre: granjaNombre);
@@ -103,6 +109,7 @@ class GestionarColaboradoresPage extends ConsumerWidget {
         error: (error, _) => _ErrorState(
           error: error.toString(),
           onRetry: () => ref.invalidate(usuariosGranjaProvider(granjaId)),
+        ),
         ),
       ),
     );
@@ -415,7 +422,12 @@ class _ColaboradorCardState extends ConsumerState<_ColaboradorCard> {
 
         if (widget.isCurrentUser) {
           debugPrint('   └─ Navegando a lista de granjas...');
-          context.go(AppRoutes.granjas);
+          // Si está dentro de un bottom sheet modal, lo cerramos primero.
+          final navigator = Navigator.of(context);
+          if (navigator.canPop()) {
+            navigator.pop();
+          }
+          context.go(AppRoutes.granjasHome);
         } else {
           ref.invalidate(usuariosGranjaProvider(widget.granjaId));
         }
@@ -546,6 +558,7 @@ class _ColaboradorCardState extends ConsumerState<_ColaboradorCard> {
                 PopupMenuButton<String>(
                   icon: Icon(
                     Icons.more_vert,
+                    size: 26,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   onSelected: (value) {

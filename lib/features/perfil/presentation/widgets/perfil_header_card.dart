@@ -28,32 +28,15 @@ class PerfilHeaderCard extends StatelessWidget {
         ? nombreCompleto.substring(0, 1).toUpperCase()
         : 'U';
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withValues(alpha: 0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: AppRadius.allXl,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
       child: Column(
         children: [
-          // Avatar centrado
+          // Avatar centrado. Si hay foto (ej. cuenta de Google) se muestra; si no,
+          // se muestra la inicial sobre un fondo sólido del color primario.
           CircleAvatar(
-            radius: 40,
-            backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
+            radius: 48,
+            backgroundColor: theme.colorScheme.primary,
             backgroundImage: fotoUrl != null && fotoUrl!.isNotEmpty
                 ? CachedNetworkImageProvider(fotoUrl!)
                 : null,
@@ -70,13 +53,13 @@ class PerfilHeaderCard extends StatelessWidget {
                   )
                 : null,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Información centrada
           Text(
             nombreCompleto,
             style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.onPrimary,
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.bold,
             ),
             maxLines: 1,
@@ -87,28 +70,26 @@ class PerfilHeaderCard extends StatelessWidget {
           Text(
             email,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Botón editar
+          // Botón editar (sólido)
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: FilledButton(
               onPressed: onEditarPerfil,
-              style: OutlinedButton.styleFrom(
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                side: BorderSide(
-                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.5),
-                ),
                 shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: Text(S.of(context).profileEditProfile),
+              child: Text(S.of(context).profileEditProfile),
             ),
           ),
         ],

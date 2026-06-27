@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/presentation/widgets/registro_pickers.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../galpones/application/providers/providers.dart';
@@ -92,12 +93,6 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
 
           // Observaciones (opcional)
           _buildObservacionesField(),
-
-          AppSpacing.gapXl,
-
-          // Nota informativa
-          _buildNotaRecomendacion(),
-          AppSpacing.gapBase,
         ],
       ),
     );
@@ -326,8 +321,6 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
   }
 
   Widget _buildGalponDropdown(List<dynamic> galponesActivos) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final selectedGalponId =
         galponesActivos.any((galpon) => galpon.id == widget.selectedGalponId)
         ? widget.selectedGalponId
@@ -336,169 +329,22 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DropdownButtonFormField<String>(
-          initialValue: selectedGalponId,
-          autovalidateMode: widget.autoValidate
-              ? AutovalidateMode.always
-              : AutovalidateMode.disabled,
-          decoration: InputDecoration(
-            labelText: S.of(context).batchFormShed,
-            helperText: S.of(context).batchFormShedLocationInfo,
-            helperMaxLines: 2,
-            errorMaxLines: 2,
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.allMd,
-              borderSide: BorderSide(
-                color: colorScheme.outlineVariant,
-                width: 1.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allMd,
-              borderSide: BorderSide(
-                color: colorScheme.outlineVariant,
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allMd,
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allMd,
-              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.allMd,
-              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-            ),
-            filled: true,
-            fillColor: colorScheme.surfaceContainerLowest,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.base,
-              vertical: AppSpacing.base,
-            ),
-          ),
-          isExpanded: true,
-          itemHeight: null,
-          menuMaxHeight: MediaQuery.sizeOf(context).height * 0.5,
-          selectedItemBuilder: (BuildContext context) {
-            return galponesActivos.map((galpon) {
-              return Text(
-                galpon.nombre,
-                style: theme.textTheme.titleSmall,
-                overflow: TextOverflow.ellipsis,
-              );
-            }).toList();
+        RegistroSelectorField<String>(
+          label: S.of(context).batchFormShed,
+          required: true,
+          value: selectedGalponId,
+          hint: S.of(context).batchSelectShed,
+          options: galponesActivos.map((g) => g.id as String).toList(),
+          labelOf: (id) =>
+              galponesActivos.firstWhere((g) => g.id == id).nombre as String,
+          subtitleOf: (id) {
+            final g = galponesActivos.firstWhere((gg) => gg.id == id);
+            return S
+                .of(context)
+                .ubicacionShedDropdown(g.codigo, g.capacidadMaxima.toString());
           },
-          items: galponesActivos.map((galpon) {
-            return DropdownMenuItem<String>(
-              value: galpon.id,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      galpon.nombre,
-                      style: theme.textTheme.titleSmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      S
-                          .of(context)
-                          .ubicacionShedDropdown(
-                            galpon.codigo,
-                            galpon.capacidadMaxima.toString(),
-                          ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: widget.onGalponChanged,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return S.of(context).batchSelectShed;
-            }
-            return null;
-          },
+          onSelected: (id) => widget.onGalponChanged(id),
         ),
-        AppSpacing.gapLg,
-
-        // Info de capacidad
-        if (selectedGalponId != null) ...[
-          Builder(
-            builder: (context) {
-              final galpon = galponesActivos.firstWhere(
-                (g) => g.id == selectedGalponId,
-              );
-
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.base),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
-                  borderRadius: AppRadius.allMd,
-                  border: Border.all(
-                    color: AppColors.success.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: AppColors.success),
-                    AppSpacing.hGapMd,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            S.of(context).batchFormShedInfo,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: AppColors.success,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          AppSpacing.gapXxs,
-                          Text(
-                            S
-                                .of(context)
-                                .ubicacionCapacityInfo(
-                                  galpon.capacidadMaxima.toString(),
-                                ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          if (galpon.areaM2 != null)
-                            Text(
-                              S
-                                  .of(context)
-                                  .ubicacionAreaInfo(galpon.areaM2.toString()),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
       ],
     );
   }
@@ -543,42 +389,6 @@ class _LoteUbicacionStepState extends ConsumerState<LoteUbicacionStep> {
       ),
       maxLines: 3,
       textInputAction: TextInputAction.done,
-    );
-  }
-
-  Widget _buildNotaRecomendacion() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: AppRadius.allMd,
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).batchFormRecommendation,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          AppSpacing.gapXxs,
-          Text(
-            S.of(context).batchFormShedCapacityNote,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

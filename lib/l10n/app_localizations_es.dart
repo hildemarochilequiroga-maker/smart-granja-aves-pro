@@ -708,6 +708,19 @@ class SEs extends S {
   String get commonExit => 'Salir';
 
   @override
+  String get appExitTitle => '¿Salir de la aplicación?';
+
+  @override
+  String get appExitMessage =>
+      '¿Estás seguro de que deseas cerrar la aplicación?';
+
+  @override
+  String get appExitConfirm => 'Sí, salir';
+
+  @override
+  String get appExitPressAgain => 'Presiona atrás de nuevo para salir';
+
+  @override
   String get commonDontWorryDataSafe =>
       'No te preocupes, tus datos están seguros.';
 
@@ -1320,6 +1333,43 @@ class SEs extends S {
 
   @override
   String get batchCostPerBird => 'Costo por Ave';
+
+  @override
+  String get batchCostBreakdown => 'Desglose del costo';
+
+  @override
+  String get batchCostByType => 'Costo por tipo de gasto';
+
+  @override
+  String get batchCalcBasis => 'Base del cálculo';
+
+  @override
+  String get batchPendingCosts => 'Costos por registrar';
+
+  @override
+  String get batchDirectExpenses => 'Gastos directos';
+
+  @override
+  String get batchSharedExpenses => 'Gastos compartidos';
+
+  @override
+  String get batchFeedCost => 'Alimento';
+
+  @override
+  String batchLiveBirdsBasis(String count) {
+    return 'Calculado sobre $count aves vivas';
+  }
+
+  @override
+  String get batchMissingInitialCost => 'Falta el costo inicial de las aves';
+
+  @override
+  String get batchNoCostData => 'Aún no hay costos registrados para este lote';
+
+  @override
+  String batchConsumosSinCosto(String count) {
+    return '$count registros de consumo sin costo: el alimento puede estar subestimado';
+  }
 
   @override
   String get batchEstimatedClose => 'Cierre Estimado';
@@ -5371,6 +5421,9 @@ class SEs extends S {
   String get batchViewCharts => 'Ver Gráficos';
 
   @override
+  String get commonCharts => 'Gráficos';
+
+  @override
   String get batchFilterRecords => 'Filtrar registros';
 
   @override
@@ -5431,7 +5484,7 @@ class SEs extends S {
   String get historialTotalConsumed => 'total consumido';
 
   @override
-  String get historialDeadBirds => 'aves fallecidas';
+  String get historialDeadBirds => 'aves muertas';
 
   @override
   String get historialNoProductionRecords => 'Sin registros de producción';
@@ -6399,6 +6452,9 @@ class SEs extends S {
 
   @override
   String get batchLiveBirds => 'Aves Vivas';
+
+  @override
+  String get batchEnteredBirds => 'Aves ingresadas';
 
   @override
   String get batchTotalLosses => 'Bajas Totales';
@@ -10441,6 +10497,19 @@ class SEs extends S {
       'El nombre debe tener al menos 3 caracteres';
 
   @override
+  String get costoBatchLabel => 'Lote asignado';
+
+  @override
+  String get costoSelectBatchHint => 'Selecciona el lote para este gasto';
+
+  @override
+  String get costoSelectBatchRequired =>
+      'Selecciona el lote al que se asigna este gasto';
+
+  @override
+  String get costoBatchNoneOption => 'Sin lote (gasto general)';
+
+  @override
   String get costoInvoiceLabel => 'Número de Factura/Recibo';
 
   @override
@@ -10456,6 +10525,24 @@ class SEs extends S {
   String get costoCardSupplier => 'Proveedor: ';
 
   @override
+  String get costoTypeCompraAves => 'Compra de Aves';
+
+  @override
+  String get costoTotalPurchaseLabel => 'Costo total de la compra';
+
+  @override
+  String get costoPerBirdLabel => 'Costo por ave';
+
+  @override
+  String costoPurchaseBirdsBasis(String count) {
+    return 'Sobre $count aves del lote';
+  }
+
+  @override
+  String get costoPurchaseNoBatch =>
+      'Asigna un lote para calcular el costo por ave';
+
+  @override
   String get costoTypeAlimento => 'Alimento';
 
   @override
@@ -10466,6 +10553,9 @@ class SEs extends S {
 
   @override
   String get costoTypeMedicamento => 'Medicamento';
+
+  @override
+  String get costoTypeCama => 'Cama';
 
   @override
   String get costoTypeMantenimiento => 'Mantenimiento';
@@ -12740,7 +12830,7 @@ class SEs extends S {
   String get bioLastLevel => 'bioLastLevel';
 
   @override
-  String get diseaseCatalogSearch => 'diseaseCatalogSearch';
+  String get diseaseCatalogSearch => 'Buscar enfermedad...';
 
   @override
   String get diseaseCatalogWarning => 'diseaseCatalogWarning';

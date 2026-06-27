@@ -6,9 +6,7 @@ import 'package:smartgranjaavespro/core/routes/app_routes.dart';
 import 'package:smartgranjaavespro/core/theme/app_colors.dart';
 import 'package:smartgranjaavespro/core/theme/app_radius.dart';
 import 'package:smartgranjaavespro/core/theme/app_spacing.dart';
-import 'package:smartgranjaavespro/core/widgets/app_snackbar.dart';
 
-import '../../../../granjas/application/providers/granja_providers.dart';
 import 'package:smartgranjaavespro/l10n/app_localizations.dart';
 
 class HomeQuickActions extends ConsumerWidget {
@@ -16,8 +14,6 @@ class HomeQuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final granjaActiva = ref.watch(granjaSeleccionadaProvider);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -29,19 +25,9 @@ class HomeQuickActions extends ConsumerWidget {
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.md),
-        // First Row - Vacunación y Catálogo
+        // Fila 1 - Enfermedades y Ventas
         Row(
           children: [
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: Icons.vaccines_rounded,
-                label: S.of(context).homeVaccination,
-                color: AppColors.teal,
-                onTap: () => context.push(AppRoutes.vacunaciones),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: _buildActionButton(
                 context,
@@ -49,32 +35,6 @@ class HomeQuickActions extends ConsumerWidget {
                 label: S.of(context).homeDiseases,
                 color: AppColors.deepPurple,
                 onTap: () => context.push(AppRoutes.catalogoEnfermedades),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        // Second Row - Bioseguridad y Ventas
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: Icons.security_rounded,
-                label: S.of(context).homeBiosecurity,
-                color: AppColors.info,
-                onTap: () {
-                  if (granjaActiva != null) {
-                    context.push(
-                      AppRoutes.bioseguridadPorGranja(granjaActiva.id),
-                    );
-                  } else {
-                    AppSnackBar.warning(
-                      context,
-                      message: S.of(context).homeSelectFarmFirst,
-                    );
-                  }
-                },
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -90,7 +50,7 @@ class HomeQuickActions extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        // Third Row - Costos e Inventario
+        // Fila 2 - Costos y Reportes
         Row(
           children: [
             Expanded(
@@ -106,43 +66,10 @@ class HomeQuickActions extends ConsumerWidget {
             Expanded(
               child: _buildActionButton(
                 context,
-                icon: Icons.inventory_2_rounded,
-                label: S.of(context).homeInventory,
-                color: AppColors.purple,
-                onTap: () => context.push(AppRoutes.inventario),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        // Fourth Row - Reportes
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(
-                context,
                 icon: Icons.bar_chart_rounded,
                 label: S.of(context).reportsTitle,
                 color: AppColors.indigo,
                 onTap: () => context.push(AppRoutes.reportes),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _buildActionButton(
-                context,
-                icon: Icons.local_hospital_rounded,
-                label: S.of(context).homeHealth,
-                color: AppColors.error,
-                onTap: () {
-                  if (granjaActiva != null) {
-                    context.push(
-                      '${AppRoutes.salud}?granjaId=${granjaActiva.id}',
-                    );
-                  } else {
-                    context.push(AppRoutes.salud);
-                  }
-                },
               ),
             ),
           ],
@@ -172,7 +99,7 @@ class HomeQuickActions extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: AppColors.white, size: 28),
+              Icon(icon, color: AppColors.white, size: 34),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 label,

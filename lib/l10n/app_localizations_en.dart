@@ -709,6 +709,18 @@ class SEn extends S {
   String get commonExit => 'Exit';
 
   @override
+  String get appExitTitle => 'Exit the app?';
+
+  @override
+  String get appExitMessage => 'Are you sure you want to close the app?';
+
+  @override
+  String get appExitConfirm => 'Yes, exit';
+
+  @override
+  String get appExitPressAgain => 'Press back again to exit';
+
+  @override
   String get commonDontWorryDataSafe => 'Don\'t worry, your data is safe.';
 
   @override
@@ -1316,6 +1328,43 @@ class SEn extends S {
 
   @override
   String get batchCostPerBird => 'Cost per Bird';
+
+  @override
+  String get batchCostBreakdown => 'Cost breakdown';
+
+  @override
+  String get batchCostByType => 'Cost by expense type';
+
+  @override
+  String get batchCalcBasis => 'Calculation basis';
+
+  @override
+  String get batchPendingCosts => 'Costs to register';
+
+  @override
+  String get batchDirectExpenses => 'Direct expenses';
+
+  @override
+  String get batchSharedExpenses => 'Shared expenses';
+
+  @override
+  String get batchFeedCost => 'Feed';
+
+  @override
+  String batchLiveBirdsBasis(String count) {
+    return 'Based on $count live birds';
+  }
+
+  @override
+  String get batchMissingInitialCost => 'Initial bird cost is missing';
+
+  @override
+  String get batchNoCostData => 'No costs recorded for this batch yet';
+
+  @override
+  String batchConsumosSinCosto(String count) {
+    return '$count consumption records without cost: feed may be underestimated';
+  }
 
   @override
   String get batchEstimatedClose => 'Estimated Close';
@@ -5341,6 +5390,9 @@ class SEn extends S {
   String get batchViewCharts => 'View Charts';
 
   @override
+  String get commonCharts => 'Charts';
+
+  @override
   String get batchFilterRecords => 'Filter records';
 
   @override
@@ -6361,6 +6413,9 @@ class SEn extends S {
 
   @override
   String get batchLiveBirds => 'Live Birds';
+
+  @override
+  String get batchEnteredBirds => 'Birds entered';
 
   @override
   String get batchTotalLosses => 'Total Losses';
@@ -10367,6 +10422,19 @@ class SEn extends S {
   String get costoSupplierMinLength => 'Name must be at least 3 characters';
 
   @override
+  String get costoBatchLabel => 'Assigned batch';
+
+  @override
+  String get costoSelectBatchHint => 'Select the batch for this expense';
+
+  @override
+  String get costoSelectBatchRequired =>
+      'Select the batch this expense is assigned to';
+
+  @override
+  String get costoBatchNoneOption => 'No batch (general expense)';
+
+  @override
   String get costoInvoiceLabel => 'Invoice/Receipt Number';
 
   @override
@@ -10382,6 +10450,23 @@ class SEn extends S {
   String get costoCardSupplier => 'Supplier: ';
 
   @override
+  String get costoTypeCompraAves => 'Bird Purchase';
+
+  @override
+  String get costoTotalPurchaseLabel => 'Total purchase cost';
+
+  @override
+  String get costoPerBirdLabel => 'Cost per bird';
+
+  @override
+  String costoPurchaseBirdsBasis(String count) {
+    return 'Over $count birds in the batch';
+  }
+
+  @override
+  String get costoPurchaseNoBatch => 'Assign a batch to compute cost per bird';
+
+  @override
   String get costoTypeAlimento => 'Feed';
 
   @override
@@ -10392,6 +10477,9 @@ class SEn extends S {
 
   @override
   String get costoTypeMedicamento => 'Medicine';
+
+  @override
+  String get costoTypeCama => 'Bedding';
 
   @override
   String get costoTypeMantenimiento => 'Maintenance';
@@ -12647,7 +12735,7 @@ class SEn extends S {
   String get bioLastLevel => 'bioLastLevel';
 
   @override
-  String get diseaseCatalogSearch => 'diseaseCatalogSearch';
+  String get diseaseCatalogSearch => 'Search disease...';
 
   @override
   String get diseaseCatalogWarning => 'diseaseCatalogWarning';

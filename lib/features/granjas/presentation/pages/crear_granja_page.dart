@@ -19,6 +19,7 @@ import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/save_success_overlay.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/providers/auth_provider.dart';
 import '../../application/application.dart';
@@ -269,19 +270,25 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l.farmNewFarm),
-              if (_lastSaveTime != null)
-                Text(
-                  _isSaving ? l.commonSaving : _formatSaveTime(_lastSaveTime!),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
+          toolbarHeight: 64,
+          title: FormTextScale(
+            factor: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l.farmNewFarm),
+                if (_lastSaveTime != null)
+                  Text(
+                    _isSaving
+                        ? l.commonSaving
+                        : _formatSaveTime(_lastSaveTime!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.onPrimary.withValues(alpha: 0.8),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
           leading: IconButton(
             icon: const Icon(Icons.close),
@@ -310,62 +317,64 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Indicador de progreso
-            FormProgressIndicator(
-              currentStep: _currentStep,
-              steps: _buildSteps(l),
-              onStepTapped: _goToStep,
-            ),
+        body: FormTextScale(
+          child: Column(
+            children: [
+              // Indicador de progreso
+              FormProgressIndicator(
+                currentStep: _currentStep,
+                steps: _buildSteps(l),
+                onStepTapped: _goToStep,
+              ),
 
-            // Contenido del formulario
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    BasicInfoStep(
-                      nombreController: _nombreController,
-                      propietarioController: _propietarioController,
-                      descripcionController: _descripcionController,
-                      autoValidate: _autoValidatePerStep[0],
-                    ),
-                    LocationStep(
-                      direccionController: _direccionController,
-                      paisController: _paisController,
-                      departamentoController: _departamentoController,
-                      ciudadController: _ciudadController,
-                      referenciaController: _referenciaController,
-                      latitudController: _latitudController,
-                      longitudController: _longitudController,
-                      onLocationSelected: _onLocationSelected,
-                      autoValidate: _autoValidatePerStep[1],
-                    ),
-                    ContactInfoStep(
-                      emailController: _emailController,
-                      telefonoController: _telefonoController,
-                      whatsappController: _whatsappController,
-                      rucController: _rucController,
-                      autoValidate: _autoValidatePerStep[2],
-                      pais: _paisController.text,
-                    ),
-                    CapacityStep(
-                      capacidadTotalController: _capacidadTotalController,
-                      areaTotalController: _areaTotalController,
-                      numeroCasasController: _numeroCasasController,
-                      autoValidate: _autoValidatePerStep[3],
-                    ),
-                  ],
+              // Contenido del formulario
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      BasicInfoStep(
+                        nombreController: _nombreController,
+                        propietarioController: _propietarioController,
+                        descripcionController: _descripcionController,
+                        autoValidate: _autoValidatePerStep[0],
+                      ),
+                      LocationStep(
+                        direccionController: _direccionController,
+                        paisController: _paisController,
+                        departamentoController: _departamentoController,
+                        ciudadController: _ciudadController,
+                        referenciaController: _referenciaController,
+                        latitudController: _latitudController,
+                        longitudController: _longitudController,
+                        onLocationSelected: _onLocationSelected,
+                        autoValidate: _autoValidatePerStep[1],
+                      ),
+                      ContactInfoStep(
+                        emailController: _emailController,
+                        telefonoController: _telefonoController,
+                        whatsappController: _whatsappController,
+                        rucController: _rucController,
+                        autoValidate: _autoValidatePerStep[2],
+                        pais: _paisController.text,
+                      ),
+                      CapacityStep(
+                        capacidadTotalController: _capacidadTotalController,
+                        areaTotalController: _areaTotalController,
+                        numeroCasasController: _numeroCasasController,
+                        autoValidate: _autoValidatePerStep[3],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Botones de navegación
-            _buildNavigationButtons(),
-          ],
+              // Botones de navegación
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );
@@ -628,7 +637,7 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
             );
 
             if (mounted) {
-              context.go(AppRoutes.granjas);
+              context.go(AppRoutes.granjasHome);
             }
           },
         ),

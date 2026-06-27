@@ -87,7 +87,7 @@ class AppFilterTab extends StatelessWidget {
                       fontWeight: isSelected
                           ? FontWeight.w600
                           : FontWeight.w500,
-                      fontSize: 14,
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -120,7 +120,7 @@ class AppFilterTab extends StatelessWidget {
 /// )
 /// ```
 class AppFilterTabRow extends StatelessWidget {
-  const AppFilterTabRow({super.key, required this.tabs, this.height = 48});
+  const AppFilterTabRow({super.key, required this.tabs, this.height = 56});
 
   /// Lista de AppFilterTab widgets
   final List<Widget> tabs;

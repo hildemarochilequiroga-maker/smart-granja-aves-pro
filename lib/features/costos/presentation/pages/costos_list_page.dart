@@ -24,6 +24,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -100,24 +102,25 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
             final filteredCostos = _filterCostos(costos);
 
             if (costos.isEmpty) {
-              return AppEmptyState(
-                icon: Icons.receipt_long_outlined,
-                title: l.costoEmptyTitle,
-                description: l.costoEmptyDescription,
-                actionLabel: l.costoEmptyAction,
-                actionIcon: Icons.add_rounded,
-                onAction: () => _navegarARegistrar(),
+              return FormTextScale(
+                child: AppEmptyState(
+                  icon: Icons.receipt_long_outlined,
+                  title: l.costoEmptyTitle,
+                  description: l.costoEmptyDescription,
+                ),
               );
             }
 
             if (filteredCostos.isEmpty) {
-              return AppEmptyState(
-                hasFilters: true,
-                filterTitle: l.costoFilterEmptyTitle,
-                filterDescription: l.costoFilterEmptyDescription,
-                onClearFilters: () {
-                  setState(() => _tipoFilter = null);
-                },
+              return FormTextScale(
+                child: AppEmptyState(
+                  hasFilters: true,
+                  filterTitle: l.costoFilterEmptyTitle,
+                  filterDescription: l.costoFilterEmptyDescription,
+                  onClearFilters: () {
+                    setState(() => _tipoFilter = null);
+                  },
+                ),
               );
             }
 
@@ -125,10 +128,7 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
               slivers: [
                 // Resumen de costos
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 8),
-                    child: CostosResumenCard(costos: costos),
-                  ),
+                  child: CostosResumenCard(costos: costos),
                 ),
 
                 // Chips de filtro
@@ -176,6 +176,7 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                         ),
                         child: CostoListCard(
                           costo: costo,
+                          index: index,
                           onTap: () => _showDetail(costo),
                           onEdit: () => _navegarAEditar(costo),
                           onAprobar: () => _aprobarCosto(costo),
@@ -215,10 +216,10 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
           : FloatingActionButton.extended(
               heroTag: 'costos_list_fab',
               onPressed: () => _navegarARegistrar(),
-              icon: const Icon(Icons.add_rounded),
+              icon: const Icon(Icons.add_rounded, size: 26),
               label: Text(
                 l.costoNewButton,
-                style: theme.textTheme.labelLarge?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -246,12 +247,12 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
 
   void _showDetail(CostoGasto costo) {
     HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    showAppBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      scrollable: true,
       builder: (context) =>
-          _CostoDetailSheet(costo: costo, tipoColor: _getTipoColor(costo.tipo)),
+          _CostoDetailSheet(costo: costo, tipoColor: costo.tipo.color),
     );
   }
 
@@ -461,53 +462,17 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final hayFiltros = tempTipoFilter != null;
 
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
+          return AppBottomSheetScaffold(
+            title: l.costoFilterTitle,
+            scrollable: true,
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 8),
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header con título
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: Text(
-                      l.costoFilterTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-
                   // Contenido scrolleable
                   Flexible(
                     child: SingleChildScrollView(
@@ -554,7 +519,7 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                                 theme: theme,
                                 label: tipo.displayName,
                                 isSelected: tempTipoFilter == tipo,
-                                color: _getTipoColor(tipo),
+                                color: tipo.color,
                                 onTap: () {
                                   setModalState(() {
                                     tempTipoFilter = tipo;
@@ -568,7 +533,7 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                     ),
                   ),
 
-                  // Botón aplicar
+                  // Botón aplicar / cerrar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                     child: AppButton.primary(
@@ -581,13 +546,14 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
                         Navigator.pop(context);
                       },
                       expanded: true,
-                      backgroundColor: AppColors.success,
+                      backgroundColor: hayFiltros
+                          ? AppColors.warning
+                          : AppColors.error,
                       foregroundColor: AppColors.white,
                     ),
                   ),
                 ],
               ),
-            ),
           );
         },
       ),
@@ -649,33 +615,6 @@ class _CostosListPageState extends ConsumerState<CostosListPage> {
     );
   }
 
-  Color _getTipoColor(TipoGasto tipo) {
-    switch (tipo) {
-      case TipoGasto.alimento:
-        return AppColors.warning;
-      case TipoGasto.manoDeObra:
-        return AppColors.info;
-      case TipoGasto.energia:
-        return AppColors.amber;
-      case TipoGasto.medicamento:
-        return AppColors.error;
-      case TipoGasto.mantenimiento:
-        return AppColors.outline;
-      case TipoGasto.agua:
-        return AppColors.infoLight;
-      case TipoGasto.transporte:
-        return AppColors.indigo;
-      case TipoGasto.administrativo:
-        return AppColors.purple;
-      case TipoGasto.depreciacion:
-        return AppColors.brown;
-      case TipoGasto.financiero:
-        return AppColors.teal;
-      case TipoGasto.otros:
-        return AppColors.outline;
-    }
-  }
-
   void _mostrarSnackBar(String mensaje, {required bool esExito}) {
     if (esExito) {
       AppSnackBar.success(context, message: mensaje);
@@ -723,43 +662,32 @@ class _CostoDetailSheet extends StatelessWidget {
       }
     }
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.paddingOf(context).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
-              // Header con fecha y badge de monto
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          AppSpacing.sm,
+          20,
+          MediaQuery.paddingOf(context).bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              // Header con icono del tipo, fecha y badge de monto
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: tipoColor.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.allMd,
+                    ),
+                    child: Icon(costo.tipo.icon, color: tipoColor, size: 24),
+                  ),
+                  AppSpacing.hGapMd,
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,7 +806,6 @@ class _CostoDetailSheet extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
