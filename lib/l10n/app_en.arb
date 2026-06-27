@@ -5978,7 +5978,7 @@
   "costoWhatType": "What type of expense is it?",
   "costoSelectCategory": "Select the category that best describes this expense",
   "costoAmountTitle": "Expense Amount",
-  "costoAmountHint": "Enter the total amount of the expense in soles",
+  "costoAmountHint": "Enter the total amount of the expense",
   "costoConceptLabel": "Expense concept",
   "costoConceptHint": "E.g.: Purchase of balanced feed",
   "costoFeedTypeLabel": "Feed type",

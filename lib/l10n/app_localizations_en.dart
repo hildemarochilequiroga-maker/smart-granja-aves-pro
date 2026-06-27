@@ -10360,8 +10360,7 @@ class SEn extends S {
   String get costoAmountTitle => 'Expense Amount';
 
   @override
-  String get costoAmountHint =>
-      'Enter the total amount of the expense in soles';
+  String get costoAmountHint => 'Enter the total amount of the expense';
 
   @override
   String get costoConceptLabel => 'Expense concept';

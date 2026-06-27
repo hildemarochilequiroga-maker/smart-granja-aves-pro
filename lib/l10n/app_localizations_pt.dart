@@ -10417,7 +10417,7 @@ class SPt extends S {
   String get costoAmountTitle => 'Expense Valor';
 
   @override
-  String get costoAmountHint => 'Insira el monto total del gasto en soles';
+  String get costoAmountHint => 'Insira o valor total da despesa';
 
   @override
   String get costoConceptLabel => 'Conceito del gasto';

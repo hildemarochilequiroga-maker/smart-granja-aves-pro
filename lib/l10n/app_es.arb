@@ -5986,7 +5986,7 @@
   "costoWhatType": "¿Qué tipo de gasto es?",
   "costoSelectCategory": "Selecciona la categoría que mejor describe este gasto",
   "costoAmountTitle": "Monto del Gasto",
-  "costoAmountHint": "Ingresa el monto total del gasto en soles",
+  "costoAmountHint": "Ingresa el monto total del gasto",
   "costoConceptLabel": "Concepto del gasto",
   "costoConceptHint": "Ej: Compra de alimento balanceado",
   "costoFeedTypeLabel": "Tipo de alimento",

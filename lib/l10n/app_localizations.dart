@@ -19371,7 +19371,7 @@ abstract class S {
   /// No description provided for @costoAmountHint.
   ///
   /// In es, this message translates to:
-  /// **'Ingresa el monto total del gasto en soles'**
+  /// **'Ingresa el monto total del gasto'**
   String get costoAmountHint;
 
   /// No description provided for @costoConceptLabel.

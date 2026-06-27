@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../application/providers/planificador_provider.dart';
 import '../../domain/entities/plan_avicola.dart';
@@ -400,7 +401,7 @@ class _PlanificadorPageState extends ConsumerState<PlanificadorPage> {
       decoration: InputDecoration(
         hintText: 'Dejar vacío para usar precio referencial',
         prefixIcon: const Icon(Icons.attach_money),
-        prefixText: 'S/ ',
+        prefixText: Formatters.currencyPrefix,
         suffixText: '/kg',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),

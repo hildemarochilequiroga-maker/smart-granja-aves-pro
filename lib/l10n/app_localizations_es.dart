@@ -10433,7 +10433,7 @@ class SEs extends S {
   String get costoAmountTitle => 'Monto del Gasto';
 
   @override
-  String get costoAmountHint => 'Ingresa el monto total del gasto en soles';
+  String get costoAmountHint => 'Ingresa el monto total del gasto';
 
   @override
   String get costoConceptLabel => 'Concepto del gasto';
