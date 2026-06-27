@@ -284,6 +284,7 @@ class LoteFirebaseDatasource {
     return _lotesCollection
         .where('granjaId', isEqualTo: granjaId)
         .orderBy('fechaIngreso', descending: true)
+        .limit(200)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
@@ -297,6 +298,7 @@ class LoteFirebaseDatasource {
     return _lotesCollection
         .where('galponId', isEqualTo: galponId)
         .orderBy('fechaIngreso', descending: true)
+        .limit(200)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs

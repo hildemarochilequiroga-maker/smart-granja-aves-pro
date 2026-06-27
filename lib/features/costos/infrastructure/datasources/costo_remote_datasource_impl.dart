@@ -224,6 +224,7 @@ class CostoRemoteDatasourceImpl implements CostoRemoteDatasource {
     return _costosCollection
         .where('granjaId', isEqualTo: granjaId)
         .orderBy('fecha', descending: true)
+        .limit(500)
         .snapshots()
         .map((snapshot) {
           final costos = <CostoGasto>[];
@@ -247,6 +248,7 @@ class CostoRemoteDatasourceImpl implements CostoRemoteDatasource {
     return _costosCollection
         .where('loteId', isEqualTo: loteId)
         .orderBy('fecha', descending: true)
+        .limit(500)
         .snapshots()
         .map((snapshot) {
           final costos = <CostoGasto>[];
