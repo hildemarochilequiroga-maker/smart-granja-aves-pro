@@ -19,6 +19,7 @@ import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../application/providers/providers.dart';
+import '../../application/services/inventario_reconciliador.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/enums/enums.dart';
 import '../widgets/widgets.dart';
@@ -44,10 +45,26 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
 
+  /// Evita lanzar la reconciliación de pendientes más de una vez por apertura.
+  bool _reconciliacionDisparada = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+  }
+
+  /// Reintenta las integraciones de inventario pendientes de la granja, para
+  /// que cualquier movimiento que no se pudo aplicar por un fallo transitorio
+  /// (red) termine de sincronizarse. No bloquea la UI; al resolver, invalida
+  /// los providers para reflejar el stock actualizado.
+  Future<void> _reconciliarPendientes(String granjaId) async {
+    final resultado = await ref
+        .read(inventarioReconciliadorProvider)
+        .reconciliarGranja(granjaId);
+    if (resultado.resueltas > 0 && mounted) {
+      ref.invalidate(inventarioItemsStreamProvider(granjaId));
+    }
   }
 
   @override
@@ -72,6 +89,14 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
     final theme = Theme.of(context);
     final l = S.of(context);
     final granjaId = _granjaId;
+
+    // Al abrir el inventario, reintenta una vez las integraciones pendientes.
+    if (granjaId != null && !_reconciliacionDisparada) {
+      _reconciliacionDisparada = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reconciliarPendientes(granjaId);
+      });
+    }
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
@@ -228,6 +253,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage>
 
               return RefreshIndicator(
                 onRefresh: () async {
+                  await _reconciliarPendientes(granjaId);
                   ref.invalidate(inventarioItemsStreamProvider(granjaId));
                 },
                 child: ListView.builder(

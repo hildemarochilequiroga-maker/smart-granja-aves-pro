@@ -17,6 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../inventario/application/services/inventario_integracion_service.dart';
+import '../../../../inventario/domain/value_objects/resultado_integracion.dart';
+import '../../../../inventario/presentation/utils/integracion_feedback.dart';
 import '../../../../lotes/application/providers/lote_providers.dart';
 import '../../../../lotes/domain/entities/lote.dart';
 import '../../../application/application.dart';
@@ -177,21 +179,23 @@ class GalponDetailHandlers {
 
     // Descontar items del inventario si hay seleccionados
     if (datos.itemsInventario != null && datos.itemsInventario!.isNotEmpty) {
-      try {
-        final integracionService = ref.read(
-          inventarioIntegracionServiceProvider,
-        );
-        for (final item in datos.itemsInventario!) {
+      final integracionService = ref.read(
+        inventarioIntegracionServiceProvider,
+      );
+      final resultados = <ResultadoIntegracion>[];
+      for (final item in datos.itemsInventario!) {
+        resultados.add(
           await integracionService.registrarSalidaDesdeDesinfeccion(
             granjaId: galpon.granjaId,
             itemId: item.id,
             cantidad: 1, // Por defecto 1 unidad
             galponId: galpon.id,
             registradoPor: '', // Se obtiene del contexto de auth
-          );
-        }
-      } on Exception catch (e) {
-        debugPrint('Error al descontar inventario de desinfección: $e');
+          ),
+        );
+      }
+      if (context.mounted) {
+        mostrarFeedbackIntegracionMultiple(context, resultados);
       }
     }
   }

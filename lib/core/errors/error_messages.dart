@@ -668,6 +668,8 @@ class ErrorMessages {
       'MOTIVO_CONSUMO_LOTE': 'Consumo de alimento en lote',
       'MOTIVO_VENTA': 'Venta de {producto}',
       'MOTIVO_FALLBACK_PRODUCTO': 'producto',
+      'STOCK_INSUFICIENTE_DETALLE':
+          'Stock insuficiente: disponible {disponible}, solicitado {solicitado}',
       'MOTIVO_TRATAMIENTO': 'Aplicación de tratamiento',
       'MOTIVO_VACUNA': 'Aplicación de vacuna',
       'MOTIVO_DESINFECCION': 'Desinfección de galpón',
@@ -2008,6 +2010,8 @@ class ErrorMessages {
       'MOTIVO_CONSUMO_LOTE': 'Feed consumption in batch',
       'MOTIVO_VENTA': 'Sale of {producto}',
       'MOTIVO_FALLBACK_PRODUCTO': 'product',
+      'STOCK_INSUFICIENTE_DETALLE':
+          'Insufficient stock: available {disponible}, requested {solicitado}',
       'MOTIVO_TRATAMIENTO': 'Treatment application',
       'MOTIVO_VACUNA': 'Vaccine application',
       'MOTIVO_DESINFECCION': 'Barn disinfection',
@@ -3357,6 +3361,8 @@ class ErrorMessages {
       'MOTIVO_CONSUMO_LOTE': 'Consumo de alimento no lote',
       'MOTIVO_VENTA': 'Venda de {producto}',
       'MOTIVO_FALLBACK_PRODUCTO': 'produto',
+      'STOCK_INSUFICIENTE_DETALLE':
+          'Estoque insuficiente: disponível {disponible}, solicitado {solicitado}',
       'MOTIVO_TRATAMIENTO': 'Aplicação de tratamento',
       'MOTIVO_VACUNA': 'Aplicação de vacina',
       'MOTIVO_DESINFECCION': 'Desinfecção do galpão',

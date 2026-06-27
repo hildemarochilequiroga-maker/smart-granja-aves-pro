@@ -34,6 +34,8 @@ import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../../inventario/application/services/inventario_integracion_service.dart';
+import '../../../inventario/domain/value_objects/resultado_integracion.dart';
+import '../../../inventario/presentation/utils/integracion_feedback.dart';
 import '../../../lotes/application/providers/lote_providers.dart';
 import '../../../lotes/domain/entities/lote.dart';
 import '../../../lotes/domain/enums/estado_lote.dart';
@@ -603,15 +605,16 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
     VentaProducto venta,
     String userId,
   ) async {
-    try {
-      final integracionService = ref.read(inventarioIntegracionServiceProvider);
+    final integracionService = ref.read(inventarioIntegracionServiceProvider);
+    final resultados = <ResultadoIntegracion>[];
 
-      switch (venta.tipoProducto) {
-        case TipoProductoVenta.huevos:
-          // Para huevos, registrar salida por cada clasificación vendida
-          final huevosVendidos = venta.huevosPorClasificacion;
-          if (huevosVendidos != null) {
-            for (final entry in huevosVendidos.entries) {
+    switch (venta.tipoProducto) {
+      case TipoProductoVenta.huevos:
+        // Para huevos, registrar salida por cada clasificación vendida
+        final huevosVendidos = venta.huevosPorClasificacion;
+        if (huevosVendidos != null) {
+          for (final entry in huevosVendidos.entries) {
+            resultados.add(
               await integracionService.registrarSalidaDesdeVenta(
                 granjaId: venta.granjaId,
                 nombreItem: S
@@ -622,12 +625,14 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
                 registradoPor: userId,
                 ventaId: venta.id,
                 tipoProducto: 'huevos',
-              );
-            }
+              ),
+            );
           }
-          break;
+        }
+        break;
 
-        case TipoProductoVenta.pollinaza:
+      case TipoProductoVenta.pollinaza:
+        resultados.add(
           await integracionService.registrarSalidaDesdeVenta(
             granjaId: venta.granjaId,
             nombreItem: S.of(context).pollinazaItemName,
@@ -636,26 +641,19 @@ class _RegistrarVentaPageState extends ConsumerState<RegistrarVentaPage> {
             registradoPor: userId,
             ventaId: venta.id,
             tipoProducto: 'pollinaza',
-          );
-          break;
-
-        case TipoProductoVenta.avesVivas:
-        case TipoProductoVenta.avesFaenadas:
-        case TipoProductoVenta.avesDescarte:
-          // Las aves no se descuentan del inventario de items,
-          // se descuentan del conteo del lote (ya manejado en otro lugar)
-          break;
-      }
-    } on Exception catch (e) {
-      // No interrumpir el flujo de la venta si falla la integración
-      debugPrint('Error al registrar salida de inventario: $e');
-      if (mounted) {
-        AppSnackBar.warning(
-          context,
-          message: S.of(context).salesInventoryUpdateError,
+          ),
         );
-      }
+        break;
+
+      case TipoProductoVenta.avesVivas:
+      case TipoProductoVenta.avesFaenadas:
+      case TipoProductoVenta.avesDescarte:
+        // Las aves no se descuentan del inventario de items,
+        // se descuentan del conteo del lote (ya manejado en otro lugar)
+        break;
     }
+
+    if (mounted) mostrarFeedbackIntegracionMultiple(context, resultados);
   }
 
   Future<void> _submitForm() async {

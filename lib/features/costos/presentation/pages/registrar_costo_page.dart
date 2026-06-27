@@ -23,6 +23,7 @@ import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/granja_providers.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../inventario/application/services/inventario_integracion_service.dart';
+import '../../../inventario/presentation/utils/integracion_feedback.dart';
 import '../../../lotes/application/providers/lote_providers.dart';
 import '../../../lotes/domain/entities/lote.dart';
 import '../../../lotes/domain/enums/estado_lote.dart';
@@ -413,40 +414,29 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       return;
     }
 
-    try {
-      final integracionService = ref.read(inventarioIntegracionServiceProvider);
+    final integracionService = ref.read(inventarioIntegracionServiceProvider);
 
-      // Crear nuevo item de inventario a partir del costo
-      final tipoItem = costo.tipo == TipoGasto.alimento
-          ? TipoItem.alimento
-          : TipoItem.medicamento;
+    // Crear nuevo item de inventario a partir del costo
+    final tipoItem = costo.tipo == TipoGasto.alimento
+        ? TipoItem.alimento
+        : TipoItem.medicamento;
 
-      await integracionService.registrarEntradaDesdeCosto(
-        granjaId: costo.granjaId,
-        tipoItem: tipoItem,
-        nombreItem: costo.concepto,
-        cantidad: 1,
-        unidad: tipoItem == TipoItem.alimento
-            ? UnidadMedida.kilogramo
-            : UnidadMedida.unidad,
-        costoTotal: costo.monto,
-        proveedor: costo.proveedor,
-        numeroDocumento: costo.numeroFactura,
-        registradoPor: userId,
-        costoId: costo.id,
-      );
+    final resultado = await integracionService.registrarEntradaDesdeCosto(
+      granjaId: costo.granjaId,
+      tipoItem: tipoItem,
+      nombreItem: costo.concepto,
+      cantidad: 1,
+      unidad: tipoItem == TipoItem.alimento
+          ? UnidadMedida.kilogramo
+          : UnidadMedida.unidad,
+      costoTotal: costo.monto,
+      proveedor: costo.proveedor,
+      numeroDocumento: costo.numeroFactura,
+      registradoPor: userId,
+      costoId: costo.id,
+    );
 
-      debugPrint('✅ Entrada de inventario registrada desde costo');
-    } on Exception catch (e) {
-      // No interrumpir el flujo del costo si falla la integración
-      debugPrint('Error al registrar entrada de inventario: $e');
-      if (mounted) {
-        AppSnackBar.warning(
-          context,
-          message: S.of(context).costRegisteredInventoryError,
-        );
-      }
-    }
+    if (mounted) mostrarFeedbackIntegracion(context, resultado);
   }
 
   void _showValidationError(String message) {

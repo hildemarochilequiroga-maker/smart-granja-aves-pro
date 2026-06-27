@@ -769,11 +769,46 @@ service cloud.firestore {
       
       // Actualización: no permitida (movimientos son inmutables)
       allow update: if false;
-      
+
       // Eliminación: solo admin (para limpieza)
       allow delete: if isAdmin();
     }
-    
+
+    // =========================================================================
+    // COLECCIÓN: INTEGRACIONES PENDIENTES (cola de reintento de inventario)
+    // =========================================================================
+    // Integraciones de inventario (entradas/salidas desde costos, consumo,
+    // ventas, salud, etc.) que fallaron por un problema transitorio y se
+    // reintentan vía el reconciliador. Acceso restringido a la granja.
+    match /integraciones_pendientes/{pendienteId} {
+      function canAccessPendiente() {
+        return isAuthenticated() && (
+          (exists(/databases/$(database)/documents/granjas/$(resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+
+      function canCreatePendiente() {
+        return isAuthenticated() && (
+          (exists(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)) &&
+           get(/databases/$(database)/documents/granjas/$(request.resource.data.granjaId)).data.propietarioId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)) &&
+           get(/databases/$(database)/documents/granja_usuarios/$(request.resource.data.granjaId + '_' + request.auth.uid)).data.activo == true)
+        );
+      }
+
+      allow list: if canAccessPendiente() || isAdmin();
+      allow get: if canAccessPendiente() || isAdmin();
+      allow create: if canCreatePendiente() &&
+        hasRequiredFields(['granjaId', 'tipo', 'parametros', 'creadoEn']);
+      // Actualización: el reconciliador incrementa el contador de intentos.
+      allow update: if canAccessPendiente() || isAdmin();
+      // Eliminación: tras reconciliar con éxito (o admin).
+      allow delete: if canAccessPendiente() || isAdmin();
+    }
+
     // =========================================================================
     // COLECCIÓN LEGACY: INVENTARIO (mantener para compatibilidad)
     // =========================================================================

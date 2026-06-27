@@ -7628,6 +7628,8 @@
   "@commonSaveAction": {},
   "costRegisteredInventoryError": "Cost registered, but there was an error updating inventory",
   "@costRegisteredInventoryError": {},
+  "inventorySyncDeferred": "Saved. Inventory will sync automatically.",
+  "@inventorySyncDeferred": {},
   "invStockActualLabel": "Current: {stock} {unit}",
   "@invStockActualLabel": {
     "placeholders": {

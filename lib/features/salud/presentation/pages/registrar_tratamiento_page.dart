@@ -476,38 +476,28 @@ class _RegistrarTratamientoPageState
 
       // Descontar del inventario si se seleccionó un medicamento
       if (_itemInventarioSeleccionado != null && _selectedGranjaId != null) {
-        try {
-          final usuario = ref.read(currentUserProvider);
-          final integracionService = ref.read(
-            inventarioIntegracionServiceProvider,
-          );
+        final usuario = ref.read(currentUserProvider);
+        final integracionService = ref.read(
+          inventarioIntegracionServiceProvider,
+        );
 
-          // Usar la dosis como cantidad si está disponible, sino usar 1 unidad
-          final cantidad = _dosisController.text.trim().isNotEmpty
-              ? double.tryParse(
-                      _dosisController.text.replaceAll(RegExp(r'[^0-9.]'), ''),
-                    ) ??
-                    1.0
-              : 1.0;
+        // Usar la dosis como cantidad si está disponible, sino usar 1 unidad
+        final cantidad = _dosisController.text.trim().isNotEmpty
+            ? double.tryParse(
+                    _dosisController.text.replaceAll(RegExp(r'[^0-9.]'), ''),
+                  ) ??
+                  1.0
+            : 1.0;
 
-          await integracionService.registrarSalidaDesdeTratamiento(
-            itemId: _itemInventarioSeleccionado!.id,
-            granjaId: _selectedGranjaId!,
-            cantidad: cantidad,
-            loteId: _selectedLoteId!,
-            registradoPor: usuario?.id ?? 'unknown',
-          );
-          debugPrint('✅ Inventario actualizado por tratamiento');
-        } on Exception catch (e) {
-          debugPrint('⚠️ Error al actualizar inventario: $e');
-          if (mounted) {
-            AppSnackBar.warning(
-              context,
-              message: S.of(context).treatRegisteredInventoryError,
-              detail: e.toString().replaceFirst('Exception: ', ''),
-            );
-          }
-        }
+        final resultado = await integracionService
+            .registrarSalidaDesdeTratamiento(
+          itemId: _itemInventarioSeleccionado!.id,
+          granjaId: _selectedGranjaId!,
+          cantidad: cantidad,
+          loteId: _selectedLoteId!,
+          registradoPor: usuario?.id ?? 'unknown',
+        );
+        if (mounted) mostrarFeedbackIntegracion(context, resultado);
       }
 
       // Limpiar el borrador después de guardar exitosamente

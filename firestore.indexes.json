@@ -1,6 +1,15 @@
 {
   "indexes": [
     {
+      "collectionGroup": "integraciones_pendientes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "intentos", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "granja_usuarios",
       "queryScope": "COLLECTION",
       "fields": [

@@ -14919,6 +14919,10 @@ class SEs extends S {
       'Costo registrado, pero hubo un error al actualizar inventario';
 
   @override
+  String get inventorySyncDeferred =>
+      'Guardado. El inventario se sincronizará automáticamente.';
+
+  @override
   String invStockActualLabel(String stock, String unit) {
     return 'Actual: $stock $unit';
   }

@@ -14886,7 +14886,11 @@ class SPt extends S {
 
   @override
   String get costRegisteredInventoryError =>
-      'Custo registrado, pero hubo un erro al atualizar inventário';
+      'Custo registrado, mas houve um erro ao atualizar o inventário';
+
+  @override
+  String get inventorySyncDeferred =>
+      'Salvo. O inventário será sincronizado automaticamente.';
 
   @override
   String invStockActualLabel(String stock, String unit) {

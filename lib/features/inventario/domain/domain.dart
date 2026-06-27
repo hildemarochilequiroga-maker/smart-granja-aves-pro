@@ -4,3 +4,4 @@ library;
 export 'enums/enums.dart';
 export 'entities/entities.dart';
 export 'repositories/repositories.dart';
+export 'value_objects/resultado_integracion.dart';

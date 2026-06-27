@@ -13,6 +13,7 @@ import '../../../auth/application/providers/auth_provider.dart';
 import '../../../granjas/application/providers/colaboradores_providers.dart';
 import '../../../inventario/application/services/inventario_integracion_service.dart';
 import '../../../inventario/domain/entities/item_inventario.dart';
+import '../../../inventario/presentation/utils/integracion_feedback.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/app_haptics.dart';
@@ -429,30 +430,18 @@ class _RegistrarConsumoPageState extends ConsumerState<RegistrarConsumoPage> {
 
       // Descontar del inventario si se seleccionó un item
       if (_itemInventarioSeleccionado != null) {
-        debugPrint('📦 Descontando del inventario...');
-        try {
-          final integracionService = ref.read(
-            inventarioIntegracionServiceProvider,
-          );
-          await integracionService.registrarSalidaDesdeConsumo(
-            granjaId: widget.lote.granjaId,
-            itemId: _itemInventarioSeleccionado!.id,
-            cantidad: _cantidadKg,
-            loteId: widget.lote.id,
-            registradoPor: user.id,
-            consumoId: registro.id,
-          );
-          debugPrint('✅ Inventario actualizado exitosamente');
-        } on Exception catch (e) {
-          debugPrint('⚠️ Error al actualizar inventario: $e');
-          // Mostrar advertencia pero no bloquear el flujo
-          if (mounted) {
-            AppSnackBar.warning(
-              context,
-              message: S.of(context).consumptionInventoryError(e.toString()),
-            );
-          }
-        }
+        final integracionService = ref.read(
+          inventarioIntegracionServiceProvider,
+        );
+        final resultado = await integracionService.registrarSalidaDesdeConsumo(
+          granjaId: widget.lote.granjaId,
+          itemId: _itemInventarioSeleccionado!.id,
+          cantidad: _cantidadKg,
+          loteId: widget.lote.id,
+          registradoPor: user.id,
+          consumoId: registro.id,
+        );
+        if (mounted) mostrarFeedbackIntegracion(context, resultado);
       }
 
       if (!mounted) return;

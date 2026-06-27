@@ -539,28 +539,19 @@ class _ProgramarVacunacionPageState
 
       // Descontar del inventario si se seleccionó una vacuna
       if (_itemInventarioSeleccionado != null) {
-        try {
-          final usuario = ref.read(currentUserProvider);
-          final integracionService = ref.read(
-            inventarioIntegracionServiceProvider,
-          );
-          await integracionService.registrarSalidaDesdeVacunacion(
-            itemId: _itemInventarioSeleccionado!.id,
-            granjaId: widget.granjaId,
-            dosis: 1,
-            loteId: _loteIdEfectivo,
-            registradoPor: usuario?.id ?? 'unknown',
-          );
-        } on Exception catch (e) {
-          debugPrint('Error al descontar inventario: $e');
-          if (mounted) {
-            AppSnackBar.warning(
-              context,
-              message: S.of(context).vacRegisteredInventoryError,
-              detail: e.toString().replaceFirst('Exception: ', ''),
-            );
-          }
-        }
+        final usuario = ref.read(currentUserProvider);
+        final integracionService = ref.read(
+          inventarioIntegracionServiceProvider,
+        );
+        final resultado = await integracionService
+            .registrarSalidaDesdeVacunacion(
+          itemId: _itemInventarioSeleccionado!.id,
+          granjaId: widget.granjaId,
+          dosis: 1,
+          loteId: _loteIdEfectivo,
+          registradoPor: usuario?.id ?? 'unknown',
+        );
+        if (mounted) mostrarFeedbackIntegracion(context, resultado);
       }
 
       // Limpiar el borrador después de guardar exitosamente

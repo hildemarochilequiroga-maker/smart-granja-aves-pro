@@ -27402,6 +27402,12 @@ abstract class S {
   /// **'Costo registrado, pero hubo un error al actualizar inventario'**
   String get costRegisteredInventoryError;
 
+  /// No description provided for @inventorySyncDeferred.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardado. El inventario se sincronizará automáticamente.'**
+  String get inventorySyncDeferred;
+
   /// No description provided for @invStockActualLabel.
   ///
   /// In es, this message translates to:

@@ -8945,8 +8945,10 @@
   "@treatNewTreatment": {},
   "commonSaveAction": "Salvar",
   "@commonSaveAction": {},
-  "costRegisteredInventoryError": "Custo registrado, pero hubo un erro al atualizar inventário",
+  "costRegisteredInventoryError": "Custo registrado, mas houve um erro ao atualizar o inventário",
   "@costRegisteredInventoryError": {},
+  "inventorySyncDeferred": "Salvo. O inventário será sincronizado automaticamente.",
+  "@inventorySyncDeferred": {},
   "invStockActualLabel": "Actual: {stock} {unit}",
   "@invStockActualLabel": {
     "placeholders": {
