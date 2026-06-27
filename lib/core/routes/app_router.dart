@@ -58,7 +58,7 @@ abstract final class AppRouter {
     GoRoute(
       path: AppRoutes.onboarding,
       name: 'onboarding',
-      builder: (context, state) => const _PlaceholderPage(title: 'Onboarding'),
+      builder: (context, state) => const HomePage(),
     ),
 
     // Auth Gate (elegir método de autenticación)
@@ -139,7 +139,7 @@ abstract final class AppRouter {
     GoRoute(
       path: AppRoutes.dashboard,
       name: 'dashboard',
-      builder: (context, state) => const _PlaceholderPage(title: 'Dashboard'),
+      builder: (context, state) => const HomePage(),
     ),
 
     // Notificaciones
@@ -882,25 +882,4 @@ abstract final class AppRouter {
       },
     ),
   ];
-}
-
-/// Página placeholder temporal
-class _PlaceholderPage extends StatelessWidget {
-  const _PlaceholderPage({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          'Página: $title\n(En construcción)',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
-    );
-  }
 }
