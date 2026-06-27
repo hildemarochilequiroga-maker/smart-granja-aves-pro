@@ -241,6 +241,10 @@ class GranjaFirebaseDatasource {
       await _limpiarColeccionPorGranja('ventas_productos', id);
       await _limpiarColeccionPorGranja('ventas_pedidos', id);
 
+      // 4b. Eliminar inventario de la granja (items y movimientos top-level)
+      await _limpiarColeccionPorGranja('inventario_items', id);
+      await _limpiarColeccionPorGranja('inventario_movimientos', id);
+
       // 5. Eliminar subcollections de salud de la granja
       for (final sub in [
         'alertas_sanitarias',

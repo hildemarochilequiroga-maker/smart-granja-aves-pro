@@ -49,9 +49,41 @@ class LoteFirebaseDatasource {
   }
 
   /// Actualiza un lote existente.
+  ///
+  /// Si el lote pasa a un estado terminal (cerrado o vendido) y el galpón que
+  /// lo referencia aún lo tiene como `loteActualId`, libera el galpón en la
+  /// misma transacción. Así un lote cerrado/vendido no deja el galpón ocupado
+  /// apuntando a un ciclo ya terminado (integridad referencial galpón ↔ lote).
   Future<Lote> actualizar(Lote lote) async {
     final model = LoteModel.fromEntity(lote);
-    await _lotesCollection.doc(lote.id).update(model.toFirestore());
+    final esTerminal =
+        lote.estado == EstadoLote.cerrado ||
+        lote.estado == EstadoLote.vendido;
+
+    if (esTerminal && lote.galponId.isNotEmpty) {
+      final galponRef = _firestore.collection('galpones').doc(lote.galponId);
+      await _firestore.runTransaction((transaction) async {
+        final galponSnap = await transaction.get(galponRef);
+        transaction.update(
+          _lotesCollection.doc(lote.id),
+          model.toFirestore(),
+        );
+        // Solo liberar si el galpón apuntaba precisamente a este lote.
+        // Replica la lógica de Galpon.liberarLote(): limpia loteActualId,
+        // resetea avesActuales y archiva el lote en lotesHistoricos.
+        if (galponSnap.exists &&
+            galponSnap.data()?['loteActualId'] == lote.id) {
+          transaction.update(galponRef, {
+            'loteActualId': null,
+            'avesActuales': 0,
+            'lotesHistoricos': FieldValue.arrayUnion([lote.id]),
+            'ultimaActualizacion': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+    } else {
+      await _lotesCollection.doc(lote.id).update(model.toFirestore());
+    }
 
     return lote.copyWith(ultimaActualizacion: DateTime.now());
   }
