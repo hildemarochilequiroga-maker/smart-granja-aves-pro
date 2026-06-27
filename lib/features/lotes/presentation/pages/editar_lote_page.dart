@@ -406,7 +406,7 @@ class _EditarLotePageState extends ConsumerState<EditarLotePage> {
       );
 
       final notifier = ref.read(loteNotifierProvider.notifier);
-      final result = await notifier.actualizar(loteActualizado);
+      final result = await notifier.editarDatos(loteActualizado);
 
       if (!mounted) return;
 

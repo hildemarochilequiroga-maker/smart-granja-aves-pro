@@ -66,6 +66,23 @@ class LoteNotifier extends StateNotifier<LoteState> {
     return result;
   }
 
+  /// Edita los datos básicos de un lote (formulario de edición) sin tocar los
+  /// acumulados ni arriesgar sobrescribir registros concurrentes.
+  Future<Either<Failure, Lote>> editarDatos(Lote lote) async {
+    state = _loading(
+      switch (Formatters.currentLocale) { 'es' => 'Actualizando lote...', 'pt' => 'Atualizando lote...', _ => 'Updating batch...' },
+    );
+    final result = await _repository.editarDatosBasicos(lote);
+    state = result.fold(
+      (failure) => _error(failure.message),
+      (loteActualizado) => LoteSuccess(
+        lote: loteActualizado,
+        mensaje: switch (Formatters.currentLocale) { 'es' => 'Lote actualizado exitosamente', 'pt' => 'Lote atualizado com sucesso', _ => 'Batch updated successfully' },
+      ),
+    );
+    return result;
+  }
+
   /// Elimina un lote.
   Future<Either<Failure, void>> eliminar(String id) async {
     state = _loading(

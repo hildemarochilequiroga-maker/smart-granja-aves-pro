@@ -87,6 +87,63 @@ class LoteRepositoryImpl implements LoteRepository {
   }
 
   @override
+  Future<Either<Failure, Lote>> editarDatosBasicos(Lote lote) async {
+    try {
+      final error = lote.validar();
+      if (error != null) {
+        return Left(ValidationFailure(message: error));
+      }
+
+      // Obtener el lote actual del servidor para conocer el galpón anterior y
+      // preservar los acumulados (que NO se reescriben aquí).
+      final actualResult = await obtenerPorId(lote.id);
+      return await actualResult.fold((failure) => Left(failure), (actual) async {
+        // Solo los campos editables del formulario (nunca los acumulados).
+        final campos = <String, dynamic>{
+          'codigo': lote.codigo,
+          'tipoAve': lote.tipoAve.toJson(),
+          'cantidadInicial': lote.cantidadInicial,
+          'fechaIngreso': lote.fechaIngreso,
+          'edadIngresoDias': lote.edadIngresoDias,
+          'galponId': lote.galponId,
+          'observaciones': lote.observaciones,
+        };
+
+        await firebaseDatasource.editarDatosBasicos(
+          loteId: lote.id,
+          campos: campos,
+          galponAnteriorId: actual.galponId,
+          galponNuevoId: lote.galponId,
+        );
+
+        // Reconstruir el lote resultante: datos editados sobre los acumulados
+        // reales del servidor, no sobre el snapshot que tenía el formulario.
+        final resultado = actual.copyWith(
+          codigo: lote.codigo,
+          tipoAve: lote.tipoAve,
+          cantidadInicial: lote.cantidadInicial,
+          fechaIngreso: lote.fechaIngreso,
+          edadIngresoDias: lote.edadIngresoDias,
+          galponId: lote.galponId,
+          observaciones: lote.observaciones,
+          ultimaActualizacion: DateTime.now(),
+        );
+
+        await localDatasource.guardarLote(LoteModel.fromEntity(resultado));
+        return Right(resultado);
+      });
+    } on LoteException catch (e) {
+      return Left(ValidationFailure(message: e.mensaje));
+    } on Exception catch (e) {
+      return Left(
+        ServerFailure(
+          message: ErrorMessages.format('ERR_UPDATE_BATCH', {'e': '$e'}),
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> eliminar(String id) async {
     try {
       // Eliminar de Firebase (Firestore encola offline automáticamente)

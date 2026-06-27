@@ -323,6 +323,65 @@ class LoteFirebaseDatasource {
     await _lotesCollection.doc(id).update(campos);
   }
 
+  /// Edita los datos básicos de un lote (los del formulario de edición) sin
+  /// tocar los campos acumulados (`mortalidadAcumulada`, `cantidadActual`,
+  /// `consumoAcumuladoKg`, `huevosProducidos`, etc.).
+  ///
+  /// A diferencia de [actualizar], que reescribe el documento completo a partir
+  /// de un snapshot que el cliente tenía en memoria (lo que sobrescribiría con
+  /// valores viejos cualquier registro de mortalidad/consumo hecho mientras el
+  /// formulario estaba abierto), esto aplica un `update` PARCIAL solo de los
+  /// campos editables.
+  ///
+  /// Si cambia el galpón, reconcilia `loteActualId` de ambos galpones (libera
+  /// el anterior si apuntaba a este lote, ocupa el nuevo) en la misma
+  /// transacción, preservando la integridad referencial galpón ↔ lote.
+  Future<void> editarDatosBasicos({
+    required String loteId,
+    required Map<String, dynamic> campos,
+    required String galponAnteriorId,
+    required String galponNuevoId,
+  }) async {
+    final loteRef = _lotesCollection.doc(loteId);
+    final cambioGalpon = galponAnteriorId != galponNuevoId;
+
+    if (!cambioGalpon) {
+      await actualizarCampos(loteId, campos);
+      return;
+    }
+
+    final galponAntRef = _firestore.collection('galpones').doc(galponAnteriorId);
+    final galponNuevoRef = _firestore.collection('galpones').doc(galponNuevoId);
+
+    await _firestore.runTransaction((transaction) async {
+      final antSnap = galponAnteriorId.isNotEmpty
+          ? await transaction.get(galponAntRef)
+          : null;
+
+      final datos = Map<String, dynamic>.from(campos);
+      datos['ultimaActualizacion'] = FieldValue.serverTimestamp();
+      transaction.update(loteRef, datos);
+
+      // Liberar el galpón anterior solo si apuntaba a este lote.
+      if (antSnap != null &&
+          antSnap.exists &&
+          antSnap.data()?['loteActualId'] == loteId) {
+        transaction.update(galponAntRef, {
+          'loteActualId': null,
+          'ultimaActualizacion': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Ocupar el galpón nuevo con este lote.
+      if (galponNuevoId.isNotEmpty) {
+        transaction.update(galponNuevoRef, {
+          'loteActualId': loteId,
+          'ultimaActualizacion': FieldValue.serverTimestamp(),
+        });
+      }
+    });
+  }
+
   /// Incrementa contadores (mortalidad, descartes, ventas).
   Future<void> incrementarContador(
     String id,

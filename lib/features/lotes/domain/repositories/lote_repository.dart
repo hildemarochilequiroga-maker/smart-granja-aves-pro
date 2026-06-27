@@ -27,6 +27,15 @@ abstract class LoteRepository {
   /// o [Left(Failure)] si ocurre un error.
   Future<Either<Failure, Lote>> actualizar(Lote lote);
 
+  /// Edita los datos básicos editables de un lote (código, tipo, raza, galpón,
+  /// fechas, observaciones) SIN reescribir los campos acumulados, evitando que
+  /// una edición sobrescriba con valores viejos la mortalidad/consumo/producción
+  /// que otro usuario haya registrado mientras el formulario estaba abierto.
+  ///
+  /// Si cambia el galpón, reconcilia la integridad referencial galpón ↔ lote.
+  /// Retorna [Right(Lote)] con el lote resultante o [Left(Failure)].
+  Future<Either<Failure, Lote>> editarDatosBasicos(Lote lote);
+
   /// Elimina un lote del sistema.
   ///
   /// [id] - Identificador único del lote a eliminar.
