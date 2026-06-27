@@ -27,6 +27,7 @@ import '../../../inventario/presentation/utils/integracion_feedback.dart';
 import '../../../lotes/application/providers/lote_providers.dart';
 import '../../../lotes/domain/entities/lote.dart';
 import '../../../lotes/domain/enums/estado_lote.dart';
+import '../../../lotes/domain/enums/tipo_alimento.dart';
 import '../../../../core/presentation/widgets/form_progress_indicator.dart';
 import '../../../inventario/domain/enums/enums.dart';
 import '../../application/providers/costos_provider.dart';
@@ -72,6 +73,7 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
   // Estado del formulario
   int _currentStep = 0;
   TipoGasto? _tipoGasto;
+  TipoAlimento? _tipoAlimento;
   DateTime _fechaGasto = DateTime.now();
   bool _isSubmitting = false;
   bool _hasUnsavedChanges = false;
@@ -220,6 +222,14 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
     _selectedLoteId = costo.loteId;
     _tipoGasto = costo.tipo;
     _conceptoController.text = costo.concepto;
+    // Si es alimento, recuperar el TipoAlimento desde el concepto guardado
+    // (que se guardó como su displayName) para precargar el selector.
+    if (costo.tipo == TipoGasto.alimento) {
+      _tipoAlimento = TipoAlimento.values.firstWhere(
+        (t) => t.displayName.toLowerCase() == costo.concepto.toLowerCase(),
+        orElse: () => TipoAlimento.otro,
+      );
+    }
     _montoController.text = costo.monto.toStringAsFixed(2);
     _fechaGasto = costo.fecha;
     _proveedorController.text = costo.proveedor ?? '';
@@ -689,6 +699,13 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
                         onMontoTotalChanged: _onMontoTotalChanged,
                         onCostoPorAveChanged: _onCostoPorAveChanged,
                         tipoGasto: _tipoGasto,
+                        tipoAlimento: _tipoAlimento,
+                        onTipoAlimentoChanged: (tipo) {
+                          setState(() {
+                            _tipoAlimento = tipo;
+                            _hasUnsavedChanges = true;
+                          });
+                        },
                       ),
 
                       // Paso 3: Detalles adicionales
@@ -722,11 +739,19 @@ class _RegistrarCostoPageState extends ConsumerState<RegistrarCostoPage> {
       tipoSeleccionado: _tipoGasto,
       onTipoChanged: (tipo) {
         setState(() {
+          final tipoAnterior = _tipoGasto;
           _tipoGasto = tipo;
           _hasUnsavedChanges = true;
           // Si el nuevo tipo no es directo, limpiar el lote asignado.
           if (!tipo.esDirecto) {
             _selectedLoteId = null;
+          }
+          // Al entrar o salir de "alimento" (selector ↔ texto libre), limpiar
+          // el concepto y el tipo de alimento para no arrastrar estado previo.
+          if (tipo == TipoGasto.alimento ||
+              tipoAnterior == TipoGasto.alimento) {
+            _conceptoController.clear();
+            _tipoAlimento = null;
           }
         });
       },

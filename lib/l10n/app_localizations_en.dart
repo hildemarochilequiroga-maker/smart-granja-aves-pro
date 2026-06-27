@@ -10370,6 +10370,15 @@ class SEn extends S {
   String get costoConceptHint => 'E.g.: Purchase of balanced feed';
 
   @override
+  String get costoFeedTypeLabel => 'Feed type';
+
+  @override
+  String get costoFeedTypeHint => 'Select the feed type';
+
+  @override
+  String get costoFeedTypeRequired => 'Select the feed type';
+
+  @override
   String get costoConceptRequired => 'Enter the expense concept';
 
   @override

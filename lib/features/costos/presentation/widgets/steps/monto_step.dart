@@ -14,6 +14,8 @@ import '../../../../../core/utils/field_validators.dart';
 import '../../../../../core/utils/formatters.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../lotes/domain/enums/tipo_alimento.dart';
 import '../../../domain/enums/tipo_gasto.dart';
 import '../costo_form_field.dart';
 
@@ -32,6 +34,8 @@ class MontoStep extends StatelessWidget {
     this.onMontoTotalChanged,
     this.onCostoPorAveChanged,
     this.tipoGasto,
+    this.tipoAlimento,
+    this.onTipoAlimentoChanged,
   });
 
   final TextEditingController conceptoController;
@@ -58,6 +62,13 @@ class MontoStep extends StatelessWidget {
 
   /// Tipo de gasto seleccionado (para el hint dinámico del concepto).
   final TipoGasto? tipoGasto;
+
+  /// Tipo de alimento seleccionado (solo cuando [tipoGasto] es alimento). Para
+  /// alimento, el selector reemplaza al campo de texto libre del concepto.
+  final TipoAlimento? tipoAlimento;
+
+  /// Llamado al elegir un tipo de alimento en el bottom sheet.
+  final ValueChanged<TipoAlimento>? onTipoAlimentoChanged;
 
   static String _conceptoHint(TipoGasto? tipo) {
     return switch (tipo) {
@@ -118,24 +129,36 @@ class MontoStep extends StatelessWidget {
           ),
           AppSpacing.gapXl,
 
-          // Campo concepto
-          CostoFormField(
-            controller: conceptoController,
-            label: l.costoConceptLabel,
-            hint: _conceptoHint(tipoGasto),
-            required: true,
-            maxLines: 2,
-            maxLength: 200,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.next,
-            autovalidateMode: autoValidate
-                ? AutovalidateMode.always
-                : AutovalidateMode.onUserInteraction,
-            validator: FieldValidators.compose([
-              FieldValidators.required(l.costoConceptRequired),
-              FieldValidators.minLength(l.costoConceptMinLength, 5),
-            ]),
-          ),
+          // Campo concepto: para alimento, un selector de tipo de alimento
+          // reemplaza el texto libre; para el resto, campo de texto normal.
+          if (tipoGasto == TipoGasto.alimento)
+            _SelectorTipoAlimento(
+              seleccionado: tipoAlimento,
+              autoValidate: autoValidate,
+              mensajeRequerido: l.costoFeedTypeRequired,
+              onSelected: (tipo) {
+                conceptoController.text = tipo.displayName;
+                onTipoAlimentoChanged?.call(tipo);
+              },
+            )
+          else
+            CostoFormField(
+              controller: conceptoController,
+              label: l.costoConceptLabel,
+              hint: _conceptoHint(tipoGasto),
+              required: true,
+              maxLines: 2,
+              maxLength: 200,
+              textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.next,
+              autovalidateMode: autoValidate
+                  ? AutovalidateMode.always
+                  : AutovalidateMode.onUserInteraction,
+              validator: FieldValidators.compose([
+                FieldValidators.required(l.costoConceptRequired),
+                FieldValidators.minLength(l.costoConceptMinLength, 5),
+              ]),
+            ),
           AppSpacing.gapBase,
 
           // Campo de monto (total)
@@ -248,4 +271,127 @@ class MontoStep extends StatelessWidget {
     );
   }
 
+}
+
+/// Selector de tipo de alimento que reemplaza el campo de concepto cuando el
+/// gasto es de tipo alimento. Es un [FormField] para integrarse con la
+/// validación del formulario (obligatorio). Abre un bottom sheet con los
+/// tipos de alimento y, al elegir, fija el concepto del costo.
+class _SelectorTipoAlimento extends FormField<TipoAlimento> {
+  _SelectorTipoAlimento({
+    required TipoAlimento? seleccionado,
+    required ValueChanged<TipoAlimento> onSelected,
+    required bool autoValidate,
+    required String mensajeRequerido,
+  }) : super(
+          initialValue: seleccionado,
+          autovalidateMode: autoValidate
+              ? AutovalidateMode.always
+              : AutovalidateMode.onUserInteraction,
+          validator: (value) => value == null ? mensajeRequerido : null,
+          builder: (state) {
+            final context = state.context;
+            final theme = Theme.of(context);
+            final l = S.of(context);
+            final value = state.value;
+            final tieneError = state.hasError;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.costoFeedTypeLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                AppSpacing.gapSm,
+                InkWell(
+                  borderRadius: AppRadius.allSm,
+                  onTap: () async {
+                    final elegido = await _mostrarSheet(context, value);
+                    if (elegido != null) {
+                      state.didChange(elegido);
+                      onSelected(elegido);
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      errorText: tieneError ? state.errorText : null,
+                      border: OutlineInputBorder(
+                        borderRadius: AppRadius.allSm,
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.allSm,
+                        borderSide: BorderSide(
+                          color: tieneError
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.outline.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        if (value != null) ...[
+                          Text(value.icono,
+                              style: const TextStyle(fontSize: 20)),
+                          AppSpacing.hGapMd,
+                        ],
+                        Expanded(
+                          child: Text(
+                            value?.localizedDisplayName(l) ??
+                                l.costoFeedTypeHint,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: value == null
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+
+  static Future<TipoAlimento?> _mostrarSheet(
+    BuildContext context,
+    TipoAlimento? actual,
+  ) {
+    final l = S.of(context);
+    return showAppBottomSheet<TipoAlimento>(
+      context: context,
+      title: l.costoFeedTypeLabel,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final tipo in TipoAlimento.values)
+            AppSheetOptionTile(
+              leading: Text(tipo.icono, style: const TextStyle(fontSize: 22)),
+              label: tipo.localizedDisplayName(l),
+              subtitle: tipo.localizedRangoEdadDescripcion(l),
+              selected: tipo == actual,
+              onTap: () => Navigator.of(ctx).pop(tipo),
+            ),
+        ],
+      ),
+    );
+  }
 }

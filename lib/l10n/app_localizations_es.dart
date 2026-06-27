@@ -10442,6 +10442,15 @@ class SEs extends S {
   String get costoConceptHint => 'Ej: Compra de alimento balanceado';
 
   @override
+  String get costoFeedTypeLabel => 'Tipo de alimento';
+
+  @override
+  String get costoFeedTypeHint => 'Selecciona el tipo de alimento';
+
+  @override
+  String get costoFeedTypeRequired => 'Selecciona el tipo de alimento';
+
+  @override
   String get costoConceptRequired => 'Ingresa el concepto del gasto';
 
   @override

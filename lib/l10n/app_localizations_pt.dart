@@ -10426,6 +10426,15 @@ class SPt extends S {
   String get costoConceptHint => 'Ex: Compra de alimento balanceado';
 
   @override
+  String get costoFeedTypeLabel => 'Tipo de ração';
+
+  @override
+  String get costoFeedTypeHint => 'Selecione o tipo de ração';
+
+  @override
+  String get costoFeedTypeRequired => 'Selecione o tipo de ração';
+
+  @override
   String get costoConceptRequired => 'Insira el conceito del gasto';
 
   @override

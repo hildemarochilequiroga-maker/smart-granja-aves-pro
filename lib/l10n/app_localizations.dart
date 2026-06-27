@@ -19386,6 +19386,24 @@ abstract class S {
   /// **'Ej: Compra de alimento balanceado'**
   String get costoConceptHint;
 
+  /// No description provided for @costoFeedTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de alimento'**
+  String get costoFeedTypeLabel;
+
+  /// No description provided for @costoFeedTypeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona el tipo de alimento'**
+  String get costoFeedTypeHint;
+
+  /// No description provided for @costoFeedTypeRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona el tipo de alimento'**
+  String get costoFeedTypeRequired;
+
   /// No description provided for @costoConceptRequired.
   ///
   /// In es, this message translates to:
