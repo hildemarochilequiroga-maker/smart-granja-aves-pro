@@ -43,7 +43,19 @@ service cloud.firestore {
     function onlyUpdates(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
-    
+
+    // Verifica acceso a una granja (propietario o colaborador activo) a partir
+    // del granjaId del documento. Usada por las reglas de collectionGroup para
+    // que un query de grupo no pueda leer registros de granjas ajenas.
+    function tieneAccesoGranjaCG(granjaId) {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/granjas/$(granjaId)) &&
+         get(/databases/$(database)/documents/granjas/$(granjaId)).data.propietarioId == request.auth.uid) ||
+        (exists(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)) &&
+         get(/databases/$(database)/documents/granja_usuarios/$(granjaId + '_' + request.auth.uid)).data.activo == true)
+      );
+    }
+
     // =========================================================================
     // COLECCIÓN INTERNA: _app_status
     // =========================================================================
@@ -1182,25 +1194,27 @@ service cloud.firestore {
     // =========================================================================
     // Necesarias para que las queries collectionGroup de actividades recientes
     // puedan leer documentos en subcollecciones de lotes.
-    // Solo lectura autenticada; la seguridad real la da el filtro granjaId.
-    
+    // La lectura se restringe al acceso a la granja del propio documento
+    // (cada doc lleva granjaId), de modo que un collectionGroup query NO pueda
+    // leer registros de granjas de otros usuarios aunque omita el filtro.
+
     match /{path=**}/produccion/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if tieneAccesoGranjaCG(resource.data.granjaId) || isAdmin();
     }
     match /{path=**}/mortalidad/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if tieneAccesoGranjaCG(resource.data.granjaId) || isAdmin();
     }
     match /{path=**}/consumos/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if tieneAccesoGranjaCG(resource.data.granjaId) || isAdmin();
     }
     match /{path=**}/pesos/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if tieneAccesoGranjaCG(resource.data.granjaId) || isAdmin();
     }
     match /{path=**}/necropsias/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if tieneAccesoGranjaCG(resource.data.granjaId) || isAdmin();
     }
     match /{path=**}/inspecciones_bioseguridad/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if tieneAccesoGranjaCG(resource.data.granjaId) || isAdmin();
     }
   }
 }
