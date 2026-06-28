@@ -266,11 +266,37 @@ exports.onMortalidadRegistrada = (0, firestore_1.onDocumentCreated)({
         firebase_functions_1.logger.warn(`No hay responsables activos para granja ${granjaId}`);
         return;
     }
+    // Mensaje de la notificación push/in-app.
+    const tituloPush = `⚠️ Mortalidad en ${loteNombre}`;
+    const mensajePush = `${cantidadMuertos} ave(s) en ${granjaName}. ` +
+        `Acumulado: ${porcentaje.toFixed(1)}%. Causa: ${causa}.`;
     const envios = [];
     for (const colabDoc of colaboradores.docs) {
         const colab = colabDoc.data();
         if (!colab.usuarioId)
             continue;
+        // 1) Notificación push + in-app al celular de cada responsable.
+        const notificacion = {
+            usuarioId: colab.usuarioId,
+            tipo: "mortalidad_alta",
+            titulo: tituloPush,
+            mensaje: mensajePush,
+            fechaCreacion: admin.firestore.Timestamp.now(),
+            granjaId,
+            granjaName,
+            data: {
+                loteId,
+                mortalidadId,
+                cantidadMuertos: String(cantidadMuertos),
+                porcentaje: porcentaje.toFixed(1),
+                registradoPor,
+            },
+            leida: false,
+            prioridad: "alta",
+            accionUrl: `/lotes/${loteId}`,
+        };
+        envios.push(crearNotificacionYEnviarPush(colab.usuarioId, notificacion));
+        // 2) Salida WhatsApp (se omite sola si no está configurada).
         envios.push(enviarWhatsAppMortalidad({
             usuarioId: colab.usuarioId,
             eventId: event.id,
@@ -289,9 +315,9 @@ exports.onMortalidadRegistrada = (0, firestore_1.onDocumentCreated)({
     const results = await Promise.allSettled(envios);
     const fallidos = results.filter(r => r.status === "rejected").length;
     if (fallidos > 0) {
-        firebase_functions_1.logger.warn(`${fallidos}/${results.length} salidas WhatsApp de mortalidad fallaron`);
+        firebase_functions_1.logger.warn(`${fallidos}/${results.length} salidas de mortalidad fallaron`);
     }
-    firebase_functions_1.logger.info(`Salidas WhatsApp de mortalidad procesadas: ${results.length}`);
+    firebase_functions_1.logger.info(`Salidas de mortalidad procesadas: ${results.length}`);
 });
 // =============================================================================
 // HELPERS: Salida WhatsApp de mortalidad
@@ -687,6 +713,7 @@ async function crearNotificacionYEnviarPush(usuarioId, notificacion) {
 // registros, vacunaciones programadas, inspecciones pendientes y entregas
 // programadas. Cada una: query por granja + dedupe + crearNotificacionYEnviarPush.
 exports.verificarAlertasPeriodicas = (0, scheduler_1.onSchedule)({ schedule: "every 30 minutes", timeZone: "America/Bogota" }, async (event) => {
+    var _a, _b;
     const scheduleKey = `schedule_alertas_${event.scheduleTime}`;
     if (await isAlreadyProcessed(scheduleKey)) {
         firebase_functions_1.logger.info(`Ejecución periódica duplicada ignorada: ${scheduleKey}`);
@@ -696,11 +723,9 @@ exports.verificarAlertasPeriodicas = (0, scheduler_1.onSchedule)({ schedule: "ev
     const granjas = await db.collection("granjas").get();
     for (const granjaDoc of granjas.docs) {
         const granjaId = granjaDoc.id;
+        const granjaName = (_b = (_a = granjaDoc.data()) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : "Granja";
         try {
-            // TODO: invocar aquí las verificaciones portadas (ver TODO de arriba).
-            // De momento es un esqueleto idempotente listo para extender sin
-            // cambiar el wiring del scheduler ni el schedule.
-            void granjaId;
+            await verificarVacunacionesProximas(granjaId, granjaName);
         }
         catch (error) {
             firebase_functions_1.logger.error(`Error verificando alertas de ${granjaId}:`, error);
@@ -708,6 +733,59 @@ exports.verificarAlertasPeriodicas = (0, scheduler_1.onSchedule)({ schedule: "ev
     }
     firebase_functions_1.logger.info("✅ Verificación periódica de alertas completada");
 });
+/**
+ * Recordatorio de vacunaciones programadas que caen dentro de las próximas 48h
+ * y aún no se han aplicado. Envía push + in-app a los responsables de la
+ * granja. Idempotente: usa un dedupe key por vacunación+día para no repetir.
+ */
+async function verificarVacunacionesProximas(granjaId, granjaName) {
+    const ahora = admin.firestore.Timestamp.now();
+    const en48h = admin.firestore.Timestamp.fromMillis(ahora.toMillis() + 48 * 60 * 60 * 1000);
+    const snap = await db
+        .collection("vacunaciones")
+        .where("granjaId", "==", granjaId)
+        .where("aplicada", "==", false)
+        .where("fechaProgramada", ">=", ahora)
+        .where("fechaProgramada", "<=", en48h)
+        .limit(50)
+        .get();
+    if (snap.empty)
+        return;
+    const destinatarios = await getDestinatariosGranja(granjaId);
+    if (destinatarios.length === 0)
+        return;
+    for (const doc of snap.docs) {
+        const vac = doc.data();
+        const nombreVacuna = toText(vac.nombreVacuna, "Vacuna");
+        const loteId = toText(vac.loteId);
+        const fecha = formatFirestoreDate(vac.fechaProgramada);
+        // Dedupe: una sola alerta por vacunación y día.
+        const hoy = new Date().toISOString().slice(0, 10);
+        const dedupeKey = `vac_prox_${doc.id}_${hoy}`;
+        if (await isAlreadyProcessed(dedupeKey))
+            continue;
+        const envios = destinatarios.map((usuarioId) => {
+            const notificacion = {
+                usuarioId,
+                // Tipo existente en el enum del cliente (TipoNotificacion.vacunacionManana).
+                tipo: "vacunacion_manana",
+                titulo: `💉 Vacunación próxima en ${granjaName}`,
+                mensaje: `${nombreVacuna} programada para ${fecha}.`,
+                fechaCreacion: admin.firestore.Timestamp.now(),
+                granjaId,
+                granjaName,
+                data: { vacunacionId: doc.id, loteId, nombreVacuna },
+                leida: false,
+                prioridad: "alta",
+                accionUrl: loteId ? `/lotes/${loteId}` : "/salud",
+            };
+            return crearNotificacionYEnviarPush(usuarioId, notificacion);
+        });
+        await Promise.allSettled(envios);
+        firebase_functions_1.logger.info(`Recordatorio de vacunación ${nombreVacuna} enviado a ` +
+            `${destinatarios.length} responsable(s) de ${granjaName}`);
+    }
+}
 /**
  * Obtiene los usuarioIds destinatarios (owner/admin/manager activos) de una
  * granja desde la colección correcta `granja_usuarios`. Usar esto en lugar de

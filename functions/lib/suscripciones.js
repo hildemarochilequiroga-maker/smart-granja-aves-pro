@@ -47,7 +47,6 @@ const admin = __importStar(require("firebase-admin"));
 const firebase_functions_1 = require("firebase-functions");
 const https_1 = require("firebase-functions/v2/https");
 const pubsub_1 = require("firebase-functions/v2/pubsub");
-const googleapis_1 = require("googleapis");
 const db = admin.firestore();
 // Nombre del paquete Android (debe coincidir con applicationId).
 const PACKAGE_NAME = (_a = process.env.ANDROID_PACKAGE_NAME) !== null && _a !== void 0 ? _a : "com.hilde.smartgranjaavespro";
@@ -61,11 +60,15 @@ const PRODUCT_TO_PLAN = {
  * (la service account de la function necesita acceso a la Play Developer API).
  */
 async function androidPublisher() {
-    const auth = new googleapis_1.google.auth.GoogleAuth({
+    // Lazy-load: `googleapis` es pesado y cargarlo a nivel de módulo hace que
+    // el análisis de backend de Firebase exceda su timeout de inicialización.
+    // Se carga solo cuando realmente se valida una compra.
+    const { google } = await Promise.resolve().then(() => __importStar(require("googleapis")));
+    const auth = new google.auth.GoogleAuth({
         scopes: ["https://www.googleapis.com/auth/androidpublisher"],
     });
     const authClient = await auth.getClient();
-    return googleapis_1.google.androidpublisher({
+    return google.androidpublisher({
         version: "v3",
         auth: authClient,
     });

@@ -11,7 +11,7 @@ import * as admin from "firebase-admin";
 import { logger } from "firebase-functions";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import { google, androidpublisher_v3 } from "googleapis";
+import type { androidpublisher_v3 } from "googleapis";
 
 const db = admin.firestore();
 
@@ -37,6 +37,10 @@ type EstadoSuscripcion =
  * (la service account de la function necesita acceso a la Play Developer API).
  */
 async function androidPublisher(): Promise<androidpublisher_v3.Androidpublisher> {
+  // Lazy-load: `googleapis` es pesado y cargarlo a nivel de módulo hace que
+  // el análisis de backend de Firebase exceda su timeout de inicialización.
+  // Se carga solo cuando realmente se valida una compra.
+  const { google } = await import("googleapis");
   const auth = new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/androidpublisher"],
   });

@@ -545,6 +545,15 @@
       "collectionGroup": "vacunaciones",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "granjaId", "order": "ASCENDING" },
+        { "fieldPath": "aplicada", "order": "ASCENDING" },
+        { "fieldPath": "fechaProgramada", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "vacunaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "aplicada", "order": "ASCENDING" },
         { "fieldPath": "granjaId", "order": "ASCENDING" },
         { "fieldPath": "fechaAplicacion", "order": "DESCENDING" }
