@@ -39,7 +39,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verificarAlertasPeriodicas = exports.onColaboradorAgregado = exports.onInvitacionCreada = exports.onMortalidadRegistrada = exports.verificarVencimientos = exports.onInventarioUpdate = void 0;
+exports.verificarAlertasPeriodicas = exports.onColaboradorAgregado = exports.onInvitacionCreada = exports.onMortalidadRegistrada = exports.verificarVencimientos = exports.onInventarioUpdate = exports.onPlayNotification = exports.validarCompraPlay = void 0;
 exports.getDestinatariosGranja = getDestinatariosGranja;
 const admin = __importStar(require("firebase-admin"));
 const firebase_functions_1 = require("firebase-functions");
@@ -49,6 +49,10 @@ const scheduler_1 = require("firebase-functions/v2/scheduler");
 admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
+// Suscripciones: validación de compras Play (callable) + RTDN (Pub/Sub).
+var suscripciones_1 = require("./suscripciones");
+Object.defineProperty(exports, "validarCompraPlay", { enumerable: true, get: function () { return suscripciones_1.validarCompraPlay; } });
+Object.defineProperty(exports, "onPlayNotification", { enumerable: true, get: function () { return suscripciones_1.onPlayNotification; } });
 // Credenciales de WhatsApp (opcionales): se leen del entorno en runtime.
 // Si no están configuradas, el envío por WhatsApp se omite con un warning,
 // permitiendo desplegar el resto de funciones sin bloquear por el secreto.

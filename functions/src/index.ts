@@ -19,6 +19,9 @@ admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
 
+// Suscripciones: validación de compras Play (callable) + RTDN (Pub/Sub).
+export { validarCompraPlay, onPlayNotification } from "./suscripciones";
+
 // Credenciales de WhatsApp (opcionales): se leen del entorno en runtime.
 // Si no están configuradas, el envío por WhatsApp se omite con un warning,
 // permitiendo desplegar el resto de funciones sin bloquear por el secreto.

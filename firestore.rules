@@ -120,6 +120,20 @@ service cloud.firestore {
     }
     
     // =========================================================================
+    // COLECCIÓN: SUSCRIPCIONES (1 doc por usuario, id == uid)
+    // =========================================================================
+    // Seguridad crítica del modelo de planes: el plan NO se puede falsificar.
+    // - Lectura: solo el dueño del documento (su propio plan) o admin.
+    // - Escritura: DENEGADA a todo cliente. Solo el Admin SDK del servidor
+    //   (Cloud Function validarCompraPlay / RTDN), que omite estas reglas,
+    //   puede crear/actualizar el plan tras validar la compra contra Google
+    //   Play. Así, un usuario no puede otorgarse Pro/Plus escribiendo aquí.
+    match /suscripciones/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // =========================================================================
     // COLECCIÓN: GRANJAS
     // =========================================================================
     match /granjas/{granjaId} {
