@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../application/application.dart';
@@ -102,7 +103,8 @@ class _AuthGatePageState extends ConsumerState<AuthGatePage>
 
     return Scaffold(
       body: AuthBackground(
-        child: SafeArea(
+        child: FormTextScale(
+          child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
@@ -128,14 +130,6 @@ class _AuthGatePageState extends ConsumerState<AuthGatePage>
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          'PRO',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
                           ),
                         ),
                       ],
@@ -203,6 +197,7 @@ class _AuthGatePageState extends ConsumerState<AuthGatePage>
                 const Spacer(flex: 2),
               ],
             ),
+          ),
           ),
         ),
       ),

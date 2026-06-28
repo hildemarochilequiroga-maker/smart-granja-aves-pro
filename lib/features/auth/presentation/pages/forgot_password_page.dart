@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_breakpoints.dart';
@@ -76,6 +77,21 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
     }
   }
 
+  /// Reenvía el correo al mismo email ya ingresado, sin volver al formulario.
+  Future<void> _handleResendEmail() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() => _emailSent = false);
+      return;
+    }
+    await ref
+        .read(authProvider.notifier)
+        .enviarEmailRestablecerPassword(email: email);
+    if (mounted) {
+      AppSnackBar.success(context, message: S.of(context).authResetLinkSent);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -94,7 +110,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
     return Scaffold(
       body: AuthBackground(
         showPattern: true,
-        child: SafeArea(
+        child: FormTextScale(
+          child: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -138,6 +155,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
                 ),
               ),
             ),
+          ),
           ),
         ),
       ),
@@ -337,9 +355,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
         // Resend button
         AuthSecondaryButton(
           text: S.of(context).authResendEmail,
-          onPressed: () {
-            setState(() => _emailSent = false);
-          },
+          onPressed: _handleResendEmail,
         ),
 
         AppSpacing.gapBase,

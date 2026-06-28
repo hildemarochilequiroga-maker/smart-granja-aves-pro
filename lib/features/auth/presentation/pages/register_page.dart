@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_breakpoints.dart';
@@ -143,7 +144,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
     return Scaffold(
       body: AuthBackground(
         showPattern: true,
-        child: SafeArea(
+        child: FormTextScale(
+          child: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -337,6 +339,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
                 ),
               ),
             ),
+          ),
           ),
         ),
       ),
