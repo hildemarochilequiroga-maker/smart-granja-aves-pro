@@ -9,7 +9,7 @@ class SEs extends S {
   SEs([String locale = 'es']) : super(locale);
 
   @override
-  String get appTitle => 'Smart Granja Aves Pro';
+  String get appTitle => 'Smart Granja Aves';
 
   @override
   String get navHome => 'Inicio';
@@ -9592,7 +9592,7 @@ class SEs extends S {
   String get reportPrint => 'Imprimir';
 
   @override
-  String get reportShareText => 'Reporte generado por Smart Granja Aves Pro';
+  String get reportShareText => 'Reporte generado por Smart Granja Aves';
 
   @override
   String get reportShareError => 'Error al compartir';
@@ -12591,7 +12591,7 @@ class SEs extends S {
   }
 
   @override
-  String get ventaShareAppName => 'Smart Granja Aves Pro';
+  String get ventaShareAppName => 'Smart Granja Aves';
 
   @override
   String ventaShareSubject(Object type) {
@@ -14118,16 +14118,13 @@ class SEs extends S {
   String get homeAppTitle => 'Smart Granja Aves';
 
   @override
-  String get authProBadge => 'PRO';
-
-  @override
   String get perfilLanguage => 'Español';
 
   @override
   String get perfilSyncing => 'Sincronizando';
 
   @override
-  String get perfilAppTitle => 'Smart Granja Aves Pro';
+  String get perfilAppTitle => 'Smart Granja Aves';
 
   @override
   String reportsPeriod(String period) {
@@ -15982,7 +15979,7 @@ class SEs extends S {
 
   @override
   String get legalTerms1Body =>
-      'Al utilizar Smart Granja Aves Pro, usted acepta estos términos y condiciones. Si no está de acuerdo, por favor no utilice la aplicación.';
+      'Al utilizar Smart Granja Aves, usted acepta estos términos y condiciones. Si no está de acuerdo, por favor no utilice la aplicación.';
 
   @override
   String get legalTerms2Title => '2. Uso de la aplicación';
@@ -16003,7 +16000,7 @@ class SEs extends S {
 
   @override
   String get legalTerms4Body =>
-      'Los datos que usted ingresa en la aplicación son de su propiedad. Smart Granja Aves Pro retiene los derechos sobre el software, diseño, algoritmos y contenido propio de la aplicación.';
+      'Los datos que usted ingresa en la aplicación son de su propiedad. Smart Granja Aves retiene los derechos sobre el software, diseño, algoritmos y contenido propio de la aplicación.';
 
   @override
   String get legalTerms5Title => '5. Limitación de responsabilidad';

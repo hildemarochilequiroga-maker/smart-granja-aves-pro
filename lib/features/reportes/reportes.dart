@@ -1,4 +1,4 @@
-/// Módulo de Reportes para Smart Granja Aves Pro.
+/// Módulo de Reportes para Smart Granja Aves.
 ///
 /// Este módulo proporciona funcionalidad completa para generar
 /// reportes profesionales en formato PDF, incluyendo:

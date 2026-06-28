@@ -40,9 +40,9 @@ class PlanPdfGenerator {
   // ═══════════════════════════════════════════════════════════════════════════
   static Future<Uint8List> generar(ResultadoPlan plan) async {
     final pdf = pw.Document(
-      title: 'Plan Avícola - Smart Granja Aves Pro',
-      author: 'Smart Granja Aves Pro',
-      creator: 'Smart Granja Aves Pro',
+      title: 'Plan Avícola - Smart Granja Aves',
+      author: 'Smart Granja Aves',
+      creator: 'Smart Granja Aves',
       subject: 'Planificador Avícola Profesional',
     );
 
@@ -190,7 +190,7 @@ class PlanPdfGenerator {
                 ),
               ),
               pw.Text(
-                'AVES PRO',
+                'AVES',
                 style: pw.TextStyle(
                   fontSize: 42,
                   fontWeight: pw.FontWeight.bold,
@@ -306,7 +306,7 @@ class PlanPdfGenerator {
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
                       pw.Text(
-                        'Smart Granja Aves Pro',
+                        'Smart Granja Aves',
                         style: pw.TextStyle(
                           fontSize: 10,
                           fontWeight: pw.FontWeight.bold,
@@ -370,7 +370,7 @@ class PlanPdfGenerator {
       child: pw.Row(
         children: [
           pw.Text(
-            'Smart Granja Aves Pro',
+            'Smart Granja Aves',
             style: pw.TextStyle(
               fontSize: 10,
               fontWeight: pw.FontWeight.bold,
@@ -402,7 +402,7 @@ class PlanPdfGenerator {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(
-            'Documento generado por Smart Granja Aves Pro',
+            'Documento generado por Smart Granja Aves',
             style: const pw.TextStyle(fontSize: 7, color: _lightGrey),
           ),
           pw.Text(

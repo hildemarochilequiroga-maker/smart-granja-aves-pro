@@ -1,6 +1,6 @@
 /// Tipos de notificación disponibles.
 ///
-/// Sistema completo de notificaciones para Smart Granja Aves Pro.
+/// Sistema completo de notificaciones para Smart Granja Aves.
 /// Incluye 77 tipos organizados por categoría.
 library;
 

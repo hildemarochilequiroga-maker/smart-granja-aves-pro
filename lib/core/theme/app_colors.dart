@@ -2,7 +2,7 @@ library;
 
 import 'dart:ui';
 
-/// Colores de la aplicación Smart Granja Aves Pro
+/// Colores de la aplicación Smart Granja Aves
 /// Basado en Material Design 3
 abstract final class AppColors {
   const AppColors._();

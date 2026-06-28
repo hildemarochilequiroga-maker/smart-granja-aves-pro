@@ -102,7 +102,7 @@ abstract class S {
   /// No description provided for @appTitle.
   ///
   /// In es, this message translates to:
-  /// **'Smart Granja Aves Pro'**
+  /// **'Smart Granja Aves'**
   String get appTitle;
 
   /// No description provided for @navHome.
@@ -17769,7 +17769,7 @@ abstract class S {
   /// No description provided for @reportShareText.
   ///
   /// In es, this message translates to:
-  /// **'Reporte generado por Smart Granja Aves Pro'**
+  /// **'Reporte generado por Smart Granja Aves'**
   String get reportShareText;
 
   /// No description provided for @reportShareError.
@@ -23373,7 +23373,7 @@ abstract class S {
   /// No description provided for @ventaShareAppName.
   ///
   /// In es, this message translates to:
-  /// **'Smart Granja Aves Pro'**
+  /// **'Smart Granja Aves'**
   String get ventaShareAppName;
 
   /// No description provided for @ventaShareSubject.
@@ -26052,12 +26052,6 @@ abstract class S {
   /// **'Smart Granja Aves'**
   String get homeAppTitle;
 
-  /// No description provided for @authProBadge.
-  ///
-  /// In es, this message translates to:
-  /// **'PRO'**
-  String get authProBadge;
-
   /// No description provided for @perfilLanguage.
   ///
   /// In es, this message translates to:
@@ -26073,7 +26067,7 @@ abstract class S {
   /// No description provided for @perfilAppTitle.
   ///
   /// In es, this message translates to:
-  /// **'Smart Granja Aves Pro'**
+  /// **'Smart Granja Aves'**
   String get perfilAppTitle;
 
   /// No description provided for @reportsPeriod.
@@ -29243,7 +29237,7 @@ abstract class S {
   /// No description provided for @legalTerms1Body.
   ///
   /// In es, this message translates to:
-  /// **'Al utilizar Smart Granja Aves Pro, usted acepta estos términos y condiciones. Si no está de acuerdo, por favor no utilice la aplicación.'**
+  /// **'Al utilizar Smart Granja Aves, usted acepta estos términos y condiciones. Si no está de acuerdo, por favor no utilice la aplicación.'**
   String get legalTerms1Body;
 
   /// No description provided for @legalTerms2Title.
@@ -29279,7 +29273,7 @@ abstract class S {
   /// No description provided for @legalTerms4Body.
   ///
   /// In es, this message translates to:
-  /// **'Los datos que usted ingresa en la aplicación son de su propiedad. Smart Granja Aves Pro retiene los derechos sobre el software, diseño, algoritmos y contenido propio de la aplicación.'**
+  /// **'Los datos que usted ingresa en la aplicación son de su propiedad. Smart Granja Aves retiene los derechos sobre el software, diseño, algoritmos y contenido propio de la aplicación.'**
   String get legalTerms4Body;
 
   /// No description provided for @legalTerms5Title.

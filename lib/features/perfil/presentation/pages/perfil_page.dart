@@ -511,7 +511,7 @@ class PerfilPage extends ConsumerWidget {
 
               // Nombre de la app centrado
               Text(
-                'Smart Granja Aves Pro',
+                'Smart Granja Aves',
                 style: AppTextStyles.titleLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.onSurface,

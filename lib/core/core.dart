@@ -1,4 +1,4 @@
-/// Core module for SmartGranjaAves Pro
+/// Core module for SmartGranjaAves
 /// Este archivo exporta todos los modulos del core de la aplicacion
 library;
 

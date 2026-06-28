@@ -868,7 +868,7 @@ class _VentaDetailView extends ConsumerWidget {
     buffer.writeln(l.shareStatusLine(venta.estado.displayName));
     buffer.writeln('');
     buffer.writeln('------------------------');
-    buffer.writeln('Smart Granja Aves Pro');
+    buffer.writeln('Smart Granja Aves');
 
     Share.share(
       buffer.toString(),

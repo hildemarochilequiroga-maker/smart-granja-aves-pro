@@ -7,7 +7,7 @@ abstract final class AppConstants {
   // ============================================================================
   // INFORMACIÓN DE LA APP
   // ============================================================================
-  static const String appName = 'Smart Granja Aves Pro';
+  static const String appName = 'Smart Granja Aves';
   static const String appVersion = '1.0.0';
   static const String appBuildNumber = '1';
   static const String appPackageName = 'com.hilde.smartgranjaavespro';

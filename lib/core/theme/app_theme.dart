@@ -1,4 +1,4 @@
-/// Temas de la aplicación Smart Granja Aves Pro
+/// Temas de la aplicación Smart Granja Aves
 ///
 /// Define los ThemeData para modo claro y oscuro
 /// basados en Material Design 3 con el color seed amarillo (#FFDD13)

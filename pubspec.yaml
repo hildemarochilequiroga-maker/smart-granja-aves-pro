@@ -1,5 +1,5 @@
 name: smartgranjaavespro
-description: "Smart Granja Aves Pro - Gestión integral de granjas avícolas con soporte multi-usuario, control de inventario, salud animal, veterinario virtual IA y analíticas de producción."
+description: "Smart Granja Aves - Gestión integral de granjas avícolas con soporte multi-usuario, control de inventario, salud animal, veterinario virtual IA y analíticas de producción."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

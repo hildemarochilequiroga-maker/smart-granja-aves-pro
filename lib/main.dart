@@ -210,7 +210,7 @@ class _SmartGranjaAvesAppState extends ConsumerState<SmartGranjaAvesApp>
     // authProvider ya es observado por routerProvider internamente
 
     return MaterialApp.router(
-      title: 'Smart Granja Aves Pro',
+      title: 'Smart Granja Aves',
       debugShowCheckedModeBanner: false,
 
       // Localización
