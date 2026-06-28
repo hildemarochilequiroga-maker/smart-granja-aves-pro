@@ -12,7 +12,6 @@ import {
   onDocumentCreated,
 } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { defineSecret } from "firebase-functions/params";
 
 // Inicializar Firebase Admin
 admin.initializeApp();
@@ -20,9 +19,18 @@ admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
 
-const whatsappAccessToken = defineSecret("WHATSAPP_ACCESS_TOKEN");
-const whatsappPhoneNumberId = defineSecret("WHATSAPP_PHONE_NUMBER_ID");
-const whatsappTemplateMortalidad = defineSecret("WHATSAPP_TEMPLATE_MORTALIDAD");
+// Credenciales de WhatsApp (opcionales): se leen del entorno en runtime.
+// Si no están configuradas, el envío por WhatsApp se omite con un warning,
+// permitiendo desplegar el resto de funciones sin bloquear por el secreto.
+const whatsappAccessToken = {
+  value: () => (process.env.WHATSAPP_ACCESS_TOKEN ?? "").trim(),
+};
+const whatsappPhoneNumberId = {
+  value: () => (process.env.WHATSAPP_PHONE_NUMBER_ID ?? "").trim(),
+};
+const whatsappTemplateMortalidad = {
+  value: () => (process.env.WHATSAPP_TEMPLATE_MORTALIDAD ?? "").trim(),
+};
 
 // =============================================================================
 // INTERFACES
@@ -284,11 +292,6 @@ export const verificarVencimientos = onSchedule(
 export const onMortalidadRegistrada = onDocumentCreated(
   {
     document: "lotes/{loteId}/mortalidad/{mortalidadId}",
-    secrets: [
-      whatsappAccessToken,
-      whatsappPhoneNumberId,
-      whatsappTemplateMortalidad,
-    ],
   },
   async (event) => {
     if (await isAlreadyProcessed(event.id)) {
@@ -418,6 +421,17 @@ async function enviarWhatsAppMortalidad(params: {
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
+
+  // Si las credenciales de WhatsApp no están configuradas en el entorno,
+  // se omite el envío de forma limpia (sin error) hasta que se configuren.
+  if (!whatsappAccessToken.value() || !whatsappPhoneNumberId.value()) {
+    await guardarSalidaWhatsApp(salidaId, {
+      ...baseSalida,
+      status: "skipped",
+      reason: "whatsapp_no_configurado",
+    });
+    return;
+  }
 
   if (!usuario) {
     await guardarSalidaWhatsApp(salidaId, {

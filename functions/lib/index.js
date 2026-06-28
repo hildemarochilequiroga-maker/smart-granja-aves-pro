@@ -45,14 +45,22 @@ const admin = __importStar(require("firebase-admin"));
 const firebase_functions_1 = require("firebase-functions");
 const firestore_1 = require("firebase-functions/v2/firestore");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
-const params_1 = require("firebase-functions/params");
 // Inicializar Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
-const whatsappAccessToken = (0, params_1.defineSecret)("WHATSAPP_ACCESS_TOKEN");
-const whatsappPhoneNumberId = (0, params_1.defineSecret)("WHATSAPP_PHONE_NUMBER_ID");
-const whatsappTemplateMortalidad = (0, params_1.defineSecret)("WHATSAPP_TEMPLATE_MORTALIDAD");
+// Credenciales de WhatsApp (opcionales): se leen del entorno en runtime.
+// Si no están configuradas, el envío por WhatsApp se omite con un warning,
+// permitiendo desplegar el resto de funciones sin bloquear por el secreto.
+const whatsappAccessToken = {
+    value: () => { var _a; return ((_a = process.env.WHATSAPP_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : "").trim(); },
+};
+const whatsappPhoneNumberId = {
+    value: () => { var _a; return ((_a = process.env.WHATSAPP_PHONE_NUMBER_ID) !== null && _a !== void 0 ? _a : "").trim(); },
+};
+const whatsappTemplateMortalidad = {
+    value: () => { var _a; return ((_a = process.env.WHATSAPP_TEMPLATE_MORTALIDAD) !== null && _a !== void 0 ? _a : "").trim(); },
+};
 // =============================================================================
 // IDEMPOTENCY GUARD
 // =============================================================================
@@ -99,19 +107,13 @@ exports.onInventarioUpdate = (0, firestore_1.onDocumentUpdated)("granjas/{granja
         // Obtener nombre de la granja
         const granjaDoc = await db.collection("granjas").doc(granjaId).get();
         const granjaName = (_h = (_g = granjaDoc.data()) === null || _g === void 0 ? void 0 : _g.nombre) !== null && _h !== void 0 ? _h : "Granja";
-        // Obtener usuarios a notificar (owner, admin, manager)
-        const colaboradores = await db
-            .collection("granjas")
-            .doc(granjaId)
-            .collection("colaboradores")
-            .where("rol", "in", ["owner", "admin", "manager"])
-            .where("activo", "==", true)
-            .get();
+        // Obtener usuarios a notificar (owner, admin, manager) desde la
+        // colección correcta `granja_usuarios` (ver getDestinatariosGranja).
+        const destinatarios = await getDestinatariosGranja(granjaId);
         const notificaciones = [];
-        for (const colabDoc of colaboradores.docs) {
-            const colab = colabDoc.data();
+        for (const usuarioId of destinatarios) {
             const notificacion = {
-                usuarioId: colab.usuarioId,
+                usuarioId: usuarioId,
                 tipo: "stock_bajo",
                 titulo: `⚠️ Stock bajo: ${nombreItem}`,
                 mensaje: `Solo quedan ${stockAhora.toFixed(1)} unidades en ${granjaName}`,
@@ -126,14 +128,14 @@ exports.onInventarioUpdate = (0, firestore_1.onDocumentUpdated)("granjas/{granja
                 prioridad: "alta",
                 accionUrl: `/granjas/${granjaId}/inventario`,
             };
-            notificaciones.push(crearNotificacionYEnviarPush(colab.usuarioId, notificacion));
+            notificaciones.push(crearNotificacionYEnviarPush(usuarioId, notificacion));
         }
         const results = await Promise.allSettled(notificaciones);
         const fallidos = results.filter(r => r.status === "rejected").length;
         if (fallidos > 0) {
             firebase_functions_1.logger.warn(`⚠️ ${fallidos}/${results.length} notificaciones de stock bajo fallaron`);
         }
-        firebase_functions_1.logger.info(`✅ Notificaciones de stock bajo enviadas: ${colaboradores.size}`);
+        firebase_functions_1.logger.info(`✅ Notificaciones de stock bajo enviadas: ${destinatarios.length}`);
     }
 });
 // =============================================================================
@@ -166,24 +168,22 @@ exports.verificarVencimientos = (0, scheduler_1.onSchedule)({ schedule: "every d
             .get();
         if (items.empty)
             continue;
-        // Obtener usuarios a notificar
-        const colaboradores = await db
-            .collection("granjas")
-            .doc(granjaId)
-            .collection("colaboradores")
-            .where("rol", "in", ["owner", "admin"])
-            .where("activo", "==", true)
-            .get();
+        // Obtener usuarios a notificar (owner/admin) desde `granja_usuarios`.
+        const destinatarios = await getDestinatariosGranja(granjaId, [
+            "owner",
+            "admin",
+        ]);
+        if (destinatarios.length === 0)
+            continue;
         // Batch notifications per granja to avoid timeout on sequential awaits
         const batchPromises = [];
         for (const itemDoc of items.docs) {
             const item = itemDoc.data();
             const fechaVenc = item.fechaVencimiento.toDate();
             const diasRestantes = Math.ceil((fechaVenc.getTime() - ahora.getTime()) / (1000 * 60 * 60 * 24));
-            for (const colabDoc of colaboradores.docs) {
-                const colab = colabDoc.data();
+            for (const usuarioId of destinatarios) {
                 const notificacion = {
-                    usuarioId: colab.usuarioId,
+                    usuarioId: usuarioId,
                     tipo: "proximo_vencer",
                     titulo: `📅 Próximo a vencer: ${item.nombre}`,
                     mensaje: `Vence en ${diasRestantes} días en ${granjaName}`,
@@ -198,7 +198,7 @@ exports.verificarVencimientos = (0, scheduler_1.onSchedule)({ schedule: "every d
                     prioridad: diasRestantes <= 3 ? "alta" : "normal",
                     accionUrl: `/granjas/${granjaId}/inventario`,
                 };
-                batchPromises.push(crearNotificacionYEnviarPush(colab.usuarioId, notificacion));
+                batchPromises.push(crearNotificacionYEnviarPush(usuarioId, notificacion));
             }
         }
         // Execute all notifications for this granja in parallel
@@ -215,11 +215,6 @@ exports.verificarVencimientos = (0, scheduler_1.onSchedule)({ schedule: "every d
 // =============================================================================
 exports.onMortalidadRegistrada = (0, firestore_1.onDocumentCreated)({
     document: "lotes/{loteId}/mortalidad/{mortalidadId}",
-    secrets: [
-        whatsappAccessToken,
-        whatsappPhoneNumberId,
-        whatsappTemplateMortalidad,
-    ],
 }, async (event) => {
     var _a, _b, _c, _d;
     if (await isAlreadyProcessed(event.id)) {
@@ -312,6 +307,12 @@ async function enviarWhatsAppMortalidad(params) {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
+    // Si las credenciales de WhatsApp no están configuradas en el entorno,
+    // se omite el envío de forma limpia (sin error) hasta que se configuren.
+    if (!whatsappAccessToken.value() || !whatsappPhoneNumberId.value()) {
+        await guardarSalidaWhatsApp(salidaId, Object.assign(Object.assign({}, baseSalida), { status: "skipped", reason: "whatsapp_no_configurado" }));
+        return;
+    }
     if (!usuario) {
         await guardarSalidaWhatsApp(salidaId, Object.assign(Object.assign({}, baseSalida), { status: "skipped", reason: "usuario_no_encontrado" }));
         return;
@@ -525,31 +526,33 @@ exports.onInvitacionCreada = (0, firestore_1.onDocumentCreated)("granjas/{granja
 // =============================================================================
 // TRIGGER: Invitación aceptada
 // =============================================================================
-exports.onColaboradorAgregado = (0, firestore_1.onDocumentCreated)("granjas/{granjaId}/colaboradores/{colaboradorId}", async (event) => {
+// Escucha la colección TOP-LEVEL `granja_usuarios` (docId `{granjaId}_{uid}`),
+// que es donde la app crea las membresías. Antes escuchaba la subcolección
+// `granjas/{id}/colaboradores`, que la app NUNCA escribe → el trigger jamás
+// se disparaba.
+exports.onColaboradorAgregado = (0, firestore_1.onDocumentCreated)("granja_usuarios/{membresiaId}", async (event) => {
     var _a, _b, _c, _d, _e, _f;
     if (await isAlreadyProcessed(event.id)) {
         firebase_functions_1.logger.info(`Evento duplicado ignorado: ${event.id}`);
         return;
     }
-    const { granjaId } = event.params;
     const colaborador = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
     if (!colaborador)
         return;
-    // No notificar al owner original
-    if (colaborador.rol === "owner")
-        return;
+    // granjaId/usuarioId vienen como campos del documento top-level.
+    const granjaId = colaborador.granjaId;
     const nuevoUsuarioId = colaborador.usuarioId;
     const rol = colaborador.rol;
-    // Parallel reads — all three queries are independent
+    if (!granjaId || !nuevoUsuarioId || !rol)
+        return;
+    // No notificar al owner original
+    if (rol === "owner")
+        return;
+    // Lecturas en paralelo: datos del nuevo usuario, granja y owners destino.
     const [usuarioDoc, granjaDoc, owners] = await Promise.all([
         db.collection("usuarios").doc(nuevoUsuarioId).get(),
         db.collection("granjas").doc(granjaId).get(),
-        db.collection("granjas")
-            .doc(granjaId)
-            .collection("colaboradores")
-            .where("rol", "==", "owner")
-            .where("activo", "==", true)
-            .get(),
+        getDestinatariosGranja(granjaId, ["owner", "admin"]),
     ]);
     const nombreColaborador = (_c = (_b = usuarioDoc.data()) === null || _b === void 0 ? void 0 : _b.nombreCompleto) !== null && _c !== void 0 ? _c : "Nuevo usuario";
     const granjaName = (_e = (_d = granjaDoc.data()) === null || _d === void 0 ? void 0 : _d.nombre) !== null && _e !== void 0 ? _e : "Granja";
@@ -559,13 +562,12 @@ exports.onColaboradorAgregado = (0, firestore_1.onDocumentCreated)("granjas/{gra
         operator: "Operador",
         viewer: "Observador",
     };
-    for (const ownerDoc of owners.docs) {
-        const owner = ownerDoc.data();
-        // No notificar si el owner es el mismo que se agregó
-        if (owner.usuarioId === nuevoUsuarioId)
+    for (const ownerId of owners) {
+        // No notificar si el destinatario es el mismo que se agregó
+        if (ownerId === nuevoUsuarioId)
             continue;
         const notificacion = {
-            usuarioId: owner.usuarioId,
+            usuarioId: ownerId,
             tipo: "invitacion_aceptada",
             titulo: "👤 Nuevo colaborador",
             mensaje: `${nombreColaborador} se unió como ${(_f = rolLabels[rol]) !== null && _f !== void 0 ? _f : rol} a ${granjaName}`,
@@ -580,7 +582,7 @@ exports.onColaboradorAgregado = (0, firestore_1.onDocumentCreated)("granjas/{gra
             prioridad: "normal",
             accionUrl: `/granjas/${granjaId}/colaboradores`,
         };
-        await crearNotificacionYEnviarPush(owner.usuarioId, notificacion);
+        await crearNotificacionYEnviarPush(ownerId, notificacion);
     }
     firebase_functions_1.logger.info(`✅ Notificación de nuevo colaborador enviada`);
 });
@@ -672,13 +674,9 @@ async function crearNotificacionYEnviarPush(usuarioId, notificacion) {
 // ejecutar `AlertasService.ejecutarVerificacionesProgramadas` (el lock
 // distribuido del cliente es solo un puente hasta que esto se despliegue).
 //
-// ⚠️ NOTA DE CONSISTENCIA DE MODELO: las functions existentes
-// (`verificarVencimientos`, stock bajo) leen destinatarios desde
-// `granjas/{id}/colaboradores`, pero la app escribe los colaboradores en la
-// colección TOP-LEVEL `granja_usuarios` (docId `{granjaId}_{usuarioId}`).
-// Antes de portar las 7 verificaciones aquí, unificar la fuente de
-// destinatarios a `granja_usuarios` para no enviar notificaciones a nadie.
-// Ver helper `getDestinatariosGranja` abajo (ya usa la fuente correcta).
+// Todas las functions de notificación ya leen destinatarios desde
+// `granja_usuarios` (vía `getDestinatariosGranja`), que es donde la app
+// escribe las membresías.
 //
 // TODO(server-side): portar desde Dart (AlertasService) las verificaciones
 // que aún no tienen function dedicada: lotes próximos a cierre, lotes sin
