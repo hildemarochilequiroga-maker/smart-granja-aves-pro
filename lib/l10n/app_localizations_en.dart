@@ -12,6 +12,138 @@ class SEn extends S {
   String get appTitle => 'Smart Poultry Farm';
 
   @override
+  String get planGratisNombre => 'Free';
+
+  @override
+  String get planProNombre => 'Pro';
+
+  @override
+  String get planPlusNombre => 'Plus';
+
+  @override
+  String get planGratisTagline =>
+      'Start without paying: register a batch, organize your day and see if the app helps you.';
+
+  @override
+  String get planProTagline =>
+      'For producers who need to control costs, alerts, sales and results with more precision.';
+
+  @override
+  String get planPlusTagline =>
+      'For operations with several houses, more team and decisions that can\'t wait.';
+
+  @override
+  String get planTituloPantalla => 'Plans';
+
+  @override
+  String get planSubtituloPantalla =>
+      'Choose the plan that best fits your operation';
+
+  @override
+  String get planPorMes => '/mo';
+
+  @override
+  String get planGratisPrecio => '/free plan';
+
+  @override
+  String planEquivalenteSoles(String monto) {
+    return 'Approx.: $monto';
+  }
+
+  @override
+  String planFeatureGranjas(String cantidad) {
+    return '$cantidad farm(s)';
+  }
+
+  @override
+  String planFeatureGalpones(String cantidad) {
+    return '$cantidad house(s)';
+  }
+
+  @override
+  String planFeatureLotes(String cantidad) {
+    return '$cantidad active batch(es)';
+  }
+
+  @override
+  String planFeatureUsuarios(String cantidad) {
+    return '$cantidad user(s)';
+  }
+
+  @override
+  String get planFeatureReportesBasicos =>
+      'Production, mortality, feed, costs, sales, alerts and basic reports';
+
+  @override
+  String get planFeatureReportesCompletos =>
+      'Production, mortality, feed, costs, sales, alerts and full reports';
+
+  @override
+  String get planFeatureApoyoPrioritario => 'Priority support';
+
+  @override
+  String get planFeatureIlimitado => 'unlimited';
+
+  @override
+  String get planCtaEmpezarGratis => 'Start free';
+
+  @override
+  String get planCtaElegirPro => 'Choose Pro';
+
+  @override
+  String get planCtaElegirPlus => 'Choose Plus';
+
+  @override
+  String get planCtaPlanActual => 'Current plan';
+
+  @override
+  String get planCtaMejorar => 'Upgrade plan';
+
+  @override
+  String get planBadgeActual => 'Your plan';
+
+  @override
+  String get planLimiteTituloGranja => 'Farm limit reached';
+
+  @override
+  String get planLimiteTituloGalpon => 'House limit reached';
+
+  @override
+  String get planLimiteTituloLote => 'Active batch limit reached';
+
+  @override
+  String get planLimiteTituloUsuario => 'User limit reached';
+
+  @override
+  String planLimiteDescripcion(String plan, String limite) {
+    return 'Your $plan plan allows up to $limite. Upgrade your plan to keep growing.';
+  }
+
+  @override
+  String get planLimiteVerPlanes => 'View plans';
+
+  @override
+  String get planCompraProcesando => 'Processing your purchase…';
+
+  @override
+  String planCompraExito(String plan) {
+    return 'Done! Your $plan plan is active.';
+  }
+
+  @override
+  String get planCompraError =>
+      'Purchase could not be completed. Please try again.';
+
+  @override
+  String get planCompraCancelada => 'Purchase cancelled.';
+
+  @override
+  String get planRestaurarCompras => 'Restore purchases';
+
+  @override
+  String get planNoDisponible => 'Subscriptions are not available right now.';
+
+  @override
   String get navHome => 'Home';
 
   @override

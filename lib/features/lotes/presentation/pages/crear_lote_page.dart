@@ -10,6 +10,9 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../suscripciones/application/providers/suscripcion_providers.dart';
+import '../../../suscripciones/presentation/widgets/plan_limite_sheet.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
@@ -499,7 +502,11 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
       );
 
       final notifier = ref.read(loteNotifierProvider.notifier);
-      final result = await notifier.crear(lote);
+      final result = await notifier.crear(
+        lote,
+        limites: ref.read(planLimitesProvider),
+        planActual: ref.read(planEfectivoProvider),
+      );
 
       if (!mounted) return;
 
@@ -507,6 +514,10 @@ class _CrearLotePageState extends ConsumerState<CrearLotePage> {
         result.fold(
           (failure) async {
             setState(() => _isLoading = false);
+            if (failure is LimitePlanFailure) {
+              await PlanLimiteSheet.mostrarDesdeFailure(context, failure);
+              return;
+            }
             AppSnackBar.error(
               context,
               message: S.of(context).batchErrorCreating,

@@ -5,6 +5,8 @@ import '../../../../core/errors/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../granjas/domain/value_objects/value_objects.dart';
+import '../../../suscripciones/domain/enums/plan_suscripcion.dart';
+import '../../../suscripciones/domain/value_objects/plan_limites.dart';
 import '../entities/galpon.dart';
 import '../enums/tipo_galpon.dart';
 import '../repositories/galpon_repository.dart';
@@ -26,6 +28,19 @@ class CrearGalponUseCase implements UseCase<Galpon, CrearGalponParams> {
       return await galponesResult.fold((failure) => Left(failure), (
         galpones,
       ) async {
+        // Límite de plan: no permitir más galpones de los que el plan concede.
+        if (!params.limites.puedeCrearGalpon(galpones.length)) {
+          return Left(
+            LimitePlanFailure(
+              message: ErrorMessages.get('PLAN_LIMITE_GALPONES'),
+              recurso: 'galpon',
+              planActual: params.planActual.name,
+              planSugerido: PlanLimites.sugeridoTras(params.planActual).name,
+              limite: params.limites.maxGalpones,
+            ),
+          );
+        }
+
         // Verificar código duplicado
         final existeCodigo = galpones.any(
           (g) => g.codigo.toLowerCase() == params.codigo.toLowerCase(),
@@ -108,6 +123,8 @@ class CrearGalponParams extends Equatable {
     required this.nombre,
     required this.tipo,
     required this.capacidadMaxima,
+    required this.limites,
+    required this.planActual,
     this.areaM2,
     this.umbralesAmbientales,
     this.descripcion,
@@ -131,6 +148,13 @@ class CrearGalponParams extends Equatable {
   final String nombre;
   final TipoGalpon tipo;
   final int capacidadMaxima;
+
+  /// Límites del plan vigente del propietario (resueltos en la página).
+  final PlanLimites limites;
+
+  /// Plan efectivo vigente (para construir el [LimitePlanFailure]).
+  final PlanSuscripcion planActual;
+
   final double? areaM2;
   final UmbralesAmbientales? umbralesAmbientales;
   final String? descripcion;
@@ -155,6 +179,8 @@ class CrearGalponParams extends Equatable {
     nombre,
     tipo,
     capacidadMaxima,
+    limites,
+    planActual,
     areaM2,
     umbralesAmbientales,
     descripcion,

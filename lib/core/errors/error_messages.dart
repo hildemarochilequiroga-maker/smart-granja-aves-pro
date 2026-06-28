@@ -310,6 +310,14 @@ class ErrorMessages {
       // Granjas usecases
       'GRANJA_NO_ENCONTRADA': 'La granja no existe',
       'GRANJA_NOMBRE_DUPLICADO': 'Ya existe una granja con ese nombre',
+      'PLAN_LIMITE_GRANJAS':
+          'Alcanzaste el límite de granjas de tu plan. Mejora tu plan para crear más.',
+      'PLAN_LIMITE_GALPONES':
+          'Alcanzaste el límite de galpones de tu plan. Mejora tu plan para crear más.',
+      'PLAN_LIMITE_LOTES':
+          'Alcanzaste el límite de lotes activos de tu plan. Cierra un lote o mejora tu plan.',
+      'PLAN_LIMITE_USUARIOS':
+          'Alcanzaste el límite de usuarios de tu plan. Mejora tu plan para invitar a más personas.',
       'GRANJA_ACTIVA_NO_ELIMINAR':
           'No se puede eliminar una granja activa. Primero suspéndala.',
       'GRANJA_CON_GALPONES_ACTIVOS':
@@ -1665,6 +1673,14 @@ class ErrorMessages {
       // Granjas usecases
       'GRANJA_NO_ENCONTRADA': 'Farm not found',
       'GRANJA_NOMBRE_DUPLICADO': 'A farm with that name already exists',
+      'PLAN_LIMITE_GRANJAS':
+          'You reached your plan\'s farm limit. Upgrade your plan to create more.',
+      'PLAN_LIMITE_GALPONES':
+          'You reached your plan\'s house limit. Upgrade your plan to create more.',
+      'PLAN_LIMITE_LOTES':
+          'You reached your plan\'s active batch limit. Close a batch or upgrade your plan.',
+      'PLAN_LIMITE_USUARIOS':
+          'You reached your plan\'s user limit. Upgrade your plan to invite more people.',
       'GRANJA_ACTIVA_NO_ELIMINAR':
           'Cannot delete an active farm. Suspend it first.',
       'GRANJA_CON_GALPONES_ACTIVOS':
@@ -3005,6 +3021,14 @@ class ErrorMessages {
       // Granjas usecases
       'GRANJA_NO_ENCONTRADA': 'A granja não existe',
       'GRANJA_NOMBRE_DUPLICADO': 'Já existe uma granja com esse nome',
+      'PLAN_LIMITE_GRANJAS':
+          'Você atingiu o limite de granjas do seu plano. Melhore seu plano para criar mais.',
+      'PLAN_LIMITE_GALPONES':
+          'Você atingiu o limite de galpões do seu plano. Melhore seu plano para criar mais.',
+      'PLAN_LIMITE_LOTES':
+          'Você atingiu o limite de lotes ativos do seu plano. Feche um lote ou melhore seu plano.',
+      'PLAN_LIMITE_USUARIOS':
+          'Você atingiu o limite de usuários do seu plano. Melhore seu plano para convidar mais pessoas.',
       'GRANJA_ACTIVA_NO_ELIMINAR':
           'Não é possível excluir uma granja ativa. Primeiro suspenda-a.',
       'GRANJA_CON_GALPONES_ACTIVOS':

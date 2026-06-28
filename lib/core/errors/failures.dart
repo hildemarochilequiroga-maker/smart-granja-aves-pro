@@ -208,3 +208,44 @@ class UnknownFailure extends Failure {
   UnknownFailure({String? message, super.code = 'UNKNOWN_FAILURE'})
     : super(message: message ?? ErrorMessages.get('UNKNOWN'));
 }
+
+/// Fallo por límite del plan de suscripción alcanzado.
+///
+/// Se usa cuando la creación de un recurso (granja, galpón, lote o usuario)
+/// supera el tope del plan vigente. La UI lo detecta para mostrar un paywall
+/// elegante (en vez de un error genérico) que invite a mejorar de plan.
+///
+/// [recurso] es el identificador del recurso bloqueado
+/// ('granja' | 'galpon' | 'lote' | 'usuario'), [planActual] el plan vigente
+/// y [planSugerido] el plan mínimo que levanta el límite.
+class LimitePlanFailure extends Failure {
+  const LimitePlanFailure({
+    required super.message,
+    required this.recurso,
+    required this.planActual,
+    required this.planSugerido,
+    this.limite,
+    super.code = 'PLAN_LIMIT_REACHED',
+  });
+
+  /// Recurso bloqueado: 'granja' | 'galpon' | 'lote' | 'usuario'.
+  final String recurso;
+
+  /// Nombre del plan vigente (p. ej. 'gratis').
+  final String planActual;
+
+  /// Nombre del plan sugerido para superar el límite (p. ej. 'pro').
+  final String planSugerido;
+
+  /// Tope numérico alcanzado (informativo para la UI).
+  final int? limite;
+
+  @override
+  List<Object?> get props => [
+    ...super.props,
+    recurso,
+    planActual,
+    planSugerido,
+    limite,
+  ];
+}

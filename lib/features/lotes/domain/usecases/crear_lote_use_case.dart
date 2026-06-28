@@ -11,6 +11,8 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/errors/error_messages.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../suscripciones/domain/enums/plan_suscripcion.dart';
+import '../../../suscripciones/domain/value_objects/plan_limites.dart';
 import '../entities/lote.dart';
 import '../enums/enums.dart';
 import '../repositories/lote_repository.dart';
@@ -46,6 +48,32 @@ class CrearLoteUseCase {
         return Left(
           ValidationFailure(
             message: ErrorMessages.get('LOTE_ACTIVO_EN_GALPON'),
+          ),
+        );
+      }
+
+      // 3. Límite de plan: contar lotes ACTIVOS de la granja (cerrar/vender
+      //    libera cupo) y comparar con el tope del plan vigente.
+      final lotesGranja = await _loteRepository.obtenerPorGranja(
+        params.granjaId,
+      );
+      final limiteSuperado = lotesGranja.fold(
+        (failure) => false, // si falla la lectura, no bloquear por plan aquí
+        (lotes) {
+          final activos =
+              lotes.where((l) => l.estado == EstadoLote.activo).length;
+          return !params.limites.puedeCrearLoteActivo(activos);
+        },
+      );
+
+      if (limiteSuperado) {
+        return Left(
+          LimitePlanFailure(
+            message: ErrorMessages.get('PLAN_LIMITE_LOTES'),
+            recurso: 'lote',
+            planActual: params.planActual.name,
+            planSugerido: PlanLimites.sugeridoTras(params.planActual).name,
+            limite: params.limites.maxLotesActivos,
           ),
         );
       }
@@ -98,6 +126,13 @@ class CrearLoteParams extends Equatable {
   final String galponId;
   final int cantidadInicial;
   final TipoAve tipoAve;
+
+  /// Límites del plan vigente del propietario (resueltos en la página).
+  final PlanLimites limites;
+
+  /// Plan efectivo vigente (para construir el [LimitePlanFailure]).
+  final PlanSuscripcion planActual;
+
   final DateTime? fechaIngreso;
   final String? codigo;
   final String? nombre;
@@ -114,6 +149,8 @@ class CrearLoteParams extends Equatable {
     required this.galponId,
     required this.cantidadInicial,
     required this.tipoAve,
+    required this.limites,
+    required this.planActual,
     this.fechaIngreso,
     this.codigo,
     this.nombre,
@@ -132,6 +169,8 @@ class CrearLoteParams extends Equatable {
     galponId,
     cantidadInicial,
     tipoAve,
+    limites,
+    planActual,
     fechaIngreso,
     codigo,
     nombre,

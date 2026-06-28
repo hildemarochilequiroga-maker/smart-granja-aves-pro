@@ -105,6 +105,228 @@ abstract class S {
   /// **'Smart Granja Aves'**
   String get appTitle;
 
+  /// No description provided for @planGratisNombre.
+  ///
+  /// In es, this message translates to:
+  /// **'Gratis'**
+  String get planGratisNombre;
+
+  /// No description provided for @planProNombre.
+  ///
+  /// In es, this message translates to:
+  /// **'Pro'**
+  String get planProNombre;
+
+  /// No description provided for @planPlusNombre.
+  ///
+  /// In es, this message translates to:
+  /// **'Plus'**
+  String get planPlusNombre;
+
+  /// No description provided for @planGratisTagline.
+  ///
+  /// In es, this message translates to:
+  /// **'Empieza sin pagar: registra un lote, ordena tu día y comprueba si la app te ayuda.'**
+  String get planGratisTagline;
+
+  /// No description provided for @planProTagline.
+  ///
+  /// In es, this message translates to:
+  /// **'Para productores que ya necesitan controlar costos, alertas, ventas y resultados con más precisión.'**
+  String get planProTagline;
+
+  /// No description provided for @planPlusTagline.
+  ///
+  /// In es, this message translates to:
+  /// **'Para operaciones con varios galpones, más equipo y decisiones que no pueden esperar.'**
+  String get planPlusTagline;
+
+  /// No description provided for @planTituloPantalla.
+  ///
+  /// In es, this message translates to:
+  /// **'Planes'**
+  String get planTituloPantalla;
+
+  /// No description provided for @planSubtituloPantalla.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige el plan que mejor se adapte a tu operación'**
+  String get planSubtituloPantalla;
+
+  /// No description provided for @planPorMes.
+  ///
+  /// In es, this message translates to:
+  /// **'/mes'**
+  String get planPorMes;
+
+  /// No description provided for @planGratisPrecio.
+  ///
+  /// In es, this message translates to:
+  /// **'/plan gratis'**
+  String get planGratisPrecio;
+
+  /// No description provided for @planEquivalenteSoles.
+  ///
+  /// In es, this message translates to:
+  /// **'Equivalente en soles: {monto}'**
+  String planEquivalenteSoles(String monto);
+
+  /// No description provided for @planFeatureGranjas.
+  ///
+  /// In es, this message translates to:
+  /// **'{cantidad} granja(s)'**
+  String planFeatureGranjas(String cantidad);
+
+  /// No description provided for @planFeatureGalpones.
+  ///
+  /// In es, this message translates to:
+  /// **'{cantidad} galpón(es)'**
+  String planFeatureGalpones(String cantidad);
+
+  /// No description provided for @planFeatureLotes.
+  ///
+  /// In es, this message translates to:
+  /// **'{cantidad} lote(s) activo(s)'**
+  String planFeatureLotes(String cantidad);
+
+  /// No description provided for @planFeatureUsuarios.
+  ///
+  /// In es, this message translates to:
+  /// **'{cantidad} usuario(s)'**
+  String planFeatureUsuarios(String cantidad);
+
+  /// No description provided for @planFeatureReportesBasicos.
+  ///
+  /// In es, this message translates to:
+  /// **'Producción, mortalidad, alimento, costos, ventas, alertas y reportes básicos'**
+  String get planFeatureReportesBasicos;
+
+  /// No description provided for @planFeatureReportesCompletos.
+  ///
+  /// In es, this message translates to:
+  /// **'Producción, mortalidad, alimento, costos, ventas, alertas y reportes completos'**
+  String get planFeatureReportesCompletos;
+
+  /// No description provided for @planFeatureApoyoPrioritario.
+  ///
+  /// In es, this message translates to:
+  /// **'Apoyo prioritario'**
+  String get planFeatureApoyoPrioritario;
+
+  /// No description provided for @planFeatureIlimitado.
+  ///
+  /// In es, this message translates to:
+  /// **'ilimitado(s)'**
+  String get planFeatureIlimitado;
+
+  /// No description provided for @planCtaEmpezarGratis.
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar gratis'**
+  String get planCtaEmpezarGratis;
+
+  /// No description provided for @planCtaElegirPro.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir Pro'**
+  String get planCtaElegirPro;
+
+  /// No description provided for @planCtaElegirPlus.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir Plus'**
+  String get planCtaElegirPlus;
+
+  /// No description provided for @planCtaPlanActual.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan actual'**
+  String get planCtaPlanActual;
+
+  /// No description provided for @planCtaMejorar.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejorar plan'**
+  String get planCtaMejorar;
+
+  /// No description provided for @planBadgeActual.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu plan'**
+  String get planBadgeActual;
+
+  /// No description provided for @planLimiteTituloGranja.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de granjas alcanzado'**
+  String get planLimiteTituloGranja;
+
+  /// No description provided for @planLimiteTituloGalpon.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de galpones alcanzado'**
+  String get planLimiteTituloGalpon;
+
+  /// No description provided for @planLimiteTituloLote.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de lotes activos alcanzado'**
+  String get planLimiteTituloLote;
+
+  /// No description provided for @planLimiteTituloUsuario.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de usuarios alcanzado'**
+  String get planLimiteTituloUsuario;
+
+  /// No description provided for @planLimiteDescripcion.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu plan {plan} permite hasta {limite}. Mejora tu plan para seguir creciendo.'**
+  String planLimiteDescripcion(String plan, String limite);
+
+  /// No description provided for @planLimiteVerPlanes.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver planes'**
+  String get planLimiteVerPlanes;
+
+  /// No description provided for @planCompraProcesando.
+  ///
+  /// In es, this message translates to:
+  /// **'Procesando tu compra…'**
+  String get planCompraProcesando;
+
+  /// No description provided for @planCompraExito.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Listo! Tu plan {plan} está activo.'**
+  String planCompraExito(String plan);
+
+  /// No description provided for @planCompraError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar la compra. Inténtalo de nuevo.'**
+  String get planCompraError;
+
+  /// No description provided for @planCompraCancelada.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra cancelada.'**
+  String get planCompraCancelada;
+
+  /// No description provided for @planRestaurarCompras.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar compras'**
+  String get planRestaurarCompras;
+
+  /// No description provided for @planNoDisponible.
+  ///
+  /// In es, this message translates to:
+  /// **'Las suscripciones no están disponibles en este momento.'**
+  String get planNoDisponible;
+
   /// No description provided for @navHome.
   ///
   /// In es, this message translates to:

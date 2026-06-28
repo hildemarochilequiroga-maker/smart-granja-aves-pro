@@ -15,6 +15,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../suscripciones/application/providers/suscripcion_providers.dart';
+import '../../../suscripciones/presentation/widgets/plan_limite_sheet.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/app_haptics.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_confirm_dialog.dart';
@@ -612,6 +615,8 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
             : _nombreController.text.trim(),
         tipo: _tipoGalpon!,
         capacidadMaxima: int.parse(_capacidadAvesController.text.trim()),
+        limites: ref.read(planLimitesProvider),
+        planActual: ref.read(planEfectivoProvider),
         areaM2: _areaM2Controller.text.trim().isEmpty
             ? null
             : double.tryParse(_areaM2Controller.text.trim()),
@@ -633,6 +638,10 @@ class _CrearGalponPageState extends ConsumerState<CrearGalponPage> {
           (failure) async {
             setState(() => _isLoading = false);
             unawaited(AppHaptics.error());
+            if (failure is LimitePlanFailure) {
+              await PlanLimiteSheet.mostrarDesdeFailure(context, failure);
+              return;
+            }
             AppSnackBar.error(
               context,
               message: failure.message,

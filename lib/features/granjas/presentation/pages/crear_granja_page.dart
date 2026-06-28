@@ -10,6 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../suscripciones/application/providers/suscripcion_providers.dart';
+import '../../../suscripciones/presentation/widgets/plan_limite_sheet.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_haptics.dart';
@@ -582,12 +585,14 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
         );
       }
 
-      // Crear params
+      // Crear params (incluye los límites del plan vigente para enforcement)
       final params = CrearGranjaParams(
         usuarioId: currentUser.id,
         nombre: _nombreController.text.trim(),
         propietarioNombre: _propietarioController.text.trim(),
         direccion: direccion,
+        limites: ref.read(planLimitesProvider),
+        planActual: ref.read(planEfectivoProvider),
         coordenadas: coordenadas,
         telefono: _telefonoController.text.trim().isEmpty
             ? null
@@ -617,6 +622,11 @@ class _CrearGranjaPageState extends ConsumerState<CrearGranjaPage> {
           (failure) async {
             setState(() => _isLoading = false);
             unawaited(AppHaptics.error());
+            // Si es un límite de plan, mostrar el paywall en vez del error.
+            if (failure is LimitePlanFailure) {
+              await PlanLimiteSheet.mostrarDesdeFailure(context, failure);
+              return;
+            }
             AppSnackBar.error(
               context,
               message: failure.message,

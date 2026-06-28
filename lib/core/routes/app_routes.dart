@@ -32,6 +32,11 @@ abstract final class AppRoutes {
   static const String notificaciones = '/notificaciones';
 
   // ============================================================================
+  // SUSCRIPCIONES
+  // ============================================================================
+  static const String planes = '/planes';
+
+  // ============================================================================
   // GRANJAS
   // ============================================================================
   static const String granjas = '/granjas';

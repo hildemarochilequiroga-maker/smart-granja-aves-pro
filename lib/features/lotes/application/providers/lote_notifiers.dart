@@ -1,8 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../suscripciones/domain/enums/plan_suscripcion.dart';
+import '../../../suscripciones/domain/value_objects/plan_limites.dart';
 import '../../domain/entities/lote.dart';
 import '../../domain/enums/estado_lote.dart';
 import '../../domain/repositories/lote_repository.dart';
@@ -35,7 +38,39 @@ class LoteNotifier extends StateNotifier<LoteState> {
   );
 
   /// Crea un nuevo lote.
-  Future<Either<Failure, Lote>> crear(Lote lote) async {
+  ///
+  /// Si se pasan [limites] y [planActual], aplica el límite de plan (cuenta
+  /// los lotes ACTIVOS de la granja; cerrar/vender libera cupo) y devuelve un
+  /// [LimitePlanFailure] si se superó el tope, antes de tocar la base.
+  Future<Either<Failure, Lote>> crear(
+    Lote lote, {
+    PlanLimites? limites,
+    PlanSuscripcion? planActual,
+  }) async {
+    // Enforcement de plan (si el caller proveyó los límites vigentes).
+    if (limites != null && planActual != null) {
+      final lotesGranja = await _repository.obtenerPorGranja(lote.granjaId);
+      final superado = lotesGranja.fold(
+        (_) => false, // si falla la lectura, no bloquear por plan aquí
+        (lotes) {
+          final activos =
+              lotes.where((l) => l.estado == EstadoLote.activo).length;
+          return !limites.puedeCrearLoteActivo(activos);
+        },
+      );
+      if (superado) {
+        final failure = LimitePlanFailure(
+          message: ErrorMessages.get('PLAN_LIMITE_LOTES'),
+          recurso: 'lote',
+          planActual: planActual.name,
+          planSugerido: PlanLimites.sugeridoTras(planActual).name,
+          limite: limites.maxLotesActivos,
+        );
+        state = _error(failure.message, code: failure.code);
+        return Left(failure);
+      }
+    }
+
     state = _loading(
       switch (Formatters.currentLocale) { 'es' => 'Creando lote...', 'pt' => 'Criando lote...', _ => 'Creating batch...' },
     );

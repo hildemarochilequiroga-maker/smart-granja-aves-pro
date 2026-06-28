@@ -17,6 +17,7 @@ import '../../../../core/config/locale_provider.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/presentation/widgets/form_text_scale.dart';
 import '../../../../core/presentation/widgets/full_height_sheet.dart';
+import '../../../suscripciones/application/providers/suscripcion_providers.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
@@ -107,6 +108,21 @@ class PerfilPage extends ConsumerWidget {
                   subtitle: l.profileViewManageAccess,
                   onTap: () =>
                       _seleccionarGranjaParaColaboradores(context, ref),
+                ),
+              ],
+            ),
+            AppSpacing.gapSm,
+
+            // Sección: Plan / Suscripción
+            MenuSection(
+              title: l.planTituloPantalla,
+              items: [
+                MenuItem(
+                  icon: Icons.workspace_premium_outlined,
+                  label: l.planTituloPantalla,
+                  iconColor: AppColors.primary,
+                  subtitle: ref.watch(planEfectivoProvider).localizedName(l),
+                  onTap: () => context.push(AppRoutes.planes),
                 ),
               ],
             ),

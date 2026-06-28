@@ -12,6 +12,139 @@ class SPt extends S {
   String get appTitle => 'Smart Granja Aves';
 
   @override
+  String get planGratisNombre => 'Grátis';
+
+  @override
+  String get planProNombre => 'Pro';
+
+  @override
+  String get planPlusNombre => 'Plus';
+
+  @override
+  String get planGratisTagline =>
+      'Comece sem pagar: registre um lote, organize seu dia e veja se o app te ajuda.';
+
+  @override
+  String get planProTagline =>
+      'Para produtores que precisam controlar custos, alertas, vendas e resultados com mais precisão.';
+
+  @override
+  String get planPlusTagline =>
+      'Para operações com vários galpões, mais equipe e decisões que não podem esperar.';
+
+  @override
+  String get planTituloPantalla => 'Planos';
+
+  @override
+  String get planSubtituloPantalla =>
+      'Escolha o plano que melhor se adapta à sua operação';
+
+  @override
+  String get planPorMes => '/mês';
+
+  @override
+  String get planGratisPrecio => '/plano grátis';
+
+  @override
+  String planEquivalenteSoles(String monto) {
+    return 'Aprox.: $monto';
+  }
+
+  @override
+  String planFeatureGranjas(String cantidad) {
+    return '$cantidad granja(s)';
+  }
+
+  @override
+  String planFeatureGalpones(String cantidad) {
+    return '$cantidad galpão(ões)';
+  }
+
+  @override
+  String planFeatureLotes(String cantidad) {
+    return '$cantidad lote(s) ativo(s)';
+  }
+
+  @override
+  String planFeatureUsuarios(String cantidad) {
+    return '$cantidad usuário(s)';
+  }
+
+  @override
+  String get planFeatureReportesBasicos =>
+      'Produção, mortalidade, ração, custos, vendas, alertas e relatórios básicos';
+
+  @override
+  String get planFeatureReportesCompletos =>
+      'Produção, mortalidade, ração, custos, vendas, alertas e relatórios completos';
+
+  @override
+  String get planFeatureApoyoPrioritario => 'Suporte prioritário';
+
+  @override
+  String get planFeatureIlimitado => 'ilimitado(s)';
+
+  @override
+  String get planCtaEmpezarGratis => 'Começar grátis';
+
+  @override
+  String get planCtaElegirPro => 'Escolher Pro';
+
+  @override
+  String get planCtaElegirPlus => 'Escolher Plus';
+
+  @override
+  String get planCtaPlanActual => 'Plano atual';
+
+  @override
+  String get planCtaMejorar => 'Melhorar plano';
+
+  @override
+  String get planBadgeActual => 'Seu plano';
+
+  @override
+  String get planLimiteTituloGranja => 'Limite de granjas atingido';
+
+  @override
+  String get planLimiteTituloGalpon => 'Limite de galpões atingido';
+
+  @override
+  String get planLimiteTituloLote => 'Limite de lotes ativos atingido';
+
+  @override
+  String get planLimiteTituloUsuario => 'Limite de usuários atingido';
+
+  @override
+  String planLimiteDescripcion(String plan, String limite) {
+    return 'Seu plano $plan permite até $limite. Melhore seu plano para continuar crescendo.';
+  }
+
+  @override
+  String get planLimiteVerPlanes => 'Ver planos';
+
+  @override
+  String get planCompraProcesando => 'Processando sua compra…';
+
+  @override
+  String planCompraExito(String plan) {
+    return 'Pronto! Seu plano $plan está ativo.';
+  }
+
+  @override
+  String get planCompraError =>
+      'Não foi possível concluir a compra. Tente novamente.';
+
+  @override
+  String get planCompraCancelada => 'Compra cancelada.';
+
+  @override
+  String get planRestaurarCompras => 'Restaurar compras';
+
+  @override
+  String get planNoDisponible =>
+      'As assinaturas não estão disponíveis no momento.';
+
+  @override
   String get navHome => 'Início';
 
   @override

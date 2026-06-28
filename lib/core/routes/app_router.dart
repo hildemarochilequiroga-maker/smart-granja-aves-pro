@@ -36,6 +36,7 @@ import '../../features/guias_manejo/presentation/pages/guias_manejo_page.dart';
 import '../../features/guias_manejo/presentation/pages/guia_diaria_page.dart';
 import '../../features/lotes/lotes.dart';
 import '../../features/notificaciones/presentation/pages/notificaciones_page.dart';
+import '../../features/suscripciones/presentation/pages/planes_page.dart';
 import '../../features/veterinario_virtual/presentation/pages/veterinario_home_page.dart';
 import '../../features/veterinario_virtual/presentation/pages/chat_consulta_page.dart';
 import '../../features/veterinario_virtual/application/services/contexto_builder.dart';
@@ -83,6 +84,13 @@ abstract final class AppRouter {
       path: AppRoutes.forgotPassword,
       name: 'forgotPassword',
       builder: (context, state) => const ForgotPasswordPage(),
+    ),
+
+    // Planes / suscripciones
+    GoRoute(
+      path: AppRoutes.planes,
+      name: 'planes',
+      builder: (context, state) => const PlanesPage(),
     ),
 
     // =========================================================================

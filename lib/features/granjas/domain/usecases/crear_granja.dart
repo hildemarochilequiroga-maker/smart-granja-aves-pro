@@ -6,6 +6,8 @@ import 'package:equatable/equatable.dart';
 import '../../../../core/errors/error_messages.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../../../suscripciones/domain/enums/plan_suscripcion.dart';
+import '../../../suscripciones/domain/value_objects/plan_limites.dart';
 import '../entities/entities.dart';
 import '../repositories/granja_repository.dart';
 import '../value_objects/value_objects.dart';
@@ -29,6 +31,21 @@ class CrearGranjaUseCase implements UseCase<Granja, CrearGranjaParams> {
       return await granjasResult.fold((failure) => Left(failure), (
         granjas,
       ) async {
+        // Límite de plan: no permitir crear más granjas de las que el plan
+        // vigente concede. Se valida sobre el conteo real recién leído.
+        if (!params.limites.puedeCrearGranja(granjas.length)) {
+          return Left(
+            LimitePlanFailure(
+              message: ErrorMessages.get('PLAN_LIMITE_GRANJAS'),
+              recurso: 'granja',
+              planActual: params.planActual.name,
+              planSugerido:
+                  PlanLimites.sugeridoTras(params.planActual).name,
+              limite: params.limites.maxGranjas,
+            ),
+          );
+        }
+
         final existeNombre = granjas.any(
           (g) => g.nombre.toLowerCase() == params.nombre.toLowerCase(),
         );
@@ -91,6 +108,8 @@ class CrearGranjaParams extends Equatable {
     required this.nombre,
     required this.propietarioNombre,
     required this.direccion,
+    required this.limites,
+    required this.planActual,
     this.coordenadas,
     this.capacidadMaximaAves,
     this.areaTotal,
@@ -104,6 +123,13 @@ class CrearGranjaParams extends Equatable {
   final String nombre;
   final String propietarioNombre;
   final Direccion direccion;
+
+  /// Límites del plan vigente del usuario (resueltos en el provider).
+  final PlanLimites limites;
+
+  /// Plan efectivo vigente (para construir el [LimitePlanFailure]).
+  final PlanSuscripcion planActual;
+
   final Coordenadas? coordenadas;
   final int? capacidadMaximaAves;
   final double? areaTotal;
@@ -118,6 +144,8 @@ class CrearGranjaParams extends Equatable {
     nombre,
     propietarioNombre,
     direccion,
+    limites,
+    planActual,
     coordenadas,
     capacidadMaximaAves,
     areaTotal,
